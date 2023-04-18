@@ -28,7 +28,7 @@ Start the servers with::
 
 Start the CR clilent with::
 
-    python -m venv .py
+    python3 -m venv .py
     source .py/bin/activate
     pip install -r requirements.txt
     # insert dummy data for the parents
