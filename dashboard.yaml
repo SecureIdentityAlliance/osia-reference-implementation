@@ -1,0 +1,193 @@
+{% set pr_server = "http://localhost:8010/monitoring/v1" %}
+{% set uin_server = "http://localhost:8020/monitoring/v1" %}
+{% set notification_server = "http://localhost:8030/monitoring/v1" %}
+{% set orchestrator_server = "http://localhost:8040/monitoring/v1" %}
+---
+title: OSIA
+rows:
+- label: Population Registry
+  cells:
+  - label: PR
+    type: label
+  - label: Health
+    server: "{{pr_server}}/is_healthy"
+    type: status
+  - label: CPU
+    server: "{{pr_server}}/metrics/gauges/cpu/count"
+    type: gauge
+    unit: "%"
+    max: 100
+    gauge_color: green
+    color: "#C0F0C0"
+  - label: Memory
+    server: "{{pr_server}}/metrics/gauges/memory/count"
+    type: gauge
+    unit: MB
+    factor: "/1048576"
+    max: 256
+    gauge_color: blue
+    color: "#C0D0F0"
+  - label: Threads
+    server: "{{pr_server}}/metrics/gauges/num_threads/count"
+    type: value
+    color: blue
+  - type: empty
+  - label: createPerson
+    server: "{{pr_server}}/metrics/histograms/createPerson"
+    type: histogram
+    unit: ms
+    factor: "*1000"
+    color: "#ff000080"
+    median_color: "#00ff0080"
+  - label: createPerson
+    server: ["{{pr_server}}/metrics/meters/createPerson/201/rate1", "{{pr_server}}/metrics/meters/createPerson/409/rate1"]
+    type: gauge
+    unit: "/h"
+    factor: "*3600"
+    gauge_color: green
+    color: "#C0F0C0"
+    max: 25000
+  - label: createIdentityWithId
+    server: "{{pr_server}}/metrics/histograms/createIdentityWithId"
+    type: histogram
+    unit: ms
+    factor: "*1000"
+    color: "#ff000080"
+    median_color: "#00ff0080"
+  - label: createIdentityWithId
+    server: ["{{pr_server}}/metrics/meters/createIdentityWithId/201/rate1", "{{pr_server}}/metrics/meters/createIdentityWithId/409/rate1"]
+    type: gauge
+    unit: "/h"
+    factor: "*3600"
+    gauge_color: green
+    color: "#C0F0C0"
+    max: 25000
+
+- label: UIN Generator
+  cells:
+  - label: UIN
+    type: label
+  - label: Health
+    server: "{{uin_server}}/is_healthy"
+    type: status
+  - label: CPU
+    server: "{{uin_server}}/metrics/gauges/cpu/count"
+    type: gauge
+    unit: "%"
+    max: 100
+    gauge_color: green
+    color: "#C0F0C0"
+  - label: Memory
+    server: "{{uin_server}}/metrics/gauges/memory/count"
+    type: gauge
+    unit: MB
+    factor: "/1048576"
+    max: 256
+    gauge_color: blue
+    color: "#C0D0F0"
+  - label: Threads
+    server: "{{uin_server}}/metrics/gauges/num_threads/count"
+    type: value
+    color: blue
+  - type: empty
+  - label: generateUIN
+    server: "{{uin_server}}/metrics/histograms/generateUIN"
+    type: histogram
+    unit: ms
+    factor: "*1000"
+    color: "#ff000080"
+    median_color: "#00ff0080"
+  - label: generateUIN
+    server: "{{uin_server}}/metrics/meters/generateUIN/200/rate1"
+    type: gauge
+    unit: "/h"
+    factor: "*3600"
+    gauge_color: green
+    color: "#C0F0C0"
+    max: 25000
+
+- label: Notification
+  cells:
+  - label: Notification
+    type: label
+  - label: Health
+    server: "{{notification_server}}/is_healthy"
+    type: status
+  - label: CPU
+    server: "{{notification_server}}/metrics/gauges/cpu/count"
+    type: gauge
+    unit: "%"
+    max: 100
+    gauge_color: green
+    color: "#C0F0C0"
+  - label: Memory
+    server: "{{notification_server}}/metrics/gauges/memory/count"
+    type: gauge
+    unit: MB
+    factor: "/1048576"
+    max: 256
+    gauge_color: blue
+    color: "#C0D0F0"
+  - label: Threads
+    server: "{{notification_server}}/metrics/gauges/num_threads/count"
+    type: value
+    color: blue
+  - type: empty
+  - label: publish
+    server: "{{notification_server}}/metrics/histograms/publish"
+    type: histogram
+    unit: ms
+    factor: "*1000"
+    color: "#ff000080"
+    median_color: "#00ff0080"
+  - label: publish
+    server: "{{notification_server}}/metrics/meters/publish/200/rate1"
+    type: gauge
+    unit: "/h"
+    factor: "*3600"
+    gauge_color: green
+    color: "#C0F0C0"
+    max: 25000
+
+- label: Orchestrator
+  cells:
+  - label: Orchestrator
+    type: label
+  - label: Health
+    server: "{{orchestrator_server}}/is_healthy"
+    type: status
+  - label: CPU
+    server: "{{orchestrator_server}}/metrics/gauges/cpu/count"
+    type: gauge
+    unit: "%"
+    max: 100
+    gauge_color: green
+    color: "#C0F0C0"
+  - label: Memory
+    server: "{{orchestrator_server}}/metrics/gauges/memory/count"
+    type: gauge
+    unit: MB
+    factor: "/1048576"
+    max: 256
+    gauge_color: blue
+    color: "#C0D0F0"
+  - label: Threads
+    server: "{{orchestrator_server}}/metrics/gauges/num_threads/count"
+    type: value
+    color: blue
+  - type: empty
+  - label: cr_event
+    server: "{{orchestrator_server}}/metrics/histograms/cr_event"
+    type: histogram
+    unit: ms
+    factor: "*1000"
+    color: "#ff000080"
+    median_color: "#00ff0080"
+  - label: cr_event
+    server: "{{orchestrator_server}}/metrics/meters/cr_event/200/rate1"
+    type: gauge
+    unit: "/h"
+    factor: "*3600"
+    gauge_color: green
+    color: "#C0F0C0"
+    max: 25000

@@ -1,0 +1,12 @@
+FROM python:3.11-slim-bullseye
+
+RUN echo "Acquire::Check-Valid-Until false;" > /etc/apt/apt.conf.d/10no--check-valid-until
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install -y apt-utils tzdata
+ENV TZ=Europe/Paris
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY src/ ./
+ENTRYPOINT [".py/bin/python", "-m", "uin"]
+

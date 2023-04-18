@@ -1,0 +1,50 @@
+version: '3'
+services:
+  pr:
+    build:
+      context: pr-mock
+    image: sia/pr
+    ports:
+      - "8010:8080"
+  uin:
+    build:
+      context: uin
+    image: sia/uin
+    ports:
+      - "8020:8080"
+  notification:
+    build:
+      context: notification
+    image: sia/notification
+    ports:
+      - "8030:8080"
+    environment:
+      REDIS_URL: "redis://redis/0"
+      ROOT_URL: "http://notification:8080/"
+    links:
+      - redis
+    depends_on:
+      - redis
+  orchestrator:
+    build:
+      context: orchestrator
+    image: sia/orchestrator
+    ports:
+      - "8040:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      NOTIFICATION_URL: "http://notification:8080/"
+      MY_URL: "http://orchestrator:8080/"
+      REDIS_URL: "redis://redis/1"
+      CR_URL: "http://host.docker.internal:8080/v1/persons"
+      PR_URL: "http://pr:8080/v1/persons"
+    links:
+      - notification
+      - redis
+    depends_on:
+      - notification
+      - redis
+  redis:
+    image: "redis:7.0.9-alpine"
+

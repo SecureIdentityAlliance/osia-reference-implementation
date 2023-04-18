@@ -1,0 +1,9 @@
+[run]
+omit = tests/*
+data_file = .tox/coverage.data
+
+[xml]
+output = .tox/coverage.xml
+
+[html]
+directory = .tox/coverage_html
