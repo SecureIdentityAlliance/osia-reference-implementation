@@ -1,4 +1,11 @@
-FROM python:3.11.3-alpine3.17
+ARG D4R6Y=
+FROM ${D4R6Y}python:3.11.3-alpine3.17
+
+ARG PIP_CONF=
+RUN echo -e  $PIP_CONF > /etc/pip.conf
+
+ARG APK_ARGS='http://dl-cdn.alpinelinux.org/alpine/v3.17/main\nhttp://dl-cdn.alpinelinux.org/alpine/v3.17/community'
+RUN echo -e $APK_ARGS > /etc/apk/repositories
 
 RUN apk add tzdata
 ENV TZ=Europe/Paris

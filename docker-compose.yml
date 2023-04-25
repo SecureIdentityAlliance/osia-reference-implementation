@@ -3,18 +3,30 @@ services:
   pr:
     build:
       context: pr-mock
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
     image: sia/pr
     ports:
       - "8010:8080"
   uin:
     build:
       context: uin
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
     image: sia/uin
     ports:
       - "8020:8080"
   notification:
     build:
       context: notification
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
     image: sia/notification
     ports:
       - "8030:8080"
@@ -28,6 +40,10 @@ services:
   orchestrator:
     build:
       context: orchestrator
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
     image: sia/orchestrator
     ports:
       - "8040:8080"
@@ -46,5 +62,5 @@ services:
       - notification
       - redis
   redis:
-    image: "redis:7.0.9-alpine"
+    image: "${D4R6Y}redis:7.0.9-alpine"
 
