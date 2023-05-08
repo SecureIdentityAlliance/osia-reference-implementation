@@ -26,7 +26,7 @@ Start the servers with::
     docker system prune -f
     docker-compose up --build --force-recreate
 
-Start the CR clilent with::
+Start the CR client with::
 
     python3 -m venv .py
     source .py/bin/activate
@@ -36,3 +36,4 @@ Start the CR clilent with::
     # declare a new birth
     python cr_birth.py
 
+Check the Population Registry content at http://localhost:8100/pr

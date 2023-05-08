@@ -1,0 +1,25 @@
+{% extends "pr/portal/base.html" %}
+{% block content %}
+<h3 class="title-deco-center">Records in the Population Registry</h3>
+
+<table class="table table-osia">
+    <thead>
+        <tr>
+            <th scope="col" class="col-1">UIN</th>
+            <th scope="col" class="col-11">Full name</th>
+        </tr>
+    </thead>
+    <tbody>
+      {% for person in persons %}
+        <tr>
+            <td>{{person.personId}}</td>
+            <td><a href="{% url 'pr:person' person.personId %}">{{person.firstName}} {{person.lastName}}</a></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'pr:index' %}" class="btn btn-primary" role="button">Refresh</a>
+<a href="{% url 'pr:add_dummy' %}" class="btn btn-primary" role="button">Add 1 dummy record</a>
+
+{% endblock %}

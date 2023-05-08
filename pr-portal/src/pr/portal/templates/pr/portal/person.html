@@ -1,0 +1,30 @@
+{% extends "pr/portal/base.html" %}
+{% block content %}
+{% load pr_portal %}
+<h3 class="title-deco-center">Details for person {{personId}}</h3>
+
+<table class="table table-osia">
+    <thead>
+        <tr>
+            <th scope="col" class="col-1">Identity ID</th>
+            <th scope="col" class="col-3">First Name</th>
+            <th scope="col" class="col-3">Last Name</th>
+            <th scope="col" class="col-1">Gender</th>
+            <th scope="col" class="col-2">Date of Birth</th>
+        </tr>
+    </thead>
+    <tbody>
+      {% for identity in identities %}
+        <tr>
+            <td>{{identity.identityId}}</td>
+            <td>{{identity.biographicData.firstName}}</td>
+            <td>{{identity.biographicData.lastName}}</td>
+            <td>{{identity.biographicData.gender}}</td>
+            <td>{{identity.biographicData.dateOfBirth|date}} ({{identity.biographicData.dateOfBirth|age}})</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'pr:index' %}" class="btn btn-primary" role="button">Go Back ...</a>
+{% endblock %}

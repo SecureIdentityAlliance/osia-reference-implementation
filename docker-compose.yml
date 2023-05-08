@@ -20,6 +20,23 @@ services:
     image: sia/uin
     ports:
       - "8020:8080"
+  pr-portal:
+    build:
+      context: pr-portal
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: sia/pr-portal
+    environment:
+      - PR_URL=http://pr:8080
+      - UIN_URL=http://uin:8080
+    tty: true
+    ports:
+      - "8100:8080"
+    links:
+      - pr
+      - uin
   notification:
     build:
       context: notification

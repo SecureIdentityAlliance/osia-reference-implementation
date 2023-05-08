@@ -3,6 +3,7 @@ import logging
 import argparse
 import asyncio
 import threading
+import datetime
 
 import requests
 
@@ -55,11 +56,12 @@ async def readPersonAttributes(request):
 
     logging.info("readPersonAttributes for UIN [%s]", uin)
 
+    dob = datetime.date.today().isoformat()
     data = {
-        "firstName": "Alice",
+        "firstName": "Baby",
         "lastName": "Smith",
-        "dateOfBirth": "1987-11-30",
-        "gender": "F",
+        "dateOfBirth": dob,
+        "gender": "M",
         "nationality": "FRA",
     }
 
@@ -111,10 +113,11 @@ def do_birth(args):
     logging.info("Get additional father data")
 
     # check if new born exists
+    dob = datetime.date.today().isoformat()
     params = {
         "firstName": "Baby",
         "lastName": "Smith",
-        "dateOfBirth": "2023-04-15"
+        "dateOfBirth": dob
     }
     with requests.get(args.pr_url+'v1/persons', params=params,**get_ssl_context()) as r:
         assert 200 == r.status_code
@@ -125,14 +128,14 @@ def do_birth(args):
     data = {
         "firstName": "Baby",
         "lastName": "Smith",
-        "dateOfBirth": "2023-04-15",
+        "dateOfBirth": dob,
         "gender": "M"
     }
     with requests.post(args.uin_url+'v1/uin', json=data, params={'transactionId': 'birth'},**get_ssl_context()) as r:
         assert 200 == r.status_code
         assert 'Server' not in r.headers
         UIN = r.json()
-        assert '12304' == UIN[:5]
+        assert '123' == UIN[:3]
     logging.info("UIN for child: %s", UIN)
 
     data = {
