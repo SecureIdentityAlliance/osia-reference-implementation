@@ -23,7 +23,7 @@ Execution
 
 Start the servers with::
 
-    docker system prune
+    docker system prune -f
     docker-compose up --build --force-recreate
 
 Start the CR clilent with::

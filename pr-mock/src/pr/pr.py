@@ -346,6 +346,8 @@ async def queryPersonList(request):
         for k in names:
             if k in i['biographicData']:
                 r2[k] = i['biographicData'][k]
+        if 'personId' in names:
+            r2['personId'] = uin
         ret2.append(r2)
     return web.json_response(ret2, status=200)
 
