@@ -28,6 +28,7 @@ USER portal:portal
 RUN mkdir prsite \
     && .py/bin/django-admin startproject prsite prsite \
     && echo -e "\nINSTALLED_APPS += ['bootstrap5','pr.portal']" >> prsite/prsite/settings.py \
+    && echo -e "\nALLOWED_HOSTS=['*']" >> prsite/prsite/settings.py \
     && echo -e "\nfrom django.urls import include\nurlpatterns+=[path('pr/', include('pr.portal.urls'))]" >> prsite/prsite/urls.py \
     && .py/bin/python prsite/manage.py migrate
 
