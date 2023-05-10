@@ -13,7 +13,6 @@ ENV TZ=Europe/Paris
 RUN addgroup -S portal
 RUN adduser --disabled-password --gecos "" --home /home/portal --ingroup portal portal
 RUN mkdir /opt/portal && chown portal:portal /opt/portal
-RUN mkdir /opt/portal/conf && chown portal:portal /opt/portal/conf
 WORKDIR /opt/portal
 
 COPY --chown=portal:portal requirements.txt .

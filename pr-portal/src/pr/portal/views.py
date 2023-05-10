@@ -16,10 +16,24 @@ def uin_url():
     return os.environ.get('UIN_URL', 'http://localhost:8020')
 
 def index(request):
-    req = requests.get(pr_url()+"/v1/persons?names=firstName&names=lastName&names=personId")
+    req = requests.post(pr_url()+"/v1/persons?transactionId=portal", json=[{
+        "attributeName":"firstName",
+        "operator":"!=",
+        "value":""
+    }])
     if req.status_code!=200:
         raise Exception("Failed to contact Population Registry (HTTP code: %s)" % req.status_code)
-    return render(request, "pr/portal/index.html", dict(persons=req.json()))
+    ret = []
+    for x in req.json():
+        pid = x['personId']
+        req2 = requests.get(pr_url()+"/v1/persons/"+pid+"/reference?transactionId=portal")
+        if req2.status_code!=200:
+            logging.error("Failed to contact Population Registry (HTTP code: %s)" % req2.status_code)
+        else:
+            d = {'personId': pid}
+            d.update(req2.json()['biographicData'])
+            ret.append(d)
+    return render(request, "pr/portal/index.html", dict(persons=ret))
 
 def person(request, person_id):
     req = requests.get(pr_url()+"/v1/persons/"+person_id+'/identities?transactionId=portal')
@@ -35,6 +49,7 @@ def names(fn):
     ret = []
     with open(os.path.join(os.path.dirname(__file__),fn), 'rt') as f:
         for l in f.readlines():
+            l = l.strip()
             if l and l[0]!='#':
                 ret.append(l)
     return ret
@@ -54,15 +69,16 @@ def add_dummy(request):
     datai = {
         "identityType": "CIVIL",
         "status": "VALID",
+        "galleries": ["1"],
         "contextualData": {
-            "enrollmentDate": datetime.date.today().isoformat(),
+            "enrollmentDate": datetime.datetime.now().isoformat(),
         },
         "biographicData": {
             "firstName": random.choice(names(fn)),
             "lastName": random.choice(names('surname.txt')),
             "dateOfBirth": dob,
             "gender": gender,
-            "nationality": "ENG",
+            "nationality": "GBR",
         }
     }
 
@@ -78,8 +94,11 @@ def add_dummy(request):
             raise Exception("Failed to contact Population Registry (HTTP code: %s)" % req.status_code)
 
     # Create identity
-    with requests.post(pr_url()+'/v1/persons/'+UIN+'/identities', json=datai, params={'transactionId': 'portal'},verify=False) as req:
-        if req.status_code!=200:
+    with requests.post(pr_url()+'/v1/persons/'+UIN+'/identities/001', json=datai, params={'transactionId': 'portal'},verify=False) as req:
+        if req.status_code!=201:
+            raise Exception("Failed to contact Population Registry (HTTP code: %s)" % req.status_code)
+    with requests.put(pr_url()+'/v1/persons/'+UIN+'/identities/001/reference', params={'transactionId': 'portal'},verify=False) as req:
+        if req.status_code!=204:
             raise Exception("Failed to contact Population Registry (HTTP code: %s)" % req.status_code)
 
     return HttpResponseRedirect(reverse("pr:index"))
