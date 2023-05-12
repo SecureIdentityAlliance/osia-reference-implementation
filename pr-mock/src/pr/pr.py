@@ -264,10 +264,6 @@ async def createIdentity(request):
     if p is None:
         return web.Response(status=404)
 
-    for i in p['identities']:
-        if i['identityId'] == identity_id:
-            return web.Response(status=409)
-
     p['identities'].append (data)
     p['identities'][-1]['identityId'] = identity_id
 
@@ -327,9 +323,14 @@ async def defineReference(request):
     if p is None:
         return web.Response(status=404)
 
+    found = False
     for i in p['identities']:
         if i['identityId'] == identity_id:
             i['is_reference'] = True
+            found = True
+    if not found:
+        return web.Response(status=404)
+    for i in p['identities']:
         if i['identityId'] != identity_id:
             i['is_reference'] = False
     return web.Response(status=204)
@@ -368,6 +369,7 @@ async def getPersonWithId(request):
 
 # _____________________________________________________________________________
 # Data Access interface
+# Note: when there is no reference identity, the latest one is used
 # _____________________________________________________________________________
 
 # _____________________________________________________________________________
@@ -385,7 +387,10 @@ async def matchPersonAttributes(request):
         return web.Response(status=404)
     if len(p['identities'])<1:
         return web.Response(status=404)
-    i = p['identities'][0]
+    # get one identity, reference if possible
+    for i in p['identities']:
+        if i.get('is_reference', False):
+            break
     ret = []
     for k, v in data.items():
         if k not in i['biographicData']:
@@ -413,14 +418,16 @@ async def queryPersonList(request):
     for uin, p in PERSONS.items():
         if len(p['identities'])<1:
             continue
+        # get one identity, reference if possible
         for i in p['identities']:
-            x = 1
-            for k, v in attributes.items():
-                if k not in i['biographicData'] or i['biographicData'][k] != v:
-                    x = x*0
-            if x==1:
-                ret.append(uin)
+            if i.get('is_reference', False):
                 break
+        x = 1
+        for k, v in attributes.items():
+            if k not in i['biographicData'] or i['biographicData'][k] != v:
+                x = x*0
+        if x==1:
+            ret.append(uin)
     
     ret = ret[offset:offset+limit]
 
@@ -450,8 +457,14 @@ async def readPersonAttributes(uin, names):
     p = PERSONS.get(uin, None)
     if p is None:
         return web.Response(status=404)
+    if len(p['identities'])<1:
+        return web.Response(status=404)
 
-    i = p['identities'][-1]
+    # get one identity, reference if possible
+    for i in p['identities']:
+        if i.get('is_reference', False):
+            break
+
     ret = {}
     for k in names:
         if k in i['biographicData']:

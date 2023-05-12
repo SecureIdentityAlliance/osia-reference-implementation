@@ -70,10 +70,12 @@ class TestNominal(TestPR):
         with requests.post(self.url+'v1/persons/0001/identities/001', json=datai, params={'transactionId': 'T0001'},**get_ssl_context()) as r:
             assert 201 == r.status_code
 
-        # Read, make sure no identity is returned
+        # Read
         with requests.get(self.url+'v1/persons/0001', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
             assert 200 == r.status_code
             assert {"personId": "0001", "status": "ACTIVE", "physicalStatus": "DEAD"} == r.json()
+        with requests.get(self.url+'v1/persons/MISS/identities', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 404 == r.status_code
 
         # Update
         data = {
@@ -82,6 +84,8 @@ class TestNominal(TestPR):
         }
         with requests.put(self.url+'v1/persons/0001', json=data, params={'transactionId': 'T0001'},**get_ssl_context()) as r:
             assert 204 == r.status_code
+        with requests.put(self.url+'v1/persons/MISS', json=data, params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 404 == r.status_code
 
         # Read
         with requests.get(self.url+'v1/persons/0001', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
@@ -91,12 +95,24 @@ class TestNominal(TestPR):
         # delete
         with requests.delete(self.url+'v1/persons/0001', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
             assert 204 == r.status_code
+        with requests.delete(self.url+'v1/persons/MISS', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 404 == r.status_code
 
         # Read, person does not exist
         with requests.get(self.url+'v1/persons/MISS', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
             assert 404 == r.status_code
 
     def test_identity(self):
+        # Create person
+        data = {
+            "status": "ACTIVE",
+            "physicalStatus": "DEAD"
+        }
+        with requests.post(self.url+'v1/persons/0000', json=data, params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 201 == r.status_code
+        with requests.post(self.url+'v1/persons/0000', json=data, params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 409 == r.status_code
+
         # Create person
         data = {
             "status": "ACTIVE",
@@ -122,11 +138,17 @@ class TestNominal(TestPR):
         }
         with requests.post(self.url+'v1/persons/0001/identities/001', json=datai, params={'transactionId': 'T0001'},**get_ssl_context()) as r:
             assert 201 == r.status_code
+        with requests.post(self.url+'v1/persons/MISS/identities/001', json=datai, params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 404 == r.status_code
+        with requests.post(self.url+'v1/persons/0001/identities/001', json=datai, params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 409 == r.status_code
 
         datai["contextualData"]["enrollmentDate"] = "2020-01-11"
         with requests.post(self.url+'v1/persons/0001/identities', json=datai, params={'transactionId': 'T0001'},**get_ssl_context()) as r:
             assert 200 == r.status_code
             assert r.json()['identityId'] != ''
+        with requests.post(self.url+'v1/persons/MISS/identities', json=datai, params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 404 == r.status_code
 
         # Read all identities
         with requests.get(self.url+'v1/persons/0001/identities', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
@@ -141,6 +163,8 @@ class TestNominal(TestPR):
         # Read missing identity
         with requests.get(self.url+'v1/persons/0001/identities/MISS', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
             assert 404 == r.status_code
+        with requests.get(self.url+'v1/persons/MISS/identities/001', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 404 == r.status_code
 
         # reference not yet defined
         with requests.get(self.url+'v1/persons/0001/reference', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
@@ -148,11 +172,21 @@ class TestNominal(TestPR):
 
         with requests.put(self.url+'v1/persons/0001/identities/001/reference', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
             assert 204 == r.status_code
+        with requests.put(self.url+'v1/persons/MISS/identities/001/reference', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 404 == r.status_code
+        with requests.put(self.url+'v1/persons/0001/identities/MISS/reference', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 404 == r.status_code
 
-        # reference not yet defined
+        # reference
         with requests.get(self.url+'v1/persons/0001/reference', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
             assert 200 == r.status_code
             assert r.json()['identityId'] != ''
+
+        # person does not exist
+        with requests.get(self.url+'v1/persons/MISS/reference', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 404 == r.status_code
+        with requests.get(self.url+'v1/persons/0000/reference', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 404 == r.status_code
 
     def test_find_person(self):
         # Create person
