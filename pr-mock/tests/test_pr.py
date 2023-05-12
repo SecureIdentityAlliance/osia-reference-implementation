@@ -142,6 +142,134 @@ class TestNominal(TestPR):
         with requests.get(self.url+'v1/persons/0001/identities/MISS', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
             assert 404 == r.status_code
 
+        # reference not yet defined
+        with requests.get(self.url+'v1/persons/0001/reference', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 404 == r.status_code
+
+        with requests.put(self.url+'v1/persons/0001/identities/001/reference', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 204 == r.status_code
+
+        # reference not yet defined
+        with requests.get(self.url+'v1/persons/0001/reference', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 200 == r.status_code
+            assert r.json()['identityId'] != ''
+
+    def test_find_person(self):
+        # Create person
+        data = {
+            "status": "ACTIVE",
+            "physicalStatus": "DEAD"
+        }
+        with requests.post(self.url+'v1/persons/0001', json=data, params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 201 == r.status_code
+
+        # Create identity
+        datai = {
+            "identityType": "CIVIL",
+            "status": "CLAIMED",
+            "contextualData": {
+                "enrollmentDate": "2019-01-11",
+            },
+            "biographicData": {
+                "firstName": "Jane1",
+                "lastName": "Doe",
+                "dateOfBirth": "1985-11-30",
+                "age":37,
+                "gender": "F",
+                "nationality": "FRA",
+            }
+        }
+        with requests.post(self.url+'v1/persons/0001/identities/001', json=datai, params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 201 == r.status_code
+
+        # Create identity
+        datai = {
+            "identityType": "CIVIL",
+            "status": "CLAIMED",
+            "contextualData": {
+                "enrollmentDate": "2019-01-11",
+            },
+            "biographicData": {
+                "firstName": "Jane2",
+                "lastName": "Doe",
+                "dateOfBirth": "1985-11-30",
+                "age":47,
+                "gender": "F",
+                "nationality": "FRA",
+            }
+        }
+        with requests.post(self.url+'v1/persons/0001/identities/002', json=datai, params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 201 == r.status_code
+        with requests.put(self.url+'v1/persons/0001/identities/002/reference', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 204 == r.status_code
+
+        # Create person
+        data = {
+            "status": "ACTIVE",
+            "physicalStatus": "DEAD"
+        }
+        with requests.post(self.url+'v1/persons/0002', json=data, params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 201 == r.status_code
+
+        # Create identity
+        datai = {
+            "identityType": "CIVIL",
+            "status": "CLAIMED",
+            "contextualData": {
+                "enrollmentDate": "2019-01-11",
+            },
+            "biographicData": {
+                "firstName": "John1",
+                "lastName": "Doe",
+                "dateOfBirth": "1985-11-30",
+                "age":37,
+                "gender": "M",
+                "nationality": "FRA",
+            }
+        }
+        with requests.post(self.url+'v1/persons/0002/identities/001', json=datai, params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 201 == r.status_code
+
+        # query for all records
+        with requests.post(self.url+'v1/persons', json=[{
+                "attributeName":"firstName",
+                "operator":"!=",
+                "value":""
+            }], params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 200 == r.status_code
+            assert 3==len(r.json())
+        with requests.post(self.url+'v1/persons', json=[{
+                "attributeName":"firstName",
+                "operator":"!=",
+                "value":""
+            }], params={'transactionId': 'T0001', 'offset':1, 'limit':1},**get_ssl_context()) as r:
+            assert 200 == r.status_code
+            assert 1==len(r.json())
+
+        with requests.post(self.url+'v1/persons', json=[{
+                "attributeName":"firstName",
+                "operator":"!=",
+                "value":""
+            }], params={'transactionId': 'T0001', 'group':'true'},**get_ssl_context()) as r:
+            assert 200 == r.status_code
+            assert 2==len(r.json())
+
+        with requests.post(self.url+'v1/persons', json=[{
+                "attributeName":"firstName",
+                "operator":"!=",
+                "value":""
+            }], params={'transactionId': 'T0001', 'reference':'true'},**get_ssl_context()) as r:
+            assert 200 == r.status_code
+            assert 1==len(r.json())
+
+        with requests.post(self.url+'v1/persons', json=[{
+                "attributeName":"age",
+                "operator":"<",
+                "value":40
+            }], params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 200 == r.status_code
+            assert 2==len(r.json())
+
 if __name__ == '__main__':
     unittest.main(argv=['-v'])
 

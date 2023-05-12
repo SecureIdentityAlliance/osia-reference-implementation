@@ -87,6 +87,16 @@ def createIdentity_PR(self,ctx, url,enrollment_id, transaction_id):
     return ctx
 
 #______________________________________________________________________________
+@app.task(bind=True)
+def defineReference_PR(self,ctx, url,enrollment_id, transaction_id):
+    logging.info("==> [%s] define reference identity in PR for enrollment %s", transaction_id, enrollment_id)
+    try:
+        asyncio.run( pr.defineReference(url, transaction_id, ctx['UIN'], ctx['identityId']) )
+    except Exception as exc:
+        self.retry(countdown=60.0,max_retries=10,exc=exc)
+    return ctx
+
+#______________________________________________________________________________
 @app.task
 def done(ctx, transaction_id):
     logging.info("==> [%s] - Workflow completed", transaction_id)
@@ -103,6 +113,7 @@ def workflow(uin, transaction_id):
         readPersonAttributes_CR.s(ctx, os.environ.get("CR_URL",'http://cr:8080/v1/persons'), enrollment_id, transaction_id),
         createPerson_PR.s(os.environ.get("PR_URL",'http://pr:8080/v1/persons'), enrollment_id, transaction_id),
         createIdentity_PR.s(os.environ.get("PR_URL",'http://pr:8080/v1/persons'), enrollment_id, transaction_id),
+        defineReference_PR.s(os.environ.get("PR_URL",'http://pr:8080/v1/persons'), enrollment_id, transaction_id),
         done.s(transaction_id),
     )()
 

@@ -115,17 +115,68 @@ def to_bool(x):
 async def findPersons(request):
     transaction_id = request.query['transactionId']
     group = to_bool(request.query.get('group', False))
-    reference = to_bool(request.query.get('offset', False))
-    gallery = request.query.get('offset', None)
+    reference = to_bool(request.query.get('reference', False))
+    gallery = request.query.get('gallery', None)
     offset = int(request.query.get('offset', 0))
     limit = int(request.query.get('limit', 100))
 
     data = await request.json()
     logging.info("[%s] - findPersons", transaction_id)
 
-    # XXX Not implemented
+    # filter
     ret = []
-    return web.Response(status=200)
+    for uin, p in PERSONS.items():
+        for i in p['identities']:
+            if reference and not i.get('is_reference', False):
+                continue
+            # evaluate all predicates
+            x = True
+            for pred in data:
+                k = pred['attributeName']
+                if k not in i['biographicData']:
+                    x = False
+                    break
+                v = i['biographicData'][k]
+                if pred['operator']=='=':
+                    f = v.__eq__
+                elif pred['operator']=='!=':
+                    f = v.__ne__
+                elif pred['operator']=='<':
+                    f = v.__lt__
+                elif pred['operator']=='>':
+                    f = v.__gt__
+                elif pred['operator']=='<=':
+                    f = v.__le__
+                elif pred['operator']=='>=':
+                    f = v.__ge__
+                else:
+                    return web.json_response({'code':1, 'message': 'Invalid operator'}, status=400)
+                if not f(pred['value']):
+                    x = False
+                    break
+            if x:
+                ret.append( (uin, i['identityId'], i.get('is_reference', False)) )
+
+    # post-processing
+    ret2 = []
+    if reference:
+        for r in ret:
+            if not r[2]:
+                continue
+            ret2.append(dict(personId=r[0], identityId=r[1]))
+    elif group:
+        s = set()
+        for r in ret:
+            s.add(r[0])
+        for i in s:
+            ret2.append(dict(personId=i))
+    else:
+        for r in ret:
+            ret2.append(dict(personId=r[0], identityId=r[1]))
+
+    ret2 = ret2[offset:offset+limit]
+
+    return web.json_response(ret2, status=200)
 
 # _____________________________________________________________________________
 @routes.post('/v1/persons/{personId}')
@@ -259,6 +310,44 @@ async def readIdentity(request):
 
     for i in p['identities']:
         if i['identityId'] == identity_id:
+            return web.json_response(i, status=200)
+
+    return web.Response(status=404)
+
+# _____________________________________________________________________________
+@routes.put('/v1/persons/{personId}/identities/{identityId}/reference')
+@LM.timer("defineReference", ok_status, "error")
+async def defineReference(request):
+    transaction_id = request.query['transactionId']
+    person_id = request.match_info['personId']
+    identity_id = request.match_info['identityId']
+
+    logging.info("[%s] - defineReference for personId [%s]/[%s]", transaction_id, person_id, identity_id)
+    p = PERSONS.get(person_id, None)
+    if p is None:
+        return web.Response(status=404)
+
+    for i in p['identities']:
+        if i['identityId'] == identity_id:
+            i['is_reference'] = True
+        if i['identityId'] != identity_id:
+            i['is_reference'] = False
+    return web.Response(status=204)
+
+# _____________________________________________________________________________
+@routes.get('/v1/persons/{personId}/reference')
+@LM.timer("readReference", ok_status, "error")
+async def readReference(request):
+    transaction_id = request.query['transactionId']
+    person_id = request.match_info['personId']
+
+    logging.info("[%s] - readReference for personId [%s]", transaction_id, person_id)
+    p = PERSONS.get(person_id, None)
+    if p is None:
+        return web.Response(status=404)
+
+    for i in p['identities']:
+        if i.get('is_reference', False):
             return web.json_response(i, status=200)
 
     return web.Response(status=404)

@@ -103,6 +103,24 @@ async def createIdentityWithId(url, transaction_id, person_id, identity_id, iden
                 error = {'message': ''}
             raise Exception("Could not create identity:\n" + error['message'])
 
+#______________________________________________________________________________
+async def defineReference(url, transaction_id, person_id, identity_id):
+    async with aiohttp.ClientSession() as session:
+        async with session.put(url+'/'+person_id+'/identities/'+identity_id+'/reference',
+                                headers={'content-type': 'application/json'},
+                                params={'transactionId': transaction_id}) as resp:
+            if resp.status == 204:
+                logger.info("reference identity defined to : %s", identity_id)
+                return
+            if resp.status in [400, 404]:
+                logger.error("PR::defineReference error %d with url %s", resp.status, resp.real_url)
+                return False
+            try:
+                error = await resp.json()
+            except:
+                error = {'message': ''}
+            raise Exception("Could not define reference identity:\n" + error['message'])
+
 
 #______________________________________________________________________________
 def main(argv):

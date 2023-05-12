@@ -35,6 +35,8 @@ def prepare_data(args):
     }
     with requests.post(args.pr_url+'v1/persons/A/identities/001', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
         assert r.status_code in [201, 409]
+    with requests.put(args.pr_url+'v1/persons/A/identities/001/reference', params={'transactionId': 'prepare'},**get_ssl_context()) as r:
+        assert 204 == r.status_code
     logging.info("Father created (Albert Smith)")
 
     data = {
@@ -61,6 +63,8 @@ def prepare_data(args):
     }
     with requests.post(args.pr_url+'v1/persons/B/identities/001', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
         assert r.status_code in [201, 409]
+    with requests.put(args.pr_url+'v1/persons/B/identities/001/reference', params={'transactionId': 'prepare'},**get_ssl_context()) as r:
+        assert 204 == r.status_code
     logging.info("Mother created (Alice Smith)")
 
     # Create Topic
