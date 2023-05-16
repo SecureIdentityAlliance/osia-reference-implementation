@@ -27,7 +27,11 @@ To implement this Use Case the following building blocks are necessary:
 - An orchestrator: the directory ``orchestrator`` contains a service able to dispatch calls to OSIA interfaces in order to implement a Use Case.
 - A Civil Registry: the directory ``cr-mock`` contains a set of scripts to simulate a Civil Registry interacting with the different servers according to the birth use case.
 
-The following exchanges are implemented:
+To secure the exchanges between the Civil Registry and the Population Registry, X-Road is used.
+X-Road® is open-source software and ecosystem solution that provides unified and secure data exchange between organisations.
+The source code is available in `GitHub <https://github.com/nordic-institute/X-Road/>`_.
+
+All exchanges are compliant with OSIA specifications and are depicted in the following diagram:
 
 .. image:: birth_uc.png
 
