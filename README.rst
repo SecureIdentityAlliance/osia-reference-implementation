@@ -1,4 +1,16 @@
+.. |pic1| image:: pr-portal/src/pr/portal/static/pr/portal/logo-osia.png
+   :width: 25%
+
+.. |pic2| image:: X-Road-logo.png
+   :width: 25%
+
+.. class:: center
+
+|pic1| |pic2|
+
+
 .. list-table::
+    :widths: 50 50
 
     * - .. image:: pr-portal/src/pr/portal/static/pr/portal/logo-osia.png
       - .. image:: X-Road-logo.png
@@ -9,15 +21,20 @@ Open Source reference implementation of OSIA in collaboration with X-Road
 Description
 -----------
 
-This project contains examples of OSIA implementation:
+The use case for the reference implementation revolves around the efficient registration of newborns by the Civil Registry (CR)
+and its synchronization with the Population Registry (PR). This collaborative effort between
+the CR and PR ensures proper documentation and sets a solid foundation for the newborn's identity.
 
-- ``pr-mock``: a Population Registry mock implementing some services from the *PR* and *Data Access* interfaces.
-- ``uin``: implementation of the OSIA *UIN Management* interface
-- ``notification``: implementation of the OSIA *notification* interface
-- ``orchestrator``: a service able to dispatch calls to OSIA interfaces in order to implement a Use Case
-- ``cr-mock``: a set of scripts to simulate a Civil Registry interacting with the different servers according to the birth use case.
+More information about this Use Case can be found `here <https://osia.readthedocs.io/en/v6.1.0/02%20-%20functional.html#birth-use-case>`_
 
-Those servers implement the birth Use Case described in §2.3.1 of OSIA specification.
+To implement this Use Case the following building blocks are necessary:
+
+- A Population Registry: the directory ``pr-mock`` contains an implementation of some services from the *PR* and *Data Access* interfaces.
+- A UIN generator: the directory ``uin`` contains an implementation of the OSIA *UIN Management* interface.
+- A notification service: the directory ``notification`` contains an implementation of the OSIA *notification* interface.
+- An orchestrator: the directory ``orchestrator`` contains a service able to dispatch calls to OSIA interfaces in order to implement a Use Case.
+- A Civil Registry: the directory ``cr-mock`` contains a set of scripts to simulate a Civil Registry interacting with the different servers according to the birth use case.
+
 The following exchanges are implemented:
 
 .. image:: birth_uc.png
