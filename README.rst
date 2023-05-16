@@ -1,5 +1,9 @@
+.. image:: pr-portal/src/pr/portal/static/pr/portal/logo-osia.png
 
-Open Source reference implementation for OSIA
+.. image:: X-Road-logo.png
+    :width: 150px
+
+Open Source reference implementation of OSIA in collaboration with X-Road
 
 Description
 -----------
