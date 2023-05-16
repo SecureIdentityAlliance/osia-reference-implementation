@@ -1,20 +1,12 @@
 .. |pic1| image:: pr-portal/src/pr/portal/static/pr/portal/logo-osia.png
-   :width: 25%
+   :width: 15%
 
 .. |pic2| image:: X-Road-logo.png
-   :width: 25%
+   :width: 15%
 
 .. class:: center
 
 |pic1| |pic2|
-
-
-.. list-table::
-    :widths: 50 50
-
-    * - .. image:: pr-portal/src/pr/portal/static/pr/portal/logo-osia.png
-      - .. image:: X-Road-logo.png
-            :width: 150px
 
 Open Source reference implementation of OSIA in collaboration with X-Road
 
