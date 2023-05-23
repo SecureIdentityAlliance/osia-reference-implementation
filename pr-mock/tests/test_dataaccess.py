@@ -53,7 +53,7 @@ class TestNominal(TestPR):
             "biographicData": {
                 "firstName": "Jane",
                 "lastName": "Doe",
-                "dateOfBirth": "1985-11-30",
+                "dateOfBirth": "1985-01-02",
                 "gender": "F",
                 "nationality": "FRA",
             }
@@ -78,6 +78,16 @@ class TestNominal(TestPR):
         with requests.post(self.url+'v1/persons/0001/match', json=data, **get_ssl_context()) as r:
             assert 200 == r.status_code
             assert [{'attributeName': 'lastName', 'errorCode': 1}, {'attributeName': 'noname', 'errorCode': 0}] == r.json()
+
+        with requests.post(self.url+'v1/persons/MISS/match', json=data, **get_ssl_context()) as r:
+            assert 404 == r.status_code
+
+        # data = {
+        #     "dateOfBirth": "1985-1-2"
+        # }
+        # with requests.post(self.url+'v1/persons/0001/match', json=data, **get_ssl_context()) as r:
+        #     assert 200 == r.status_code
+        #     assert [] == r.json()
 
     def test_query(self):
         # Create persons
