@@ -1,11 +1,11 @@
 .. |pic1| image:: OSIA-logo.png
-   :width: 15%
+   :width: 150
 
 .. |pic2| image:: X-Road-logo.png
-   :width: 15%
+   :width: 91
 
 .. |pic3| image:: UNDP-logo.png
-   :width: 15%
+   :width: 56
 
 .. class:: center
 
