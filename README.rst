@@ -1,10 +1,10 @@
-.. |pic1| image:: pr-portal/src/pr/portal/static/pr/portal/OSIA-logo.png
+.. |pic1| image:: OSIA-logo.png
    :width: 15%
 
 .. |pic2| image:: X-Road-logo.png
    :width: 15%
 
-.. |pic3| image:: pr-portal/src/pr/portal/static/pr/portal/UNDP-logo.png
+.. |pic3| image:: UNDP-logo.png
    :width: 15%
 
 .. class:: center
