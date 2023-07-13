@@ -1,14 +1,17 @@
-.. |pic1| image:: pr-portal/src/pr/portal/static/pr/portal/logo-osia.png
-   :width: 15%
+.. |pic1| image:: OSIA-logo.png
+   :width: 150
 
 .. |pic2| image:: X-Road-logo.png
-   :width: 15%
+   :width: 91
+
+.. |pic3| image:: UNDP-logo.png
+   :width: 56
 
 .. class:: center
 
-|pic1| |pic2|
+|pic1| |pic2| |pic3|
 
-Open Source reference implementation of OSIA in collaboration with X-Road
+Open Source reference implementation of OSIA in collaboration with X-Road and UNDP
 
 Description
 -----------
@@ -21,11 +24,13 @@ More information about this Use Case can be found `here <https://osia.readthedoc
 
 To implement this Use Case the following building blocks are necessary:
 
-- A Population Registry: the directory ``pr-mock`` contains an implementation of some services from the *PR* and *Data Access* interfaces.
+- A Population Registry: UNDP provides DGIT as a possible Population Registry.
+  The directory ``pr-mock`` contains an implementation of some services from the *PR* and *Data Access* interfaces.
 - A UIN generator: the directory ``uin`` contains an implementation of the OSIA *UIN Management* interface.
 - A notification service: the directory ``notification`` contains an implementation of the OSIA *notification* interface.
 - An orchestrator: the directory ``orchestrator`` contains a service able to dispatch calls to OSIA interfaces in order to implement a Use Case.
-- A Civil Registry: the directory ``cr-mock`` contains a set of scripts to simulate a Civil Registry interacting with the different servers according to the birth use case.
+- A Civil Registry: UNDP provides DGIT as a possible Civil Registry.
+  The directory ``cr-mock`` contains a set of scripts to simulate a Civil Registry interacting with the different servers according to the birth use case.
 
 To secure the exchanges between the Civil Registry and the Population Registry, X-Road is used.
 X-Road® is open-source software and ecosystem solution that provides unified and secure data exchange between organisations.
