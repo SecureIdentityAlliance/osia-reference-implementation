@@ -328,11 +328,11 @@ async def CB(request):
         logging.info("Confirming subscription")
         logging.info(str(m))
         async with aiohttp.ClientSession() as clt_session:
-            async with clt_session.get(m['subscribe_url'], ssl=False) as response:
+            async with clt_session.get(m['confirmURL'], ssl=False) as response:
                 if response.status == 200:
                     await response.read()
                 else:
-                    logging.error("Failed to confirm subscription %s", m['subscribe_url'])
+                    logging.error("Failed to confirm subscription %s", m['confirmURL'])
                     return web.Response(status=400, body='')
     else:
         logging.info("Notification")
