@@ -36,7 +36,7 @@ def request_confirmation(self,protocol,address,token,topicId, subscriptionId, po
         'Topic-Id': topicId
     }
     try:
-        with requests.post(address,params={'token':token}, headers=h, json=m) as r:
+        with requests.post(address, headers=h, json=m) as r:
             r.raise_for_status()
     except Exception as exc2:
         # error while sending the result

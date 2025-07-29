@@ -315,28 +315,3 @@ async def publish(request):
             notification.tasks.notify.delay(s['protocol'],s['address'],subject,body,t['uuid'], s['uuid'],s['policy'])
             LM.mark("publish","OK")
     return web.Response(status=200, body="")
-
-# _____________________________________________________________________________
-# *** Used for tests only ***
-MESSAGE = None
-@routes.post('/test')
-async def CB(request):
-    body = await request.read()
-    m = json.loads(body.decode('utf-8'))
-
-    if m['type']=='SubscriptionConfirmation':
-        logging.info("Confirming subscription")
-        logging.info(str(m))
-        async with aiohttp.ClientSession() as clt_session:
-            async with clt_session.get(m['confirmURL'], ssl=False) as response:
-                if response.status == 200:
-                    await response.read()
-                else:
-                    logging.error("Failed to confirm subscription %s", m['confirmURL'])
-                    return web.Response(status=400, body='')
-    else:
-        logging.info("Notification")
-        logging.info(str(m))
-        global MESSAGE
-        MESSAGE = m
-    return web.Response(status=200, body='')

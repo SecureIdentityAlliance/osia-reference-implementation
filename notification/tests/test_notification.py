@@ -113,8 +113,8 @@ class TestNominal(TestNotification):
 
         time.sleep(1.0)
 
-        assert notification.notification.MESSAGE['subject']=='SUBJECT'
-        assert notification.notification.MESSAGE['message']=='test message'
+        assert self.MESSAGE['subject']=='SUBJECT'
+        assert self.MESSAGE['message']=='test message'
 
         # Unsubscribe
         with requests.delete(self.url+"v1/subscriptions/"+S['uuid']) as r:
@@ -125,12 +125,12 @@ class TestNominal(TestNotification):
             assert r.status_code == 404
 
         # Publish again and make sure we get nothing - test publishing to a name (not a uuid)
-        notification.notification.MESSAGE = None
+        self.MESSAGE = None
         with requests.post(self.url+"v1/topics/TEST01/publish",params={'subject':'SUBJECT2'},data="test message2") as r:
             assert r.status_code == 200
 
         time.sleep(1.0)
-        assert notification.notification.MESSAGE is None
+        assert self.MESSAGE is None
 
 
 

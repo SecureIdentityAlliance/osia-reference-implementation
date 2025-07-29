@@ -12,6 +12,7 @@ import base64
 import json
 import logging
 
+import aiohttp
 from aiohttp import web
 
 import notification
@@ -20,14 +21,42 @@ import notification.notification
 
 LOOP = None
 PORT = '8080'
+MESSAGE = None
+
+routes = web.RouteTableDef()
+
+@routes.post('/test')
+async def CB(request):
+    body = await request.read()
+    m = json.loads(body.decode('utf-8'))
+
+    if m['type']=='SubscriptionConfirmation':
+        logging.info("Confirming subscription")
+        logging.info(str(m))
+        token = m['token']
+        async with aiohttp.ClientSession() as clt_session:
+            async with clt_session.get(m['confirmURL'], params={'token':token}, ssl=False) as response:
+                if response.status == 200:
+                    logging.info("Confirmed subscription %s", m['confirmURL'])
+                    await response.read()
+                else:
+                    logging.error("Failed to confirm subscription %s", m['confirmURL'])
+                    return web.Response(status=400, body='')
+    else:
+        logging.info("Notification")
+        logging.info(str(m))
+        global MESSAGE
+        MESSAGE = m
+    return web.Response(status=200, body='')
 
 async def runner():
     # Setup the global args variable (from the env variables)
     notification.__main__.main(['--do-not-start'])
     app = notification.notification.get_app()
+    app.add_routes(routes)
     runner = web.AppRunner(app)
     await runner.setup()
-
+    logging.info('port: %s', PORT)
     site = web.TCPSite(runner, 'localhost', int(PORT), reuse_address=True, ssl_context=notification.notification.get_ssl_context())
     await site.start()
 
@@ -81,3 +110,13 @@ class TestNotification(unittest.TestCase):
             else:
                 return "http://localhost:"+PORT+"/"
 
+
+    @property
+    def MESSAGE(self):
+        global MESSAGE
+        return MESSAGE
+
+    @MESSAGE.setter
+    def MESSAGE(self, M):
+        global MESSAGE
+        MESSAGE = M

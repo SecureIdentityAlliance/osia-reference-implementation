@@ -12,11 +12,14 @@ in WSL::
 
 Start::
 
-    python -m notification --redis-url=redis://localhost:6379
+    redis-cli flushall
+    # python -m notification --redis-url=redis://localhost:6379
     celery -A notification worker -l INFO
 
 Test::
 
+    tox -e py
+    # or
     pytest tests/test_notification.py -v -s
 
 Redis::
