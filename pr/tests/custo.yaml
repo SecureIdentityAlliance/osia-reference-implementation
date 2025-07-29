@@ -1,0 +1,60 @@
+---
+BiographicData:
+  type: object
+  required:
+    - firstName
+    - lastName
+  properties:
+    firstName:
+      type: string
+    lastName:
+      type: string
+    dateOfBirth:
+      type: string
+      format: date
+    gender:
+      type: string
+      enum: ['M', 'F']
+    nationality:
+      type: string
+      enum:
+        - FRA
+        - USA
+      default: USA
+    # test all possible types
+    fByte:
+      type: string
+      format: byte
+    fBoolean:
+      type: boolean
+    fInteger32:
+      type: integer
+      format: int32
+    fInteger64:
+      type: integer
+      format: int64
+    fNumberFloat:
+      type: number
+      format: float
+    fNumberDouble:
+      type: number
+      format: double
+  additionalProperties: false
+ContextualData:
+  type: object
+  properties:
+    operator:
+      type: string
+    operationDateTime:
+      type: string
+      format: date-time
+    device:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        brand:
+          type: string
+  additionalProperties: false

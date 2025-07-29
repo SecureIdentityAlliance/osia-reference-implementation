@@ -1,0 +1,11 @@
+configargparse
+aiohttp
+livemetrics[aiohttp]
+sqlalchemy
+marshmallow-sqlalchemy
+pyyaml
+jsonschema
+referencing
+psycopg2-binary
+asyncpg
+aiosqlite

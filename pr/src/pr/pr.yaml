@@ -1,0 +1,1421 @@
+
+# (c) Secure Identity Alliance
+
+openapi: 3.0.0
+info:
+  description: |
+    The OSIA Population Registry Interface
+
+    Change log:
+    
+    - 1.4.1:
+      - Add missing values in BiometricSubType
+      - Use HTTP code 409 in case of conflict of ID in create/move operations
+    - 1.4.0:
+      - Add an identityType in the identity object
+      - rename documents in documentData in the identity object
+      - Change date to date-time
+      - Mark the identityId as readOnly, add it to biometricData
+      - Add the impressionType, mimeType, template, templateRef, templateFormat to biometricData
+      - replace format with mimeType in documents
+      - Add quality, qualityFormat, algorithm, vendor fields to biometricData
+      - New service moveIdentity
+      - Mark some fields (ID, etc.) as readOnly
+      - Rename entity Document as DocumentData
+      - Add FORM in possible document type
+    - 1.3.0:
+      - Add error structure on 400 errors
+      - Add additional documentType and open it for extension
+      - Add signature in biometricType
+      - Force additionalProperties to false when extension is not allowed
+      - Pagination when accessing gallery content
+      - Add a query service, searching on all the identities of a person
+      - Add fields on BiometricData: instance, metadata, comment, missing
+    - 1.2.0:
+      - Addition of security
+    - 1.1.0:
+      - Add the merge service
+      - Change the mandatory flag for the status, based on the type of service
+    - 1.0.0: Initial version
+
+  version: 1.4.1
+  title: OSIA Population Registry Interface
+  license:
+    name: SIA
+    url: "https://raw.githubusercontent.com/SecureIdentityAlliance/osia/master/LICENSE"
+tags:
+  - name: Person
+  - name: Identity
+  - name: Reference
+  - name: Gallery
+servers:
+  - url: https://pr.com/
+paths:
+
+
+  /v1/persons:
+    post:
+      tags:
+        - Person
+      summary: Query for persons
+      description: |
+        Retrieve a list of personId corresponding to the records with one identity matching the criteria.
+
+        By default, all identities are used in the search.
+      operationId: findPersons
+      security:
+        - BearerAuth: [pr.person.read]
+      parameters:
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: group
+          in: query
+          description: Group all matching identities of one person and return only the personId
+          required: false
+          schema:
+            type: boolean
+        - name: reference
+          in: query
+          description: Limit the query to the reference identity
+          required: false
+          schema:
+            type: boolean
+        - name: gallery
+          in: query
+          description: Limit the query to the records belonging to this gallery
+          required: false
+          schema:
+            type: string
+        - name: offset
+          in: query
+          description: The offset of the query (first item of the response)
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          description: The maximum number of items to return
+          required: false
+          schema:
+            type: integer
+            default: 100
+      requestBody:
+        description: A set of expressions on attributes of the person's identity
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Expressions'
+            example:
+              - attributeName: firstName
+                operator: "="
+                value: John
+              - attributeName: dateOfBirth
+                operator: "<"
+                value: "1990-12-31"
+      responses:
+        '200':
+          description: Query successful. If the group parameter was set the identityId is not included in the response.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - personId
+                  properties:
+                    personId:
+                      type: string
+                    identityId:
+                      type: string
+                  additionalProperties: false
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Query not allowed
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
+  /v1/persons/{personId}:
+    post:
+      tags:
+        - Person
+      summary: Create one person
+      operationId: createPerson
+      security:
+        - BearerAuth: [pr.person.write]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Person'
+      responses:
+        '201':
+          description: Operation successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operation not allowed
+        '409':
+          description: Creation not allowed, personId already exists
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - Person
+      summary: Read one person
+      operationId: readPerson
+      security:
+        - BearerAuth: [pr.person.read]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Read successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Person'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Read not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Person
+      summary: Update one person
+      operationId: updatePerson
+      security:
+        - BearerAuth: [pr.person.write]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Person'
+      responses:
+        '204':
+          description: Update successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Update not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Person
+      summary: Delete a person and all its identities
+      operationId: deletePerson
+      security:
+        - BearerAuth: [pr.person.write]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Delete successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Delete not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/persons/{personIdTarget}/merge/{personIdSource}:
+    post:
+      tags:
+        - Person
+      summary: Merge two persons
+      description: |
+        Merge two person records into a single one. Identity ID are preserved and in case of duplicates
+        an error 409 is returned and no changes are done.
+        If the operation is successful, the person merged is deleted.
+      operationId: mergePerson
+      security:
+        - BearerAuth: [pr.person.write]
+      parameters:
+        - name: personIdTarget
+          in: path
+          description: the id of the person receiving new identities
+          required: true
+          schema:
+            type: string
+        - name: personIdSource
+          in: path
+          description: the id of the person giving the identities
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Merge successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Merge not allowed
+        '409':
+          description: Creation not allowed, conflict of identityId
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/persons/{personId}/identities:
+    get:
+      tags:
+        - Identity
+      summary: Read all the identities of a person
+      operationId: readIdentities
+      security:
+        - BearerAuth: [pr.identity.read]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Operation successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Identity'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operation not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - Identity
+      summary: Create one identity and generate its id
+      operationId: createIdentity
+      security:
+        - BearerAuth: [pr.identity.write]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Identity'
+                  
+      responses:
+        '200':
+          description: Insertion successful
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - identityId
+                properties:
+                  identityId:
+                    type: string
+                additionalProperties: false
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insertion not allowed
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/persons/{personId}/identities/{identityId}:
+    post:
+      tags:
+        - Identity
+      summary: Create one identity
+      description: |
+        Create one new identity for a person. The provided identityId is
+        checked for validity and used for the new identity.
+      operationId: createIdentityWithId
+      security:
+        - BearerAuth: [pr.identity.write]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: identityId
+          in: path
+          description: the id of the identity
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Identity'
+      responses:
+        '201':
+          description: Insertion successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insertion not allowed
+        '409':
+          description: Creation not allowed, identityId already exists
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - Identity
+      summary: Read one identity
+      operationId: readIdentity
+      security:
+        - BearerAuth: [pr.identity.read]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: identityId
+          in: path
+          description: the id of the identity
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Read successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Identity'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Read not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Identity
+      summary: Update one identity
+      operationId: updateIdentity
+      security:
+        - BearerAuth: [pr.identity.write]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: identityId
+          in: path
+          description: the id of the identity
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Identity'
+      responses:
+        '204':
+          description: Update successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Update not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      tags:
+        - Identity
+      summary: Update partially one identity
+      description: Update partially an identity. Payload content is a partial identity object compliant with RFC7396.
+      operationId: partialUpdateIdentity
+      security:
+        - BearerAuth: [pr.identity.write]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: identityId
+          in: path
+          description: the id of the identity
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Identity'
+            example:
+              galleries: [G1, G2]
+              biographicData:
+                gender: null
+                nationality: FRA
+      responses:
+        '204':
+          description: Update successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Update not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Identity
+      summary: Delete one identity
+      operationId: deleteIdentity
+      security:
+        - BearerAuth: [pr.identity.write]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: identityId
+          in: path
+          description: the id of the identity
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Delete successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Delete not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/persons/{personIdTarget}/move/{personIdSource}/identities/{identityId}:
+    post:
+      tags:
+        - Identity
+      summary: Move one identity
+      description: |
+        Move one identity from the source person to the target person.
+        Identity ID is preserved and in case of duplicate
+        an error 409 is returned and no changes are done.
+        The source person is not deleted, even if it was the only identity of this person.
+      operationId: moveIdentity
+      security:
+        - BearerAuth: [pr.identity.write]
+      parameters:
+        - name: personIdTarget
+          in: path
+          description: the id of the person receiving the identity
+          required: true
+          schema:
+            type: string
+        - name: personIdSource
+          in: path
+          description: the id of the person giving the identity
+          required: true
+          schema:
+            type: string
+        - name: identityId
+          in: path
+          description: the id of the identity
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Move successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Move not allowed
+        '404':
+          description: Unknown record
+        '409':
+          description: Operation not allowed, conflict of identityId
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/persons/{personId}/identities/{identityId}/status:
+    put:
+      tags:
+        - Identity
+      summary: Change the status of an identity
+      operationId: setIdentityStatus
+      security:
+        - BearerAuth: [pr.identity.write]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: identityId
+          in: path
+          description: the id of the identity
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: The status of the identity
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Operation successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operation not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/persons/{personId}/identities/{identityId}/reference:
+    put:
+      tags:
+        - Reference
+      summary: Define the reference
+      operationId: defineReference
+      security:
+        - BearerAuth: [pr.reference.write]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: identityId
+          in: path
+          description: the id of the identity
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Operation successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operation not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+  /v1/persons/{personId}/reference:
+    get:
+      tags:
+        - Reference
+      summary: Read the reference
+      operationId: readReference
+      security:
+        - BearerAuth: [pr.reference.read]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Read successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Identity'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Read not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
+  /v1/galleries:
+    get:
+      tags:
+        - Gallery
+      summary: Read the ID of all the galleries
+      operationId: readGalleries
+      security:
+        - BearerAuth: [pr.gallery.read]
+      parameters:
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Operation successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Read not allowed
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/galleries/{galleryId}:
+    get:
+      tags:
+        - Gallery
+      summary: Read the content of one gallery
+      operationId: readGalleryContent
+      security:
+        - BearerAuth: [pr.gallery.read]
+      parameters:
+        - name: galleryId
+          in: path
+          description: the id of the gallery
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: offset
+          in: query
+          description: The offset of the query (first item of the response)
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          description: The maximum number of items to return
+          required: false
+          schema:
+            type: integer
+            default: 1000
+      responses:
+        '200':
+          description: Operation successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - personId
+                    - identityId
+                  properties:
+                    personId:
+                      type: string
+                    identityId:
+                      type: string
+                  additionalProperties: false
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Read not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          description: Error code
+          type: integer
+          format: int32
+        message:
+          description: Error message
+          type: string
+      additionalProperties: false
+    Person:
+      description: >-
+        Person entity.
+      type: object
+      required:
+        - status
+        - physicalStatus
+      properties:
+        personId:
+          type: string
+          description: The unique id for this person
+          readOnly: true
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+        physicalStatus:
+          type: string
+          enum: [DEAD, ALIVE]
+      additionalProperties: false
+    Identity:
+      type: object
+      required:
+        - status
+        - identityId
+        - identityType
+      properties:
+        identityId:
+          type: string
+          readOnly: true
+        identityType:
+          type: string
+        status:
+          type: string
+          enum: [CLAIMED, VALID, INVALID, REVOKED]
+        galleries:
+          type: array
+          description: The list of galleries for this object.
+          items:
+            type: string
+          minItems: 1
+          uniqueItems: true
+        clientData:
+          type: string
+          format: byte
+        contextualData:
+          $ref: '#/components/schemas/ContextualData'
+        biographicData:
+          $ref: '#/components/schemas/BiographicData'
+        biometricData:
+          type: array
+          items:
+            $ref: '#/components/schemas/BiometricData'
+        documentData:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentData'
+      additionalProperties: false
+    ContextualData:
+      type: object
+      additionalProperties: true
+      example:
+        enrollmentDate: "2019-01-11"
+    BiographicData:
+      type: object
+      description: The set of biographic data.
+      additionalProperties: true
+      example:
+        firstName: John
+        lastName: Doo
+        dateOfBirth: "1985-11-30"
+        gender: M
+        nationality: FRA
+
+    CompressionType:
+      type: string
+      enum: [NONE, WSQ, JPEG, JPEG2000, PNG]
+      example: WSQ
+
+    DocumentData:
+      type: object
+      required:
+        - documentType
+        - parts
+      properties:
+        documentType:
+          $ref: '#/components/schemas/DocumentType'
+        documentTypeOther:
+          type: string
+          description: Details about the type of document when OTHER is used.
+        instance:
+          type: string
+          description: "Used to separate two distincts documents of the same type (ex: two passports)"
+        parts:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/DocumentPart'
+      additionalProperties: false
+    DocumentType:
+      type: string
+      description: Type of document.
+      enum: [ID_CARD, PASSPORT, INVOICE, BIRTH_CERTIFICATE, FORM, OTHER]
+      example: FORM
+    DocumentPart:
+      type: object
+      properties:
+        pages:
+          type: array
+          description: The pages included in this part. Can be a single page number, or a list.
+          minItems: 1
+          items:
+            type: integer
+        data:
+          type: string
+          format: byte
+          description: Base64-encoded data of the document
+        dataRef:
+          type: string
+          format: uri
+          description: URI to the data
+          example: "http://server.com/buffer?id=00003"
+        width:
+          type: integer
+          description: the width of the image in pixels
+        height:
+          type: integer
+          description: the height of the image in pixels
+        mimeType:
+          type: string
+          description: the nature and format of the document. The mime type definitions should be in compliance with RFC 6838.
+        captureDate:
+          type: string
+          format: date-time
+          example: "2019-05-21T12:00:00Z"
+        captureDevice:
+          type: string
+          description: A string identifying the device used to capture the document part
+      additionalProperties: false
+    BiometricData:
+      type: object
+      required:
+        - biometricType
+      properties:
+        biometricType:
+          $ref: '#/components/schemas/BiometricType'
+        biometricSubType:
+          $ref: '#/components/schemas/BiometricSubType'
+        instance:
+          type: string
+          description: Used to separate two distincts biometric items of the same type and subtype
+        identityId:
+          type: string
+          description: the id of the identity owner of this biometric
+          readOnly: true
+        image:
+          type: string
+          format: byte
+          description: Base64-encoded image
+        imageRef:
+          type: string
+          format: uri
+          description: URI to an image
+          example: "http://imageserver.com/image?id=00003"
+        captureDate:
+          type: string
+          format: date-time
+          example: "2019-05-21T12:00:00Z"
+        captureDevice:
+          type: string
+          description: A string identifying the device used to capture the biometric
+        impressionType:
+          $ref: '#/components/schemas/ImpressionType'
+        width:
+          type: integer
+          description: the width of the image
+        height:
+          type: integer
+          description: the height of the image
+        bitdepth:
+          type: integer
+        mimeType:
+          type: string
+          description: the nature and format of the image. The mime type definitions should be in compliance with RFC 6838.
+        resolution:
+          type: integer
+          description: the image resolution (in DPI)
+        compression:
+          $ref: '#/components/schemas/CompressionType'
+        missing:
+          description: Optional properties indicating if a part of the biometric data is missing
+          type: array
+          items:
+            $ref: '#/components/schemas/MissingType'
+        metadata:
+          type: string
+          description: An optional string used to convey information vendor-specific
+        comment:
+          type: string
+          description: A comment about the biometric data
+        template:
+          type: string
+          format: byte
+          description: Base64-encoded template
+        templateRef:
+          type: string
+          format: uri
+          description: URI to the template when it is managed in a dedicated data server
+          example: "http://dataserver.com/template?id=00014"
+        templateFormat:
+          $ref: '#/components/schemas/TemplateFormat'
+        quality:
+          type: integer
+          format: int64
+          description: Quality, as a number, of the biometric
+        qualityFormat:
+          $ref: '#/components/schemas/QualityFormat'
+        algorithm:
+          type: string
+        vendor:
+          type: string
+      additionalProperties: false
+    TemplateFormat:
+      type: string
+      description: |
+        Format of the template.
+        One of ISO_19794_2, ISO_19794_2_NS, ISO_19794_2_CS, ISO_19794_2_2011, ANSI_378_2009 or ANSI_378.
+        Can be extended to include additional proprietary template format
+    QualityFormat:
+      type: string
+      description: |
+        Format of the quality.
+        One of ISO_19794, NFIQ, or NFIQ2.
+        Can be extended to include additional proprietary quality format
+    MissingType:
+      type: object
+      properties:
+        biometricSubType:
+          $ref: '#/components/schemas/BiometricSubType'
+        presence:
+          type: string
+          enum: [BANDAGED, AMPUTATED, DAMAGED]
+      additionalProperties: false
+    ImpressionType:
+      type: string
+      enum:
+        - LIVE_SCAN_PLAIN
+        - LIVE_SCAN_ROLLED
+        - NONLIVE_SCAN_PLAIN
+        - NONLIVE_SCAN_ROLLED
+        - LATENT_IMPRESSION
+        - LATENT_TRACING
+        - LATENT_PHOTO
+        - LATENT_LIFT
+        - LIVE_SCAN_SWIPE
+        - LIVE_SCAN_VERTICAL_ROLL
+        - LIVE_SCAN_PALM
+        - NONLIVE_SCAN_PALM
+        - LATENT_PALM_IMPRESSION
+        - LATENT_PALM_TRACING
+        - LATENT_PALM_PHOTO
+        - LATENT_PALM_LIFT
+        - LIVE_SCAN_OPTICAL_CONTACTLESS_PLAIN
+        - OTHER
+        - UNKNOWN
+    BiometricType:
+      type: string
+      enum:
+        - FACE
+        - FINGER
+        - IRIS
+        - SIGNATURE
+        - UNKNOWN
+      example: FINGER
+    BiometricSubType:
+      type: string
+      enum:
+        - UNKNOWN
+        - RIGHT_THUMB
+        - RIGHT_INDEX
+        - RIGHT_MIDDLE
+        - RIGHT_RING
+        - RIGHT_LITTLE
+        - LEFT_THUMB
+        - LEFT_INDEX
+        - LEFT_MIDDLE
+        - LEFT_RING
+        - LEFT_LITTLE
+        - PLAIN_RIGHT_FOUR_FINGERS
+        - PLAIN_LEFT_FOUR_FINGERS
+        - PLAIN_THUMBS
+        
+        - UNKNOWN_PALM
+        - RIGHT_FULL_PALM
+        - RIGHT_WRITERS_PALM
+        - LEFT_FULL_PALM
+        - LEFT_WRITERS_PALM
+        - RIGHT_LOWER_PALM
+        - RIGHT_UPPER_PALM
+        - LEFT_LOWER_PALM
+        - LEFT_UPPER_PALM
+        - RIGHT_OTHER
+        - LEFT_OTHER
+        - RIGHT_INTERDIGITAL
+        - RIGHT_THENAR
+        - RIGHT_HYPOTHENAR
+        - LEFT_INTERDIGITAL
+        - LEFT_THENAR
+        - LEFT_HYPOTHENAR
+        
+        - RIGHT_INDEX_AND_MIDDLE
+        - RIGHT_MIDDLE_AND_RING
+        - RIGHT_RING_AND_LITTLE
+        - LEFT_INDEX_AND_MIDDLE
+        - LEFT_MIDDLE_AND_RING
+        - LEFT_RING_AND_LITTLE
+        - RIGHT_INDEX_AND_LEFT_INDEX
+        - RIGHT_INDEX_AND_MIDDLE_AND_RING
+        - RIGHT_MIDDLE_AND_RING_AND_LITTLE
+        - LEFT_INDEX_AND_MIDDLE_AND_RING
+        - LEFT_MIDDLE_AND_RING_AND_LITTLE
+        
+        - EYE_UNDEF
+        - EYE_RIGHT
+        - EYE_LEFT
+        - EYE_BOTH
+        
+        - PORTRAIT
+        - LEFT_PROFILE
+        - RIGHT_PROFILE
+      example: RIGHT_INDEX
+    Expression:
+      type: object
+      required:
+        - attributeName
+        - operator
+        - value
+      properties:
+        attributeName:
+          type: string
+        operator:
+          type: string
+          enum: ['<', '>', '=', '>=', '<=', '!=']
+        value:
+          oneOf:
+          - type: string
+          - type: integer
+          - type: number
+          - type: boolean
+      additionalProperties: false
+    Expressions:
+      type: array
+      items:
+        $ref: '#/components/schemas/Expression'
