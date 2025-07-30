@@ -173,10 +173,7 @@ class TestNominal(TestPR):
             }
         }
         with requests.post(self.url+'v1/persons/P0002/identities/002', json=data, params={'transactionId': 'T0002'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
-            res = r.json()
-            assert res['identityId'] == '002'
-            assert list(res.keys()) == ['identityId']
+            assert 201 == r.status_code
 
         # Read the identity created
         with requests.get(self.url+'v1/persons/P0002/identities/002', json=data, params={'transactionId': 'T0002'},**get_ssl_context()) as r:
@@ -343,10 +340,7 @@ class TestNominal(TestPR):
             "contextualData": {}
         }
         with requests.post(self.url+'v1/persons/P0002/identities/001', json=data, params={'transactionId': 'T0002'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
-            res = r.json()
-            assert res['identityId'] == '001'
-            assert list(res.keys()) == ['identityId']
+            assert 201 == r.status_code
 
         # Read the identity created
         with requests.get(self.url+'v1/persons/P0002/identities/001', params={'transactionId': 'T0002'},**get_ssl_context()) as r:
@@ -442,10 +436,7 @@ class TestNominal(TestPR):
             }
         }
         with requests.post(self.url+'v1/persons/P0002/identities/001', json=data, params={'transactionId': 'T0002'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
-            res = r.json()
-            assert res['identityId'] == '001'
-            assert list(res.keys()) == ['identityId']
+            assert 201 == r.status_code
 
         # Read the identity created
         with requests.get(self.url+'v1/persons/P0002/identities/001', params={'transactionId': 'T0002'},**get_ssl_context()) as r:
@@ -556,7 +547,7 @@ class TestNominal(TestPR):
             }
         }
         with requests.post(self.url+'v1/persons/P0003-1/identities/001', json=data, params={'transactionId': 'T0003'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
+            assert 201 == r.status_code
 
         # Create person2 with 2 identity
         data = {
@@ -575,7 +566,7 @@ class TestNominal(TestPR):
             }
         }
         with requests.post(self.url+'v1/persons/P0003-2/identities/001', json=data, params={'transactionId': 'T0003'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
+            assert 201 == r.status_code
         with requests.put(self.url+'v1/persons/P0003-2/identities/001/reference', params={'transactionId': 'T0003'},**get_ssl_context()) as r:
             assert 204 == r.status_code
         data = {
@@ -588,7 +579,7 @@ class TestNominal(TestPR):
             }
         }
         with requests.post(self.url+'v1/persons/P0003-2/identities/002', json=data, params={'transactionId': 'T0003'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
+            assert 201 == r.status_code
 
         # test galleries
         with requests.get(self.url+'v1/galleries', params={'transactionId': 'T0003'},**get_ssl_context()) as r:
@@ -845,7 +836,7 @@ class TestNominal(TestPR):
             # timezone not supported by sqlite
             data['contextualData']['operationDateTime'] = "2024-01-31T18:26:00"
         with requests.post(self.url+'v1/persons/P0003-1/identities/001', json=data, params={'transactionId': 'T0003'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
+            assert 201 == r.status_code
 
         # Read the identity created
         with requests.get(self.url+'v1/persons/P0003-1/identities/001', params={'transactionId': 'T0003'},**get_ssl_context()) as r:
@@ -933,9 +924,7 @@ class TestNominal(TestPR):
             "contextualData": {}
         }
         with requests.post(self.url+'v1/persons/P0004/identities/001', json=data, params={'transactionId': 'T0004'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
-            res = r.json()
-            assert res['identityId'] == '001'
+            assert 201 == r.status_code
 
         # Read the identity created
         with requests.get(self.url+'v1/persons/P0004/identities/001',params={'transactionId': 'T0004'},**get_ssl_context()) as r:
@@ -995,9 +984,7 @@ class TestNominal(TestPR):
             # timezone not supported by sqlite
             data['documentData'][0]['parts'][0]['captureDate'] = "2019-05-21T12:00:00"
         with requests.post(self.url+'v1/persons/P0005/identities/001', json=data, params={'transactionId': 'T0005'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
-            res = r.json()
-            assert res['identityId'] == '001'
+            assert 201 == r.status_code
 
         # Read the identity created
         with requests.get(self.url+'v1/persons/P0005/identities/001',params={'transactionId': 'T0005'},**get_ssl_context()) as r:
@@ -1030,7 +1017,7 @@ class TestNominal(TestPR):
             }
         }
         with requests.post(self.url+'v1/persons/P0006-1/identities/001', json=data, params={'transactionId': 'T0006'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
+            assert 201 == r.status_code
 
         # Create person2 with 2 identity
         data = {
@@ -1049,7 +1036,7 @@ class TestNominal(TestPR):
             }
         }
         with requests.post(self.url+'v1/persons/P0006-2/identities/001', json=data, params={'transactionId': 'T0006'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
+            assert 201 == r.status_code
         with requests.put(self.url+'v1/persons/P0006-2/identities/001/reference', params={'transactionId': 'T0006'},**get_ssl_context()) as r:
             assert 204 == r.status_code
         data = {
@@ -1062,7 +1049,7 @@ class TestNominal(TestPR):
             }
         }
         with requests.post(self.url+'v1/persons/P0006-2/identities/002', json=data, params={'transactionId': 'T0006'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
+            assert 201 == r.status_code
 
         # Create person3 with 1 identity
         data = {
@@ -1081,7 +1068,7 @@ class TestNominal(TestPR):
             }
         }
         with requests.post(self.url+'v1/persons/P0006-3/identities/999', json=data, params={'transactionId': 'T0006'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
+            assert 201 == r.status_code
 
         # should be OK
         with requests.post(self.url+'v1/persons/P0006-2/merge/P0006-3', params={'transactionId': 'T0006'},**get_ssl_context()) as r:
@@ -1161,7 +1148,7 @@ class TestNominal(TestPR):
             }
         }
         with requests.post(self.url+'v1/persons/P0007-1/identities/001', json=data, params={'transactionId': 'T0007'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
+            assert 201 == r.status_code
 
         # Create person2 with 2 identity
         data = {
@@ -1180,7 +1167,7 @@ class TestNominal(TestPR):
             }
         }
         with requests.post(self.url+'v1/persons/P0007-2/identities/001', json=data, params={'transactionId': 'T0007'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
+            assert 201 == r.status_code
         with requests.put(self.url+'v1/persons/P0007-2/identities/001/reference', params={'transactionId': 'T0007'},**get_ssl_context()) as r:
             assert 204 == r.status_code
         data = {
@@ -1193,7 +1180,7 @@ class TestNominal(TestPR):
             }
         }
         with requests.post(self.url+'v1/persons/P0007-2/identities/002', json=data, params={'transactionId': 'T0006'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
+            assert 201 == r.status_code
 
 
         # move should fail

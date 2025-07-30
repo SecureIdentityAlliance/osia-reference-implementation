@@ -393,7 +393,7 @@ async def mergePerson(request):
 
 
 # _____________________________________________________________________________
-async def _create_identity(transaction_id, person_id, identity_id, data):
+async def _create_identity(transaction_id, person_id, identity_id, data, ok_code=200):
     msg = validate_json(data, 'Identity')
     if msg:
         return web.json_response(data={'code': 400, 'message': msg}, status=400)
@@ -415,7 +415,9 @@ async def _create_identity(transaction_id, person_id, identity_id, data):
         p.identities.append(ni)
         session.add(p)
 
-        return web.json_response(data={'identityId': identity_id}, status=200)
+        if ok_code==201:
+            return web.Response(status=201)
+        return web.json_response(data={'identityId': identity_id}, status=ok_code)
 
 # _____________________________________________________________________________
 @routes.post('/v1/persons/{personId}/identities')
@@ -439,7 +441,7 @@ async def createIdentityWithId(request):
 
     data = await request.json()
     logging.info("[%s] - createIdentityWithId for personId [%s]/[%s]", transaction_id, person_id, identity_id)
-    return await _create_identity(transaction_id, person_id, identity_id, data)
+    return await _create_identity(transaction_id, person_id, identity_id, data, 201)
 
 
 # _____________________________________________________________________________

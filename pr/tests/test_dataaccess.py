@@ -51,7 +51,7 @@ class TestDataAccess(TestPR):
             }
         }
         with requests.post(self.url+'v1/persons/DA001-1/identities/001', json=data, params={'transactionId': 'T000DA1'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
+            assert 201 == r.status_code
 
         # Create person2 with 2 identity
         data = {
@@ -70,7 +70,7 @@ class TestDataAccess(TestPR):
             }
         }
         with requests.post(self.url+'v1/persons/DA001-2/identities/001', json=data, params={'transactionId': 'T000DA1'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
+            assert 201 == r.status_code
         with requests.put(self.url+'v1/persons/DA001-2/identities/001/reference', params={'transactionId': 'T000DA1'},**get_ssl_context()) as r:
             assert 204 == r.status_code
         data = {
@@ -83,7 +83,7 @@ class TestDataAccess(TestPR):
             }
         }
         with requests.post(self.url+'v1/persons/DA001-2/identities/002', json=data, params={'transactionId': 'T000DA1'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
+            assert 201 == r.status_code
 
     def tearDown(self):
         # delete the person
@@ -278,7 +278,7 @@ class TestDataAccessDocument(TestPR):
             ]
         }
         with requests.post(self.url+'v1/persons/DA002-1/identities/001', json=data, params={'transactionId': 'T000DA2'},**get_ssl_context()) as r:
-            assert 200 == r.status_code
+            assert 201 == r.status_code
         with requests.put(self.url+'v1/persons/DA002-1/identities/001/reference', params={'transactionId': 'T000DA2'},**get_ssl_context()) as r:
             assert 204 == r.status_code
 
