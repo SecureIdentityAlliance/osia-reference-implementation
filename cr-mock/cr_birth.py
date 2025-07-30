@@ -47,7 +47,7 @@ def run_server(handler, args):
         loop.run_until_complete(loop.shutdown_asyncgens())
         loop.close()
 
-
+FN = None
 # _____________________________________________________________________________
 @routes.get('/v1/persons/{uin}')
 async def readPersonAttributes(request):
@@ -58,7 +58,7 @@ async def readPersonAttributes(request):
 
     dob = datetime.date.today().isoformat()
     data = {
-        "firstName": "Baby",
+        "firstName": FN,
         "lastName": "Smith",
         "dateOfBirth": dob,
         "gender": "M",
@@ -74,6 +74,9 @@ async def readPersonAttributes(request):
 
 def do_birth(args):
 
+    global FN
+    FN = args.firstname
+    
     # match mother
     data = {
         "firstName": "Alice",
@@ -115,18 +118,21 @@ def do_birth(args):
     # check if new born exists
     dob = datetime.date.today().isoformat()
     params = {
-        "firstName": "Baby",
+        "firstName": args.firstname,
         "lastName": "Smith",
         "dateOfBirth": dob
     }
     with requests.get(args.pr_url+'v1/persons', params=params,**get_ssl_context()) as r:
         assert 200 == r.status_code
+        if len(r.json()) > 0:
+            logging.info("New born already in database")
+            return
         assert [] == r.json()
     logging.info("New born not found in database")
 
     # get a new UIN for the child
     data = {
-        "firstName": "Baby",
+        "firstName": args.firstname,
         "lastName": "Smith",
         "dateOfBirth": dob,
         "gender": "M"
@@ -135,7 +141,7 @@ def do_birth(args):
         assert 200 == r.status_code
         assert 'Server' not in r.headers
         UIN = r.json()
-        assert '123' == UIN[:3]
+        assert '125' == UIN[:3]
     logging.info("UIN for child: %s", UIN)
 
     data = {
@@ -166,6 +172,7 @@ def main(argv=sys.argv[1:]):
     parser.add_argument("--notification-url", dest='notification_url',
                         default='http://localhost:8030/',
                         help='The URL to the notification service')
+    parser.add_argument("--fn", default='Baby', dest='firstname', help="First name of the baby")
 
     args = parser.parse_args(argv)
 

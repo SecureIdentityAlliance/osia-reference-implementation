@@ -1,13 +1,16 @@
-version: '3'
 services:
   pr:
     build:
-      context: pr-mock
+      context: pr
       args:
         D4R6Y: ${D4R6Y}
         PIP_CONF: ${PIP_CONF}
         APK_ARGS: ${APK_ARGS}
     image: sia/pr
+    environment:
+      PR_CUSTO_FILENAME: "/custo/pr.yaml"
+    volumes:
+      - ${PWD}/custo:/custo
     ports:
       - "8010:8080"
   uin:

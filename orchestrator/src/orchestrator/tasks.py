@@ -42,7 +42,6 @@ def createPerson_PR(self,ctx, url,enrollment_id, transaction_id):
         person = {}
         person['status'] = 'ACTIVE'
         person['physicalStatus'] = 'ALIVE'
-        person['personId'] = str(ctx['UIN'])
         data = io.BytesIO(json.dumps(person).encode('latin-1'))
         res = asyncio.run( pr.createPerson(url, transaction_id, ctx['UIN'], data) )
     except Exception as exc:
@@ -61,12 +60,13 @@ def createIdentity_PR(self,ctx, url,enrollment_id, transaction_id):
         # Get enrollment data (no biometrics)
         identity = dict(
             status='VALID',
+            identityType='CIVIL',
             galleries=['ALL'],
             contextualData=dict(
             ),
             biographicData=ctx['biographicData'],
             biometricData=[],
-            documents=[]
+            documentData=[]
         )
 
         data = io.BytesIO(json.dumps(identity).encode('latin-1'))
@@ -74,8 +74,6 @@ def createIdentity_PR(self,ctx, url,enrollment_id, transaction_id):
         if identity_id is None:
             identity_id = asyncio.run( pr.createIdentity(url, transaction_id, ctx['UIN'], data) )
         else:
-            identity['identityId'] = identity_id
-            data = io.BytesIO(json.dumps(identity).encode('latin-1'))
             if not asyncio.run( pr.createIdentityWithId(url, transaction_id, ctx['UIN'], identity_id, data) ):
                 identity_id = None
     except Exception as exc:

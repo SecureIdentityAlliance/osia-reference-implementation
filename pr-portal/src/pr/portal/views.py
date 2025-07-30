@@ -71,14 +71,14 @@ def add_dummy(request):
         "status": "VALID",
         "galleries": ["1"],
         "contextualData": {
-            "enrollmentDate": datetime.datetime.now().isoformat(),
+            "enrollmentDate": datetime.date.today().isoformat(),
         },
         "biographicData": {
             "firstName": random.choice(names(fn)),
             "lastName": random.choice(names('surname.txt')),
             "dateOfBirth": dob,
             "gender": gender,
-            "nationality": "GBR",
+            "nationality": "USA",
         }
     }
 
