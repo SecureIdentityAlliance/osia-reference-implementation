@@ -96,9 +96,9 @@ To test with PostgreSQL::
 
     docker compose -f docker-compose-postgres.yml up -d --force-recreate --build
     source .tox/py/bin/activate # or another venv with the prerequisite libs installed
-    pytest tests/test_server.py
+    PR_CUSTO_FILENAME=tests/custo.yaml  SQLITE=0 pytest tests/test_pr.py
     # or
-    python tests/test_server.py http://localhost:8080/
+    PR_CUSTO_FILENAME=tests/custo.yaml  SQLITE=0 python tests/test_pr.py http://localhost:8080/
     docker compose -f docker-compose-postgres.yml down --remove-orphans -v
     docker system prune -f
 

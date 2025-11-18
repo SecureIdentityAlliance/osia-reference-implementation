@@ -8,35 +8,28 @@ import time
 import threading
 import asyncio
 import os
+import base64
+import json
+import logging
 
 from aiohttp import web
 
 import pr
 import pr.__main__
+import pr.server
 
 LOOP = None
-
-# Setup the global args variable (from the env variables)
-pr.__main__.main(['--do-not-start',
-                '--port', '8080',
-                '--custo-filename', os.path.join(os.path.dirname(__file__),'custo.yaml')])
-
-import pr.server
+PORT = '8080'
+HOSTNAME = 'localhost'
 
 async def runner():
     # Setup the global args variable (from the env variables)
-    # we need to do it a second time in the server thread
-    pr.__main__.main(['--do-not-start',
-                    '--port', '8080',
-                    # to increase test coverage if needed:
-                    # '--loglevel', 'DEBUG',
-                    # '--logfile', 'test.log',
-                    '--custo-filename', os.path.join(os.path.dirname(__file__),'custo.yaml')])
+    pr.__main__.main(['--do-not-start'])
     app = pr.server.get_app()
     runner = web.AppRunner(app)
     await runner.setup()
 
-    site = web.TCPSite(runner, 'localhost', pr.args.port, reuse_address=True, ssl_context=pr.server.get_ssl_context())
+    site = web.TCPSite(runner, 'localhost', int(PORT), reuse_address=True, ssl_context=pr.server.get_ssl_context())
     await site.start()
 
 def run_server(handler):
@@ -54,7 +47,7 @@ def run_server(handler):
         loop.close()
 
 #_______________________________________________________________________________
-class TestPR(unittest.TestCase):
+class TestPr(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -75,17 +68,13 @@ class TestPR(unittest.TestCase):
     @property
     def url(self):
         if pr.args.server_certfile:
-            return "https://localhost:{}/".format(pr.args.port)
+            return "https://" + os.environ.get('TEST_SERVER_HOSTNAME', HOSTNAME)+":"+os.environ.get('TEST_SERVER_PORT', PORT)+"/"
         else:
-            return "http://localhost:{}/".format(pr.args.port)
+            return "http://" + os.environ.get('TEST_SERVER_HOSTNAME', HOSTNAME)+":"+os.environ.get('TEST_SERVER_PORT', PORT)+"/"
 
     @property
     def mon_url(self):
-        if pr.args.monitoring_port>0:
-            return "http://localhost:{}/".format(pr.args.monitoring_port)
+        if int(os.environ.get('PR_MONITORING_PORT', 0))>0:
+            return "http://" + os.environ.get('TEST_SERVER_HOSTNAME', HOSTNAME)+":"+os.environ.get('PR_MONITORING_PORT', PORT)+"/"
         else:
-            if pr.args.server_certfile:
-                return "https://localhost:{}/".format(pr.args.port)
-            else:
-                return "http://localhost:{}/".format(pr.args.port)
-
+            return self.url

@@ -1,21 +1,25 @@
 import ssl
 import logging
 import json
-import copy
-import uuid
-import base64
-import io
-import asyncio
 
 import aiohttp
 from aiohttp import web
 
+import pr
+
+import livemetrics
+import livemetrics.publishers.aiohttp
+
+# [---CUSTO---]
+# Additional imports
+import uuid
+import asyncio
 import yaml
+
 import jsonschema
 import referencing
 import referencing.jsonschema
 
-import pr
 import pr.model
 
 from sqlalchemy.orm import Session, make_transient
@@ -23,23 +27,28 @@ from sqlalchemy import select
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import livemetrics
-import livemetrics.publishers.aiohttp
-
-routes = web.RouteTableDef()
-
-def is_healthy():
-    return True
-
-LM = livemetrics.LiveMetrics(json.dumps(dict(version=pr.__version__)), "pr", is_healthy)
-
-def ok_status(ret):
-    return str(ret.status)
-
 # An exception class to propagate web.Response
 class ResponseException(BaseException):
     def __init__(self, response):
         self.response = response
+
+# [---CUSTO---]
+
+routes = web.RouteTableDef()
+
+if 'is_healthy' not in globals():
+    def is_healthy():
+        return True
+
+if 'is_ready' not in globals():
+    def is_ready():
+        return True
+
+LM = livemetrics.LiveMetrics(json.dumps(dict(version=pr.__version__)), "pr", is_healthy, is_ready)
+
+def ok_status(ret):
+    return str(ret.status)
+
 
 # _____________________________________________________________________________
 @web.middleware
@@ -49,12 +58,15 @@ async def error_middleware(request, handler):
         if response.status >= 400:
             logging.info("Request failed with HTTP error %d", response.status)
         return response
+    # [---CUSTO---]
+    # Manage additional exceptions
     except KeyError as exc:
         if exc.args==('transactionId',):
                 return web.json_response({'code':1, 'message': 'Missing transactionId'}, status=400)
         raise
     except ResponseException as resp:
         return resp.response
+    # [---CUSTO---]
     except aiohttp.web_exceptions.HTTPException:
         raise
     except Exception as exc:
@@ -82,6 +94,7 @@ def get_ssl_context():
         logging.debug("certfile/keyfile loaded for SSL Context")
     return ctx
 
+  
 
 # _____________________________________________________________________________
 async def _strip_server(req, res):
@@ -93,7 +106,10 @@ async def _strip_server(req, res):
 async def start_monitoring(app):
     app2 = web.Application(middlewares=[error_middleware])
     app2.add_routes(livemetrics.publishers.aiohttp.routes(LM))
-    runner = web.AppRunner(app2)
+    if pr.args.loglevel=='DEBUG':
+        runner = web.AppRunner(app2)
+    else:
+        runner = web.AppRunner(app2, access_log=None)
     await runner.setup()
     site = web.TCPSite(runner, host=pr.args.ip, port=pr.args.monitoring_port)
     await site.start()
@@ -102,6 +118,10 @@ async def start_monitoring(app):
 def get_app():
     app = web.Application(client_max_size=pr.args.input_max_size*1024*1024,
                           middlewares=[error_middleware])
+    if 'on_startup' in globals():
+        app.on_startup.append(on_startup)
+    if 'on_shutdown' in globals():
+        app.on_shutdown.append(on_shutdown)
     app.add_routes(routes)
     if pr.args.monitoring_port<=0 or pr.args.monitoring_port==pr.args.port:
         app.add_routes(livemetrics.publishers.aiohttp.routes(LM))
@@ -121,6 +141,8 @@ def serve():
         return
     logging.info('Starting application...')
     web.run_app(app, host=pr.args.ip, port=pr.args.port, access_log=None, ssl_context=get_ssl_context())
+
+# [---CUSTO---]
     logging.info('Closing application...')
     if pr.aengine:
         # proper cleanup of async engine
@@ -979,3 +1001,4 @@ def gauge_nb_biometricdata():
         return session.query(pr.model.BiometricData).count()
 LM.gauge('nb_biometricdata', gauge_nb_biometricdata)
 
+# [---CUSTO---]

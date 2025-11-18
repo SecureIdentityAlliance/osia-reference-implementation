@@ -11,7 +11,7 @@ if __name__ == '__main__':
     if len(sys.argv)>1:
         URL = sys.argv[1]
 
-    class TestPR(unittest.TestCase):
+    class TestPr(unittest.TestCase):
 
         @property
         def mon_url(self):
@@ -19,10 +19,10 @@ if __name__ == '__main__':
             return URL
 
 else:
-    from . import TestPR
+    from . import TestPr
 
 #_______________________________________________________________________________
-class TestNominal(TestPR):
+class TestNominal(TestPr):
     def test_health(self):
         with requests.get(self.mon_url+'monitoring/v1/is_healthy', verify=False) as r:
             assert 200 == r.status_code

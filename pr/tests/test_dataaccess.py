@@ -14,7 +14,7 @@ if __name__ == '__main__':
     if len(sys.argv)>1:
         URL = sys.argv[1]
 
-    class TestPR(unittest.TestCase):
+    class TestPr(unittest.TestCase):
 
         @property
         def url(self):
@@ -22,7 +22,7 @@ if __name__ == '__main__':
             return URL
 
 else:
-    from . import TestPR
+    from . import TestPr
 
 def get_ssl_context():
     kw = {}
@@ -30,7 +30,7 @@ def get_ssl_context():
     return kw
 
 #_______________________________________________________________________________
-class TestDataAccess(TestPR):
+class TestDataAccess(TestPr):
 
     def setUp(self):
         # Insert test data
@@ -197,7 +197,7 @@ class TestDataAccess(TestPR):
             assert r.json() is False
 
 #_______________________________________________________________________________
-class TestDataAccessDocument(TestPR):
+class TestDataAccessDocument(TestPr):
 
     def setUp(self):
         with open(os.path.join(os.path.dirname(__file__), 'DOCUMENT.pdf'), 'rb') as f:

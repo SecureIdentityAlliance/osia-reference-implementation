@@ -1,6 +1,7 @@
-configargparse
-aiohttp
-livemetrics[aiohttp]
+configargparse==1.7.1
+aiohttp==3.13.0
+livemetrics[aiohttp]==0.7.1
+# [---CUSTO---]
 sqlalchemy
 marshmallow-sqlalchemy
 pyyaml
@@ -9,3 +10,4 @@ referencing
 psycopg2-binary
 asyncpg
 aiosqlite
+# [---CUSTO---]

@@ -1,10 +1,12 @@
 import unittest
 import sys
-import os
-
-import pr.model
 
 import requests
+
+# [---CUSTO---]
+import os
+import pr.model
+# [---CUSTO---]
 
 URL = "http://localhost:8080/"
 
@@ -14,7 +16,7 @@ if __name__ == '__main__':
     if len(sys.argv)>1:
         URL = sys.argv[1]
 
-    class TestPR(unittest.TestCase):
+    class TestPr(unittest.TestCase):
 
         @property
         def url(self):
@@ -22,15 +24,16 @@ if __name__ == '__main__':
             return URL
 
 else:
-    from . import TestPR
+    from . import TestPr
 
 def get_ssl_context():
     kw = {}
     kw['verify'] = False
     return kw
 
+# [---CUSTO---]
 #_______________________________________________________________________________
-class TestNominal(TestPR):
+class TestNominal(TestPr):
     def test_person(self):
         # Create person, bad input
         data = {
@@ -384,10 +387,10 @@ class TestNominal(TestPR):
             assert res['biographicData']['nationality'] == 'USA'    # back to default since we did not specify FRA in the update payload
             assert len(res['biometricData']) == 0
 
-        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_persons/count') as r:
+        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_persons/count',**get_ssl_context()) as r:
             assert 200 == r.status_code
             assert 1 == r.json()
-        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_identities/count') as r:
+        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_identities/count',**get_ssl_context()) as r:
             assert 200 == r.status_code
             assert 1 == r.json()
 
@@ -514,13 +517,13 @@ class TestNominal(TestPR):
             assert res['biographicData']['nationality'] == 'FRA'    # was not changed
             assert len(res['biometricData']) == 0                   # was removed
 
-        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_persons/count') as r:
+        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_persons/count',**get_ssl_context()) as r:
             assert 200 == r.status_code
             assert 1 == r.json()
-        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_identities/count') as r:
+        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_identities/count',**get_ssl_context()) as r:
             assert 200 == r.status_code
             assert 1 == r.json()
-        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_biometricdata/count') as r:
+        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_biometricdata/count',**get_ssl_context()) as r:
             assert 200 == r.status_code
             assert 0 == r.json()
         
@@ -803,7 +806,7 @@ class TestNominal(TestPR):
             "status": "ACTIVE",
             "physicalStatus": "ALIVE",
         }
-        with requests.post(self.url+'v1/persons/P0003-1', json=data, params={'transactionId': 'T0003'},**get_ssl_context()) as r:
+        with requests.post(self.url+'v1/persons/P0008', json=data, params={'transactionId': 'T0005'},**get_ssl_context()) as r:
             assert 201 == r.status_code
         data = {
             "status":"VALID",
@@ -835,11 +838,11 @@ class TestNominal(TestPR):
         if os.environ.get('SQLITE', '0')=='1':
             # timezone not supported by sqlite
             data['contextualData']['operationDateTime'] = "2024-01-31T18:26:00"
-        with requests.post(self.url+'v1/persons/P0003-1/identities/001', json=data, params={'transactionId': 'T0003'},**get_ssl_context()) as r:
+        with requests.post(self.url+'v1/persons/P0008/identities/001', json=data, params={'transactionId': 'T0003'},**get_ssl_context()) as r:
             assert 201 == r.status_code
 
         # Read the identity created
-        with requests.get(self.url+'v1/persons/P0003-1/identities/001', params={'transactionId': 'T0003'},**get_ssl_context()) as r:
+        with requests.get(self.url+'v1/persons/P0008/identities/001', params={'transactionId': 'T0003'},**get_ssl_context()) as r:
             assert 200 == r.status_code
             res = r.json()
             del res['identityId']
@@ -880,10 +883,10 @@ class TestNominal(TestPR):
         if os.environ.get('SQLITE', '0')=='1':
             # timezone not supported by sqlite
             data['contextualData']['operationDateTime'] = "2024-01-31T18:26:00"
-        with requests.post(self.url+'v1/persons/P0003-1/identities/002', json=data, params={'transactionId': 'T0003'},**get_ssl_context()) as r:
+        with requests.post(self.url+'v1/persons/P0008/identities/002', json=data, params={'transactionId': 'T0003'},**get_ssl_context()) as r:
             assert 400 == r.status_code
 
-        with requests.delete(self.url+'v1/persons/P0003-1', params={'transactionId': 'T0003'},**get_ssl_context()) as r:
+        with requests.delete(self.url+'v1/persons/P0008', params={'transactionId': 'T0003'},**get_ssl_context()) as r:
             assert 204 == r.status_code
 
     def test_identity_biometric_data(self):
@@ -1087,10 +1090,10 @@ class TestNominal(TestPR):
         with requests.post(self.url+'v1/persons/P0006-2/merge/P0006-1', params={'transactionId': 'T0006'},**get_ssl_context()) as r:
             assert 409 == r.status_code
 
-        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_persons/count') as r:
+        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_persons/count',**get_ssl_context()) as r:
             assert 200 == r.status_code
             assert 2 == r.json()
-        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_identities/count') as r:
+        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_identities/count',**get_ssl_context()) as r:
             assert 200 == r.status_code
             assert 4 == r.json()
 
@@ -1122,10 +1125,10 @@ class TestNominal(TestPR):
         with requests.delete(self.url+'v1/persons/P0006-2', params={'transactionId': 'T0006'},**get_ssl_context()) as r:
             assert 204 == r.status_code
 
-        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_persons/count') as r:
+        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_persons/count',**get_ssl_context()) as r:
             assert 200 == r.status_code
             assert 0 == r.json()
-        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_identities/count') as r:
+        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_identities/count',**get_ssl_context()) as r:
             assert 200 == r.status_code
             assert 0 == r.json()
 
@@ -1201,10 +1204,10 @@ class TestNominal(TestPR):
             res = r.json()
             assert len(res) == 2
 
-        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_persons/count') as r:
+        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_persons/count',**get_ssl_context()) as r:
             assert 200 == r.status_code
             assert 2 == r.json()
-        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_identities/count') as r:
+        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_identities/count',**get_ssl_context()) as r:
             assert 200 == r.status_code
             assert 3 == r.json()
 
@@ -1213,10 +1216,10 @@ class TestNominal(TestPR):
         with requests.delete(self.url+'v1/persons/P0007-2', params={'transactionId': 'T0007'},**get_ssl_context()) as r:
             assert 204 == r.status_code
 
-        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_persons/count') as r:
+        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_persons/count',**get_ssl_context()) as r:
             assert 200 == r.status_code
             assert 0 == r.json()
-        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_identities/count') as r:
+        with requests.get(self.url+'monitoring/v1/metrics/gauges/nb_identities/count',**get_ssl_context()) as r:
             assert 200 == r.status_code
             assert 0 == r.json()
 
@@ -1231,6 +1234,7 @@ class TestNominal(TestPR):
 # XXX test insert with all fields and check all fields are returned
 # XXX test update with all fields and check all fields are returned modified
 
+# [---CUSTO---]
+
 if __name__ == '__main__':
     unittest.main(argv=['-v'])
-

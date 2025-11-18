@@ -1,17 +1,22 @@
 
 import sys
-import os
+import json
 import time
 import logging
 import logging.handlers
 import configargparse
 
 import pr
-import pr.model
 import pr.server
 
+# [---CUSTO---]
+# Additional imports/global vars
+import os
+import pr.model
+# [---CUSTO---]
+
 # _____________________________________________________________________________
-class FormatterTime(logging.Formatter):
+class FormatterJSON(logging.Formatter):
     """
     Custom logging formatter to format as JSON the logs
     """
@@ -22,12 +27,42 @@ class FormatterTime(logging.Formatter):
         s += time.strftime("%z", ct)
         return s
 
+    def format(self, record):
+        d = dict()
+        d['timestamp'] = self.formatTime(record)
+        d['logger'] = record.name
+        d['thread'] = record.threadName
+        d['level'] = record.levelname
+        d['message'] = record.getMessage()
+        if 'transactionId' in record.__dict__:
+            d['transactionId'] = record.transactionId
+        # [---CUSTO---]
+        # Customization of log content
+        # [---CUSTO---]
+        s = ''
+        if record.exc_info and not record.exc_text:
+                record.exc_text = self.formatException(record.exc_info)
+        if record.exc_text:
+            if not s.endswith("\n"):
+                s = s + "\n"
+            s = s + record.exc_text
+        if record.stack_info:
+            if not s.endswith("\n"):
+                s = s + "\n"
+            s = s + self.formatStack(record.stack_info)
+        if s:
+            d['stack_trace'] = s
+        return json.dumps(d)
+
 # _____________________________________________________________________________
 #
 # main and command line options
 #
 # _____________________________________________________________________________
 def main(argv=sys.argv[1:]):
+    # [---CUSTO---]
+    # Preprocessing, for example to ensure backward compatibility
+    # [---CUSTO---]
 
     parser = configargparse.ArgumentParser(description='pr version ' + pr.__version__,
                                            default_config_files=['~/.pr.ini'],
@@ -41,13 +76,7 @@ def main(argv=sys.argv[1:]):
     parser.add_argument("-l", "--loglevel", default='INFO', dest='loglevel', env_var='PR_LOGLEVEL', help="Log level")
     parser.add_argument("-f", "--logfile", default=None, dest='logfile', env_var='PR_LOGFILE', help="Log file")
 
-    parser.add_argument(      "--custo-filename", default="custo.yaml", dest='custo_filename', env_var='PR_CUSTO_FILENAME', help="File containing the description of the custo (YAML)")
-    parser.add_argument(      "--api-file", default=os.path.join(os.path.dirname(__file__), 'pr.yaml'), dest='api_file', env_var='PR_API_FILE', help="OpenAPI file for this server (YAML)")
-    parser.add_argument(      "--database-url", default="sqlite:///file:testdb?mode=memory&cache=shared&uri=true", dest='database_url', env_var='PR_DATABASE_URL', help="String to connect to the database")
-    parser.add_argument(      "--dont-create-schema", default=False, action='store_true', dest='dont_create_schema', help="Default is to create the schema in the database when connecting. Use this flag to disable this behavior")
-    parser.add_argument(      "--dump-schema", default=False, action='store_true', dest='dump_schema', help="Used to dump the DDL of the database schema")
-
-    parser.add_argument("-M", "--max-size", type=int, dest='input_max_size', env_var='INPUT_MAX_SIZE',
+    parser.add_argument("-M", "--max-size", type=int, dest='input_max_size', env_var='PR_INPUT_MAX_SIZE',
                         default=10,
                         help="The buffer maximum size accepted (in MB)")
     parser.add_argument("--conf-directory", dest='conf_directory',
@@ -57,45 +86,64 @@ def main(argv=sys.argv[1:]):
                         help='Additional directory where configuration will be looked up. Last directory added will be searched first.')
 
     # arguments used for certificates
-    parser.add_argument("--server-certfile", dest='server_certfile', env_var='PR_CERTFILE',
+    parser.add_argument("--server-certfile", dest='server_certfile', env_var='PR_SERVER_CERTFILE',
                         default=None,
                         help='Path to a PEM formatted file containing the certificate identifying\nthis server')
-    parser.add_argument("--server-keyfile", dest='server_keyfile', env_var='PR_KEYFILE',
+    parser.add_argument("--server-keyfile", dest='server_keyfile', env_var='PR_SERVER_KEYFILE',
                         default=None,
                         help='The private key identifying this server.')
     parser.add_argument("--server-keyfile-password", dest='server_keyfile_password',
-                        env_var='PR_KEYFILE_PASSWORD',
+                        env_var='PR_SERVER_KEYFILE_PASSWORD',
                         default=None,
                         help='The password to access the private key')
     parser.add_argument("--server-ca-certfile", dest='server_ca_certfile',
-                        env_var='PR_CA_CERTFILE',
+                        env_var='PR_SERVER_CA_CERTFILE',
                         default=None,
                         help='Path to a PEM formatted file containing the certificates of the clients for mutual authent')
 
+    # Add arguments for clients
+      
+    # [---CUSTO---]
+    # Additional arguments
+    parser.add_argument(      "--custo-filename", default="custo.yaml", dest='custo_filename', env_var='PR_CUSTO_FILENAME', help="File containing the description of the custo (YAML)")
+    parser.add_argument(      "--api-file", default=os.path.join(os.path.dirname(__file__), 'pr.yaml'), dest='api_file', env_var='PR_API_FILE', help="OpenAPI file for this server (YAML)")
+    parser.add_argument(      "--database-url", default="sqlite:///file:testdb?mode=memory&cache=shared&uri=true", dest='database_url', env_var='PR_DATABASE_URL', help="String to connect to the database")
+    parser.add_argument(      "--dont-create-schema", default=False, action='store_true', dest='dont_create_schema', help="Default is to create the schema in the database when connecting. Use this flag to disable this behavior")
+    parser.add_argument(      "--dump-schema", default=False, action='store_true', dest='dump_schema', help="Used to dump the DDL of the database schema")
+    # [---CUSTO---]
+
     pr.args = parser.parse_args(argv)
     pr.args.conf_directory.reverse()
+    # [---CUSTO---]
+    # Extra argument processing
+    # [---CUSTO---]
 
     if pr.args.loglevel == 'DEBUG':
         print(parser.format_values())
 
+    # Configure logging
     h = logging.StreamHandler(sys.stdout)
-    f = FormatterTime('%(asctime)-15s %(levelname)s - %(message)s')
+    f = FormatterJSON()
     h.setFormatter(f)
-    h.setLevel(logging.getLevelNamesMapping()[pr.args.loglevel])
+    h.setLevel(logging.getLevelName(pr.args.loglevel))
     logging.basicConfig(force=True,
-                        level=logging.getLevelNamesMapping()[pr.args.loglevel],
+                        level=logging.getLevelName(pr.args.loglevel),
                         handlers=[h])
     if pr.args.logfile:
         fh = logging.handlers.RotatingFileHandler(pr.args.logfile, maxBytes=1000000, backupCount=20)
-        fh.setLevel(logging.getLevelNamesMapping()[pr.args.loglevel])
+        fh.setLevel(logging.getLevelName(pr.args.loglevel))
         fh.setFormatter(f)
         logging.getLogger().addHandler(fh)
 
-    logging.info('Starting')
+    # [---CUSTO---]
+    # Extra initialization
     if pr.args.dump_schema:
         pr.model.dump()
         return
     pr.model.setup()
+    # [---CUSTO---]
+
+    logging.info('Starting')
     pr.server.serve()
 
 
