@@ -20,7 +20,12 @@ BiographicData:
       enum:
         - FRA
         - USA
-      default: USA
+    email:
+      type: string
+    mobileNumber:
+      type: string
+    title:
+      type: string
   additionalProperties: false
 ContextualData:
   type: object

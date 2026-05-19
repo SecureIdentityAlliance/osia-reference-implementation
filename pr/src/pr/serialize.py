@@ -37,6 +37,15 @@ class DocumentPartSchema(SQLAlchemyAutoSchema):
     pages = fields.List(fields.Int())
     data = LargeBinary()
 
+    @post_dump
+    def post_dump(self,obj,**kwargs):
+        # remove all keys with value None
+        d = {}
+        for k, v in obj.items():
+            if v is not None:
+                d[k] = v
+        return d
+
 class DocumentDataSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = model.DocumentData
@@ -44,6 +53,15 @@ class DocumentDataSchema(SQLAlchemyAutoSchema):
         include_fk = False
         exclude = ['id']
     parts = Nested(DocumentPartSchema, many=True)
+
+    @post_dump
+    def post_dump(self,obj,**kwargs):
+        # remove all keys with value None
+        d = {}
+        for k, v in obj.items():
+            if v is not None:
+                d[k] = v
+        return d
 
 class MissingSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -68,8 +86,13 @@ class BiometricDataSchema(SQLAlchemyAutoSchema):
         # remove all keys with value None
         d = {}
         for k, v in obj.items():
-            if v is not None:
-                d[k] = v
+            if k=='missing':
+                if type(v) is list and len(v)==0:
+                    continue
+            else:
+                if v is None:
+                    continue
+            d[k] = v
         return d
 
 
