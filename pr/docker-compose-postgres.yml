@@ -1,16 +1,14 @@
-version: '3'
+---
 services:
   pr:
-    build:
-      context: .
-      args:
-        D4R6Y: ${D4R6Y}
-        PIP_CONF: ${PIP_CONF}
-        APK_ARGS: ${APK_ARGS}
-    # image: osia/pr
+    image: pr:latest
+    build: .
     ports:
       - 8080:8080
     environment:
+      - PR_PORT=8080
+      - PR_LOGLEVEL=DEBUG
+# [---CUSTO---]
       # See https://docs.sqlalchemy.org/en/20/core/engines.html#postgresql
       - PR_DATABASE_URL=postgresql+psycopg2://admin:SuperSecret@postgres/plug2db
       - PR_CUSTO_FILENAME=/custo/custo.yaml
@@ -31,3 +29,4 @@ services:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=SuperSecret
       - TZ=Europe/Paris
+# [---CUSTO---]
