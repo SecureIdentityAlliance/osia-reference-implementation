@@ -141,7 +141,7 @@ def do_birth(args):
         assert 200 == r.status_code
         assert 'Server' not in r.headers
         UIN = r.json()
-        assert '125' == UIN[:3]
+        assert '126' == UIN[:3]
     logging.info("UIN for child: %s", UIN)
 
     data = {

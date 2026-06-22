@@ -1,6 +1,6 @@
-configargparse==1.7.5
-aiohttp==3.14.1
-livemetrics[aiohttp]==0.8
+configargparse
+aiohttp
+livemetrics[aiohttp]
 # [---CUSTO---]
 sqlalchemy
 marshmallow-sqlalchemy

@@ -1,6 +1,6 @@
-configargparse==1.5.3
-aiohttp==3.8.3
-livemetrics[aiohttp]==0.6
+configargparse
+aiohttp
+livemetrics[aiohttp]
 
 python_dateutil
 redis

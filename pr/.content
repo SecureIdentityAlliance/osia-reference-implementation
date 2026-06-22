@@ -2,7 +2,7 @@
 # .content
 .coveragerc
 conf/pr.cfg
-docker-compose.yml -> docker-compose-postgres.yml
+# docker-compose.yml -> docker-compose-postgres.yml
 # Dockerfile
 pyproject.toml
 # README.md

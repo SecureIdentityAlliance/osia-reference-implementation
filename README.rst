@@ -47,7 +47,7 @@ Execution
 Start the servers with::
 
     docker system prune -f
-    docker-compose up --build --force-recreate
+    docker compose -f docker-compose.yml up --build --force-recreate
 
 Start the CR client with::
 
