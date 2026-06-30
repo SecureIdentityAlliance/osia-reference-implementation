@@ -2,10 +2,25 @@ import ssl
 import logging
 import json
 
+import yaml
+
+import jsonschema
+import referencing
+import referencing.jsonschema
+
 import aiohttp
 from aiohttp import web
 
+import asyncio
+
+from sqlalchemy.orm import Session, make_transient
+from sqlalchemy import select
+from sqlalchemy import delete
+from sqlalchemy.ext.asyncio import AsyncSession
+
+
 import pr
+import pr.model
 
 import livemetrics
 import livemetrics.publishers.aiohttp
@@ -13,19 +28,6 @@ import livemetrics.publishers.aiohttp
 # [---CUSTO---]
 # Additional imports
 import uuid
-import asyncio
-import yaml
-
-import jsonschema
-import referencing
-import referencing.jsonschema
-
-import pr.model
-
-from sqlalchemy.orm import Session, make_transient
-from sqlalchemy import select
-from sqlalchemy import delete
-from sqlalchemy.ext.asyncio import AsyncSession
 
 # An exception class to propagate web.Response
 class ResponseException(BaseException):
@@ -142,12 +144,12 @@ def serve():
     logging.info('Starting application...')
     web.run_app(app, host=pr.args.ip, port=pr.args.port, access_log=None, ssl_context=get_ssl_context())
 
-# [---CUSTO---]
     logging.info('Closing application...')
     if pr.aengine:
         # proper cleanup of async engine
         asyncio.run(pr.aengine.dispose())
         logging.info('Async engine closed')
+
 
 # _____________________________________________________________________________
 def to_bool(x):
@@ -169,6 +171,7 @@ def validate_json(data, schema_name, with_required=True):
                 api = yaml.load(f, Loader=yaml.SafeLoader)
             schemas = api['components']['schemas']
 
+            # [---CUSTO---]
             # patch schemas for readOnly attributes
             schemas['Identity']['required'].remove('identityId')
 
@@ -177,6 +180,7 @@ def validate_json(data, schema_name, with_required=True):
                 schemas['BiographicData'] = pr.model.custo['BiographicData']
             if pr.model.custo and 'ContextualData' in pr.model.custo:
                 schemas['ContextualData'] = pr.model.custo['ContextualData']
+            # [---CUSTO---]
 
             registry = referencing.Registry().with_resource(
                 uri='',
@@ -197,6 +201,7 @@ def validate_json(data, schema_name, with_required=True):
     if msg:
         logging.error(msg)
         return msg
+# [---CUSTO---]
 
 # _____________________________________________________________________________
 # PR interface

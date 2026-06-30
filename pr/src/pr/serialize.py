@@ -11,6 +11,31 @@ from marshmallow_sqlalchemy import SQLAlchemySchema, SQLAlchemyAutoSchema, auto_
 from marshmallow_sqlalchemy.fields import Related, Nested
 from marshmallow import post_dump, pre_load
 
+# [---CUSTO---]
+# Additional imports
+# [---CUSTO---]
+
+# Utilities for embedding custo data with an additional prefix
+def _ext2int(data,key,prefix):
+    # Get all content from data.*key* and copy as bgd_zzz
+    for k,v in data.setdefault(key,{}).items():
+        data[prefix+k] = v
+    del data[key]
+    return data
+
+def _int2ext(data,key,prefix):
+    # Get all key of the form '*prefix*_zzz' and move it in data.*key*.zzz
+    bgd = {}
+    data2 = {}
+    for k,v in data.items():
+        if not k.startswith(prefix) and v is not None:
+            data2[k] = v
+            continue
+        # Do not dump if None (no value in database)
+        if v is not None:
+            bgd[k[len(prefix):]] = v
+    data2[key] = bgd
+    return data2
 
 # Field that serializes to a base64 encoded string a bytes.
 class LargeBinary(fields.Field):
@@ -28,6 +53,8 @@ class LargeBinary(fields.Field):
         except ValueError as error:
             raise ValidationError("Buffer must be base64 encoded") from error
 
+# [---CUSTO---]
+# Place it your serializer
 class DocumentPartSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = model.DocumentPart
@@ -123,32 +150,9 @@ class PersonSchema(SQLAlchemyAutoSchema):
         dump_only = ['personId']
         exclude = ['identities']
 
-
-# Utilities for embedded biographicData & contextualData
-def _ext2int(data,key='biographicData',prefix='bgd_'):
-    # Get all content from data.biographicData and copy as bgd_zzz
-    for k,v in data.setdefault(key,{}).items():
-        data[prefix+k] = v
-    del data[key]
-    return data
-
-def _int2ext(data,key='biographicData',prefix='bgd_'):
-    # Get all key of the form 'bgd_zzz' and move it in data.biographicData.zzz
-    bgd = {}
-    data2 = {}
-    for k,v in data.items():
-        if not k.startswith(prefix) and v is not None:
-            data2[k] = v
-            continue
-        # Do not dump if None (no value in database)
-        if v is not None:
-            bgd[k[len(prefix):]] = v
-    data2[key] = bgd
-    return data2
-
 def ext2int(data):
-    return _ext2int(_ext2int(data,key='contextualData',prefix='ctx_'))
+    return _ext2int(_ext2int(data,key='contextualData',prefix='ctx_'), key='biographicData',prefix='bgd_')
 
 def int2ext(data):
-    return _int2ext(_int2ext(data,key='contextualData',prefix='ctx_'))
-
+    return _int2ext(_int2ext(data,key='contextualData',prefix='ctx_'), key='biographicData',prefix='bgd_')
+# [---CUSTO---]

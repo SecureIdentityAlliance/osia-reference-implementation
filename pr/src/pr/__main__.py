@@ -1,5 +1,6 @@
 
 import sys
+import os
 import json
 import time
 import logging
@@ -8,11 +9,10 @@ import configargparse
 
 import pr
 import pr.server
+import pr.model
 
 # [---CUSTO---]
 # Additional imports/global vars
-import os
-import pr.model
 # [---CUSTO---]
 
 # _____________________________________________________________________________
@@ -103,13 +103,19 @@ def main(argv=sys.argv[1:]):
 
     # Add arguments for clients
       
-    # [---CUSTO---]
-    # Additional arguments
+
+    
     parser.add_argument(      "--custo-filename", default="custo.yaml", dest='custo_filename', env_var='PR_CUSTO_FILENAME', help="File containing the description of the custo (YAML)")
     parser.add_argument(      "--api-file", default=os.path.join(os.path.dirname(__file__), 'pr.yaml'), dest='api_file', env_var='PR_API_FILE', help="OpenAPI file for this server (YAML)")
+    
+    
     parser.add_argument(      "--database-url", default="sqlite:///file:testdb?mode=memory&cache=shared&uri=true", dest='database_url', env_var='PR_DATABASE_URL', help="String to connect to the database")
     parser.add_argument(      "--dont-create-schema", default=False, action='store_true', dest='dont_create_schema', help="Default is to create the schema in the database when connecting. Use this flag to disable this behavior")
     parser.add_argument(      "--dump-schema", default=False, action='store_true', dest='dump_schema', help="Used to dump the DDL of the database schema")
+    
+
+    # [---CUSTO---]
+    # Additional arguments
     # [---CUSTO---]
 
     pr.args = parser.parse_args(argv)
@@ -135,12 +141,15 @@ def main(argv=sys.argv[1:]):
         fh.setFormatter(f)
         logging.getLogger().addHandler(fh)
 
-    # [---CUSTO---]
-    # Extra initialization
+    
     if pr.args.dump_schema:
         pr.model.dump()
         return
     pr.model.setup()
+    
+
+    # [---CUSTO---]
+    # Extra initialization
     # [---CUSTO---]
 
     logging.info('Starting')

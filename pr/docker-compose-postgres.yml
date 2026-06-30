@@ -23,7 +23,7 @@ services:
       - postgres
     restart: on-failure
   postgres:
-    image: ${D4R6Y}postgres:17.3-alpine3.21
+    image: ${D4R6Y}postgres:18.4-alpine3.24
     ports:
       - 5432:5432
     environment:

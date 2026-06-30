@@ -1,5 +1,3 @@
-# https://www.sqlalchemy.org/
-
 import io
 import logging
 import json
@@ -25,6 +23,12 @@ from sqlalchemy.types import TypeDecorator, VARCHAR
 #______________________________________________________________________________
 class Base(AsyncAttrs,DeclarativeBase):
     pass
+
+# [---CUSTO---]
+# Data model classes and global variables
+
+CUSTO_BGD = {}
+CUSTO_CTX = {}
 
 class Person(Base):
     __tablename__ = 'PERSON'
@@ -208,23 +212,25 @@ class Identity(Base):
         res = session.scalars(select(Identity).where(Identity.identityId==identityId))
         return list(res)
 
+# [---CUSTO---]
+
 #______________________________________________________________________________
-# Load the custo
+# Mechanism to load the custo and inject its definition in the data model
 # Custo definition is inspired by OpenAPI v3 (https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md#dataTypes)
 # See also https://docs.sqlalchemy.org/en/20/core/type_basics.html
 #______________________________________________________________________________
 
-def _add_field(n, c, prefix, required):
+def _add_field(name, c, prefix, required, klass):
     # support the following properties: type, format, enum (for string), maxLength (for string), required, default
     # XXX min, max, pattern? or leave in JSON schema validation?
 
     kw = {}
-    if n in required:
+    if name in required:
         kw['nullable'] = False
     else:
         kw['nullable'] = True
         
-    n = prefix + n
+    name = prefix + name
     t = c.get('type','string')
     col = None
     d = c.get('default',None)
@@ -236,47 +242,48 @@ def _add_field(n, c, prefix, required):
         e = c.get('enum',None)
         if f=='':
             if e is not None:
-                col = mapped_column(n, sa.Enum(*e, name=n+'_enum'),**kw)
+                col = mapped_column(name, sa.Enum(*e, name=name+'_enum'),**kw)
             else:
-                col = mapped_column(n, sa.String(c.get('maxLength',255)),**kw)
+                col = mapped_column(name, sa.String(c.get('maxLength',255)),**kw)
         elif f=='date':
-            col = mapped_column(n, sa.Date(),**kw)
+            col = mapped_column(name, sa.Date(),**kw)
         elif f=='date-time':
-            col = mapped_column(n, sa.DateTime(timezone=True),**kw)
+            col = mapped_column(name, sa.DateTime(timezone=True),**kw)
         elif f=='byte':
-            col = mapped_column(n, sa.Text(),**kw)
+            col = mapped_column(name, sa.Text(),**kw)
     elif t=='boolean':
-        col = mapped_column(n, sa.Boolean(),**kw)
+        col = mapped_column(name, sa.Boolean(),**kw)
     elif t=='integer':
         f = c.get('format','int32')
         if f=='int32':
-            col = mapped_column(n, sa.Integer(),**kw)
+            col = mapped_column(name, sa.Integer(),**kw)
         elif f=='int64':
-            col = mapped_column(n, sa.BigInteger(),**kw)
+            col = mapped_column(name, sa.BigInteger(),**kw)
     elif t=='number':
         f = c.get('format','float')
         if f=='float':
-            col = mapped_column(n, sa.Float(),**kw)
+            col = mapped_column(name, sa.Float(),**kw)
         elif f=='double':
-            col = mapped_column(n, sa.Double(),**kw)
+            col = mapped_column(name, sa.Double(),**kw)
     elif t=='object':
-        col = mapped_column(n, sa.JSON(),**kw)
+        col = mapped_column(name, sa.JSON(),**kw)
     if col is None:
-        raise Exception("Illegal type/format in custo definition for field [{}]/[{}]".format(n, t))
+        raise Exception("Illegal type/format in custo definition for field [{}]/[{}]".format(name, t))
     # https://docs.sqlalchemy.org/en/14/orm/declarative_tables.html#appending-additional-columns-to-an-existing-declarative-mapped-class
-    setattr(Identity, n, col)
+    setattr(klass, name, col)
 
-CUSTO_BGD = {}
-CUSTO_CTX = {}
-def load_custo(custo):
+def inject_custo(custo):
+    # [---CUSTO---]
+    # Process the custo and inject in data model
     global CUSTO_BGD
     global CUSTO_CTX
-    for n,c in custo.get('BiographicData',{}).get('properties', {}).items():
-        _add_field(n,c,'bgd_', custo.get('BiographicData',{}).get('required', []))
-        CUSTO_BGD[n] = c
-    for n,c in custo.get('ContextualData',{}).get('properties', {}).items():
-        _add_field(n,c,'ctx_', custo.get('ContextualData',{}).get('required', []))
-        CUSTO_CTX[n] = c
+    for name,c in custo.get('BiographicData',{}).get('properties', {}).items():
+        _add_field(name,c,'bgd_', custo.get('BiographicData',{}).get('required', []), Identity)
+        CUSTO_BGD[name] = c
+    for name,c in custo.get('ContextualData',{}).get('properties', {}).items():
+        _add_field(name,c,'ctx_', custo.get('ContextualData',{}).get('required', []), Identity)
+        CUSTO_CTX[name] = c
+    # [---CUSTO---]
 
 custo = None
 def _load_custo():
@@ -286,7 +293,7 @@ def _load_custo():
     if pr.args and pr.args.custo_filename and custo is None:
         with io.open(pr.args.custo_filename, 'rt', encoding='utf-8') as stream:
             custo = yaml.load(stream, Loader=yaml.Loader)
-            load_custo(custo)
+            inject_custo(custo)
             logging.info("Custo from file [%s] was loaded", pr.args.custo_filename)
 
 def setup():

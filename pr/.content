@@ -10,6 +10,8 @@ requirements.txt
 setup.cfg
 setup.py
 src/pr/server.py
+src/pr/model.py
+src/pr/serialize.py
 src/pr/__init__.py
 src/pr/__main__.py
 tests/test_cmdline.py
