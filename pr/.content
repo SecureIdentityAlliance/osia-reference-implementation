@@ -19,4 +19,5 @@ tests/test_monitoring.py
 tests/test_pr.py
 tests/TLS_CA/setup_CA.sh
 tests/__init__.py
+tests/custo.yaml
 tox.ini

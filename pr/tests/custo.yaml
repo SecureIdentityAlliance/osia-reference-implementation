@@ -1,4 +1,5 @@
 ---
+# [---CUSTO---]
 BiographicData:
   type: object
   required:
@@ -58,3 +59,4 @@ ContextualData:
         brand:
           type: string
   additionalProperties: false
+# [---CUSTO---]

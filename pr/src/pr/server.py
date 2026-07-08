@@ -171,15 +171,13 @@ def validate_json(data, schema_name, with_required=True):
                 api = yaml.load(f, Loader=yaml.SafeLoader)
             schemas = api['components']['schemas']
 
+            # apply custo definition
+            if pr.model.custo:
+                for k,v in pr.model.custo.items():
+                    schemas[k] = v
             # [---CUSTO---]
             # patch schemas for readOnly attributes
             schemas['Identity']['required'].remove('identityId')
-
-            # apply custo definition
-            if pr.model.custo and 'BiographicData' in pr.model.custo:
-                schemas['BiographicData'] = pr.model.custo['BiographicData']
-            if pr.model.custo and 'ContextualData' in pr.model.custo:
-                schemas['ContextualData'] = pr.model.custo['ContextualData']
             # [---CUSTO---]
 
             registry = referencing.Registry().with_resource(
