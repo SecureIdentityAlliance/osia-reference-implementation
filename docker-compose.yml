@@ -1,4 +1,26 @@
 services:
+  #
+  # OSIA Services
+  #
+  enrollment:
+    build:
+      context: enrollment
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: sia/enrollment
+    environment:
+      ENROLLMENT_CUSTO_FILENAME: "/custo/enrollment.yaml"
+      ENROLLMENT_NOTIFICATION_URL: "http://notification:8080"
+    volumes:
+      - ${PWD}/custo:/custo
+    ports:
+      - "8000:8080"
+    links:
+      - notification
+    depends_on:
+      - notification
   pr:
     build:
       context: pr
@@ -23,23 +45,6 @@ services:
     image: sia/uin
     ports:
       - "8020:8080"
-  pr-portal:
-    build:
-      context: pr-portal
-      args:
-        D4R6Y: ${D4R6Y}
-        PIP_CONF: ${PIP_CONF}
-        APK_ARGS: ${APK_ARGS}
-    image: sia/pr-portal
-    environment:
-      - PR_URL=http://pr:8080
-      - UIN_URL=http://uin:8080
-    tty: true
-    ports:
-      - "8100:8080"
-    links:
-      - pr
-      - uin
   notification:
     build:
       context: notification
@@ -57,6 +62,10 @@ services:
       - redis
     depends_on:
       - redis
+
+  #
+  # Middleware
+  #
   orchestrator:
     build:
       context: orchestrator
@@ -81,6 +90,42 @@ services:
     depends_on:
       - notification
       - redis
+  #
+  # Databases
+  #
   redis:
-    image: "${D4R6Y}redis:7.0.9-alpine"
-
+    image: ${D4R6Y}redis:7.0.9-alpine
+  postgres:
+    image: ${D4R6Y}postgres:18.4-alpine3.24
+    environment:
+      - POSTGRES_DB=osiadb
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=SuperSecret
+      - TZ=Europe/Paris
+  pgadmin:
+    image: ${D4R6Y}dpage/pgadmin4:2026-06-18-3
+    ports:
+      - 9080:80
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=osia@secureidentityalliance.org
+      - PGADMIN_DEFAULT_PASSWORD=SuperSecret
+  #
+  # Non-OSIA components, for testing, monitoring and demonstration
+  #
+  pr-portal:
+    build:
+      context: pr-portal
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: sia/pr-portal
+    environment:
+      - PR_URL=http://pr:8080
+      - UIN_URL=http://uin:8080
+    tty: true
+    ports:
+      - "8100:8080"
+    links:
+      - pr
+      - uin

@@ -121,6 +121,25 @@ async def register_topic(app):
     except:
         logging.exception("Could not subscribe on topic CR")
 
+    logging.info("Register for events from topic [enrollment]")
+    params = {'topic':'enrollment', 'address': orchestrator.args.my_url+'enrollment_event', 'policy': '3,10'}
+
+    try:
+        async with aiohttp.ClientSession() as clt_session:
+            async with clt_session.post(orchestrator.args.notification_url+"v1/topics", params={'name':'enrollment'}, ssl=False) as response:
+                if response.status == 200:
+                    await response.read()
+                else:
+                    logging.error("Failed to create topic [enrollment]")
+            async with clt_session.post(orchestrator.args.notification_url+"v1/subscriptions", params=params, ssl=False) as response:
+                if response.status == 200:
+                    await response.read()
+                else:
+                    logging.error("Failed to subscribe on topic [enrollment]")
+    except:
+        logging.exception("Could not subscribe on topic enrollment")
+
+
 # _____________________________________________________________________________
 @routes.post('/cr_event')
 @LM.timer("cr_event", ok_status, "error")
@@ -149,5 +168,31 @@ async def cr_event(request):
             t = orchestrator.tasks.workflow(event['uin'], 'liveBirth')
         else:
             logging.info("Ignoring event [%s]", m['subject'])
+    return web.Response(status=200, body='')
+
+# _____________________________________________________________________________
+@routes.post('/enrollment_event')
+@LM.timer("enrollment_event", ok_status, "error")
+async def enrollment_event(request):
+    logging.debug('Receiving notification')
+    m = await request.json()
+
+    if m['type']=='SubscriptionConfirmation':
+        logging.info("Confirming subscription")
+        logging.debug('Headers: '+str(request.headers))
+        logging.debug(str(m))
+        async with aiohttp.ClientSession() as clt_session:
+            async with clt_session.get(m['confirmURL'], params={'token': m['token']}, ssl=False) as response:
+                if response.status == 200:
+                    await response.read()
+                else:
+                    logging.error("Failed to confirm subscription %s", m['confirmURL'])
+                    return web.Response(status=400, body='')
+    else:
+        logging.debug("Notification")
+        logging.debug('Headers: '+str(request.headers))
+        logging.debug(str(m))
+        event = json.loads(m['message'])
+        logging.info("Ignoring event [%s]", str(event))
     return web.Response(status=200, body='')
 
