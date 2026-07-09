@@ -25,14 +25,16 @@ import pr.model
 import livemetrics
 import livemetrics.publishers.aiohttp
 
-# [---CUSTO---]
-# Additional imports
-import uuid
 
 # An exception class to propagate web.Response
 class ResponseException(BaseException):
     def __init__(self, response):
         self.response = response
+
+
+# [---CUSTO---]
+# Additional imports
+import uuid
 
 # [---CUSTO---]
 
@@ -66,9 +68,11 @@ async def error_middleware(request, handler):
         if exc.args==('transactionId',):
                 return web.json_response({'code':1, 'message': 'Missing transactionId'}, status=400)
         raise
+    # [---CUSTO---]
+    # 
     except ResponseException as resp:
         return resp.response
-    # [---CUSTO---]
+    # 
     except aiohttp.web_exceptions.HTTPException:
         raise
     except Exception as exc:
@@ -206,51 +210,6 @@ def validate_json(data, schema_name, with_required=True):
 # _____________________________________________________________________________
 
 # _____________________________________________________________________________
-def _build_predicate(data, reference, gallery, group, limit, offset):
-    if group:
-        sel = select(pr.model.Identity.personId)
-    else:
-        sel = select(pr.model.Identity)
-    for pred in data:
-        k = pred['attributeName']
-        found = False
-        for pre, lis in [('',['personId']), ('bgd_', pr.model.CUSTO_BGD)]:
-            if k in lis:
-                found = True
-                if pred['operator'] == '=':
-                    sel = sel.where( getattr(pr.model.Identity, pre+k) == pred['value'])
-                elif pred['operator']=='!=':
-                    sel = sel.where( getattr(pr.model.Identity, pre+k) != pred['value'])
-                elif pred['operator']=='<':
-                    sel = sel.where( getattr(pr.model.Identity, pre+k) < pred['value'])
-                elif pred['operator']=='>':
-                    sel = sel.where( getattr(pr.model.Identity, pre+k) > pred['value'])
-                elif pred['operator']=='<=':
-                    sel = sel.where( getattr(pr.model.Identity, pre+k) <= pred['value'])
-                elif pred['operator']=='>=':
-                    sel = sel.where( getattr(pr.model.Identity, pre+k) >= pred['value'])
-                else:
-                    return web.json_response({'code':1, 'message': 'Invalid operator [{}] in query expression'.format(pred['operator'])}, status=400)
-                break
-        if not found:
-            return web.json_response({'code':1, 'message': 'Unknown attribute [{}] in query expression'.format(k)}, status=400)
-
-    if reference:
-        sel = sel.where(pr.model.Identity.isReference)
-
-    if group:
-        sel = sel.group_by("personId")
-
-    if gallery:
-        sel = sel.join(pr.model.Gallery).where(pr.model.Gallery.galleryId == gallery)
-
-    if limit:
-        sel = sel.limit(limit)
-    if offset:
-        sel = sel.offset(offset)
-    return sel
-
-# _____________________________________________________________________________
 @routes.post('/v1/persons')
 @LM.timer("findPersons", ok_status, "error")
 async def findPersons(request):
@@ -270,7 +229,9 @@ async def findPersons(request):
 
     # build predicate
     async with AsyncSession(pr.aengine) as session, session.begin():
-        sel = _build_predicate(data, reference, gallery, group, limit, offset)
+        sel = pr.model._build_predicate(data, reference, gallery, group, limit, offset)
+        if type(sel) is dict:
+            return web.json_response(sel, status=400)
         res = await session.execute(sel)
         # Execute
         ret = []
@@ -820,9 +781,9 @@ async def queryPersonList(request):
                 operator='=',
                 value=v
             ))
-        sel = _build_predicate(data, reference=True, gallery=None, group=False, limit=limit, offset=offset)
-        if type(sel) is web.Response:
-            return sel
+        sel = pr.model._build_predicate(data, reference=True, gallery=None, group=False, limit=limit, offset=offset)
+        if type(sel) is dict:
+            return web.json_response(sel, status=400)
 
         # Execute
         ret = []
@@ -900,9 +861,9 @@ async def verifyPersonAttributes(request):
             operator='=',
             value=uin
         ))
-        sel = _build_predicate(data, reference=True, gallery=None, group=True, limit=100, offset=0)
-        if type(sel) is web.Response:
-            return sel
+        sel = pr.model._build_predicate(data, reference=True, gallery=None, group=True, limit=100, offset=0)
+        if type(sel) is dict:
+            return web.json_response(sel, status=400)
         result = await session.execute(sel)
         for ident in result.scalars():
             # we found one

@@ -214,6 +214,66 @@ class Identity(Base):
 
 # [---CUSTO---]
 
+
+#
+# Mechanism to build a predicate
+#
+def _build_predicate(data,
+# [---CUSTO---]
+                    reference, gallery, group,
+# [---CUSTO---]
+                     limit, offset):
+    sel = select(Identity)
+# [---CUSTO---]
+    if group:
+        sel = select(Identity.personId)
+# [---CUSTO---]
+    for pred in data:
+        k = pred['attributeName']
+        found = False
+        for pre, lis in [
+# [---CUSTO---]
+            ('',['personId']),
+            ('bgd_', CUSTO_BGD)
+# [---CUSTO---]
+                         ]:
+            if k in lis:
+                found = True
+                if pred['operator'] == '=':
+                    sel = sel.where( getattr(Identity, pre+k) == pred['value'])
+                elif pred['operator']=='!=':
+                    sel = sel.where( getattr(Identity, pre+k) != pred['value'])
+                elif pred['operator']=='<':
+                    sel = sel.where( getattr(Identity, pre+k) < pred['value'])
+                elif pred['operator']=='>':
+                    sel = sel.where( getattr(Identity, pre+k) > pred['value'])
+                elif pred['operator']=='<=':
+                    sel = sel.where( getattr(Identity, pre+k) <= pred['value'])
+                elif pred['operator']=='>=':
+                    sel = sel.where( getattr(Identity, pre+k) >= pred['value'])
+                else:
+                    {'code':1, 'message': 'Invalid operator [{}] in query expression'.format(pred['operator'])}
+                break
+        if not found:
+            return {'code':1, 'message': 'Unknown attribute [{}] in query expression'.format(k)}
+
+# [---CUSTO---]
+    if reference:
+        sel = sel.where(pr.model.Identity.isReference)
+
+    if group:
+        sel = sel.group_by("personId")
+
+    if gallery:
+        sel = sel.join(pr.model.Gallery).where(pr.model.Gallery.galleryId == gallery)
+# [---CUSTO---]
+
+    if limit:
+        sel = sel.limit(limit)
+    if offset:
+        sel = sel.offset(offset)
+    return sel
+
 #______________________________________________________________________________
 # Mechanism to load the custo and inject its definition in the data model
 # Custo definition is inspired by OpenAPI v3 (https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md#dataTypes)

@@ -22,6 +22,10 @@ LOOP = None
 PORT = '8080'
 HOSTNAME = 'localhost'
 
+# [---CUSTO---]
+# Custom code used for testing
+# [---CUSTO---]
+
 async def runner():
     # Setup the global args variable (from the env variables)
     pr.__main__.main(['--do-not-start'])
