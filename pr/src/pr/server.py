@@ -203,6 +203,43 @@ def validate_json(data, schema_name, with_required=True):
     if msg:
         logging.error(msg)
         return msg
+
+
+# _____________________________________________________________________________
+def gauge_nb_persons():
+    if not pr.engine:
+        return 0
+    with Session(pr.engine) as session, session.begin():
+        return session.query(pr.model.Person).count()
+LM.gauge('nb_persons', gauge_nb_persons)
+
+# _____________________________________________________________________________
+def gauge_nb_identities():
+    if not pr.engine:
+        return 0
+    with Session(pr.engine) as session, session.begin():
+        return session.query(pr.model.Identity).count()
+LM.gauge('nb_identities', gauge_nb_identities)
+
+# _____________________________________________________________________________
+def gauge_nb_biometricdata():
+    if not pr.engine:
+        return 0
+    with Session(pr.engine) as session, session.begin():
+        return session.query(pr.model.BiometricData).count()
+LM.gauge('nb_biometricdata', gauge_nb_biometricdata)
+
+
+# _____________________________________________________________________________
+async def _aget_person(session, person_id):
+    res = await pr.model.Person.afind_by_id(session, person_id)
+    if len(res) > 1:
+        raise ResponseException(web.Response(status=400))
+    if len(res) < 1:
+        raise ResponseException(web.Response(status=404))
+    return res[0]
+
+
 # [---CUSTO---]
 
 # _____________________________________________________________________________
@@ -242,27 +279,6 @@ async def findPersons(request):
                 ret.append( dict(personId=I) )
     
         return web.json_response(ret, status=200)
-
-
-# _____________________________________________________________________________
-def _get_person(session, person_id):
-    res = pr.model.Person.find_by_id(session, person_id)
-    if len(res) > 1:
-        # not sure we can reach this code since personId is a PK
-        raise ResponseException(web.Response(status=400))
-    if len(res) < 1:
-        raise ResponseException(web.Response(status=404))
-    return res[0]
-
-# _____________________________________________________________________________
-async def _aget_person(session, person_id):
-    res = await pr.model.Person.afind_by_id(session, person_id)
-    if len(res) > 1:
-        # not sure we can reach this code since personId is a PK
-        raise ResponseException(web.Response(status=400))
-    if len(res) < 1:
-        raise ResponseException(web.Response(status=404))
-    return res[0]
 
 # _____________________________________________________________________________
 @routes.post('/v1/persons/{personId}')
@@ -935,34 +951,5 @@ async def readDocument(request):
         return resp
 
     return web.Response(status=404)
-
-
-#
-# Monitoring interface
-#
-
-# _____________________________________________________________________________
-def gauge_nb_persons():
-    if not pr.engine:
-        return 0
-    with Session(pr.engine) as session, session.begin():
-        return session.query(pr.model.Person).count()
-LM.gauge('nb_persons', gauge_nb_persons)
-
-# _____________________________________________________________________________
-def gauge_nb_identities():
-    if not pr.engine:
-        return 0
-    with Session(pr.engine) as session, session.begin():
-        return session.query(pr.model.Identity).count()
-LM.gauge('nb_identities', gauge_nb_identities)
-
-# _____________________________________________________________________________
-def gauge_nb_biometricdata():
-    if not pr.engine:
-        return 0
-    with Session(pr.engine) as session, session.begin():
-        return session.query(pr.model.BiometricData).count()
-LM.gauge('nb_biometricdata', gauge_nb_biometricdata)
 
 # [---CUSTO---]
