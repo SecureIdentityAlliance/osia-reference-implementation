@@ -9,18 +9,22 @@ services:
         D4R6Y: ${D4R6Y}
         PIP_CONF: ${PIP_CONF}
         APK_ARGS: ${APK_ARGS}
-    image: sia/enrollment
+    image: osia/enrollment
     environment:
       ENROLLMENT_CUSTO_FILENAME: "/custo/enrollment.yaml"
       ENROLLMENT_NOTIFICATION_URL: "http://notification:8080"
+      ENROLLMENT_DATABASE_URL: "postgresql+psycopg2://enrollment:EnrollmentSecret@postgres/osiadb"
     volumes:
       - ${PWD}/custo:/custo
     ports:
       - "8000:8080"
     links:
       - notification
+      - postgres
     depends_on:
       - notification
+      - postgres
+    restart: on-failure
   pr:
     build:
       context: pr
@@ -28,13 +32,19 @@ services:
         D4R6Y: ${D4R6Y}
         PIP_CONF: ${PIP_CONF}
         APK_ARGS: ${APK_ARGS}
-    image: sia/pr
+    image: osia/pr
     environment:
       PR_CUSTO_FILENAME: "/custo/pr.yaml"
+      PR_DATABASE_URL: "postgresql+psycopg2://pr:PRSecret@postgres/osiadb"
     volumes:
       - ${PWD}/custo:/custo
     ports:
       - "8010:8080"
+    links:
+      - postgres
+    depends_on:
+      - postgres
+    restart: on-failure
   uin:
     build:
       context: uin
@@ -42,7 +52,7 @@ services:
         D4R6Y: ${D4R6Y}
         PIP_CONF: ${PIP_CONF}
         APK_ARGS: ${APK_ARGS}
-    image: sia/uin
+    image: osia/uin
     ports:
       - "8020:8080"
   notification:
@@ -52,7 +62,7 @@ services:
         D4R6Y: ${D4R6Y}
         PIP_CONF: ${PIP_CONF}
         APK_ARGS: ${APK_ARGS}
-    image: sia/notification
+    image: osia/notification
     ports:
       - "8030:8080"
     environment:
@@ -73,7 +83,7 @@ services:
         D4R6Y: ${D4R6Y}
         PIP_CONF: ${PIP_CONF}
         APK_ARGS: ${APK_ARGS}
-    image: sia/orchestrator
+    image: osia/orchestrator
     ports:
       - "8040:8080"
     extra_hosts:
@@ -102,13 +112,15 @@ services:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=SuperSecret
       - TZ=Europe/Paris
+    volumes:
+      - ./pg_setup.sql:/docker-entrypoint-initdb.d/pg_setup.sql
   pgadmin:
     image: ${D4R6Y}dpage/pgadmin4:2026-06-18-3
     ports:
       - 9080:80
     environment:
       - PGADMIN_DEFAULT_EMAIL=osia@secureidentityalliance.org
-      - PGADMIN_DEFAULT_PASSWORD=SuperSecret
+      - PGADMIN_DEFAULT_PASSWORD=OSIASecret
   #
   # Non-OSIA components, for testing, monitoring and demonstration
   #
@@ -119,7 +131,7 @@ services:
         D4R6Y: ${D4R6Y}
         PIP_CONF: ${PIP_CONF}
         APK_ARGS: ${APK_ARGS}
-    image: sia/pr-portal
+    image: osia/pr-portal
     environment:
       - PR_URL=http://pr:8080
       - UIN_URL=http://uin:8080

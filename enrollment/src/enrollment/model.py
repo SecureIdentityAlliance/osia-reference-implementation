@@ -1,6 +1,7 @@
 import io
 import logging
 import json
+import datetime
 from typing import Optional
 
 import yaml
@@ -17,6 +18,8 @@ from sqlalchemy import select
 from sqlalchemy import create_engine, create_mock_engine
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.types import TypeDecorator, VARCHAR
+
+QCONV = {}
 
 #______________________________________________________________________________
 # The persistent schema
@@ -164,6 +167,7 @@ class Enrollment(Base):
 # [---CUSTO---]
 
 
+
 #
 # Mechanism to build a predicate
 #
@@ -171,6 +175,7 @@ def _build_predicate(data,
 # [---CUSTO---]
 # [---CUSTO---]
                      limit, offset):
+    global QCONV
     sel = select(Enrollment)
 # [---CUSTO---]
 # [---CUSTO---]
@@ -188,18 +193,23 @@ def _build_predicate(data,
                          ]:
             if k in lis:
                 found = True
+                qv = pred['value']
+                col_name = pre+k
+                col = getattr(Enrollment, col_name)
+                if col_name in QCONV:
+                    qv = QCONV[col_name](qv)
                 if pred['operator'] == '=':
-                    sel = sel.where( getattr(Enrollment, pre+k) == pred['value'])
+                    sel = sel.where( col == qv)
                 elif pred['operator']=='!=':
-                    sel = sel.where( getattr(Enrollment, pre+k) != pred['value'])
+                    sel = sel.where( col != qv)
                 elif pred['operator']=='<':
-                    sel = sel.where( getattr(Enrollment, pre+k) < pred['value'])
+                    sel = sel.where( col < qv)
                 elif pred['operator']=='>':
-                    sel = sel.where( getattr(Enrollment, pre+k) > pred['value'])
+                    sel = sel.where( col > qv)
                 elif pred['operator']=='<=':
-                    sel = sel.where( getattr(Enrollment, pre+k) <= pred['value'])
+                    sel = sel.where( col <= qv)
                 elif pred['operator']=='>=':
-                    sel = sel.where( getattr(Enrollment, pre+k) >= pred['value'])
+                    sel = sel.where( col >= qv)
                 else:
                     {'code':1, 'message': 'Invalid operator [{}] in query expression'.format(pred['operator'])}
                 break
@@ -224,7 +234,7 @@ def _build_predicate(data,
 def _add_field(name, c, prefix, required, klass):
     # support the following properties: type, format, enum (for string), maxLength (for string), required, default
     # XXX min, max, pattern? or leave in JSON schema validation?
-
+    global QCONV
     kw = {}
     if name in required:
         kw['nullable'] = False
@@ -248,8 +258,10 @@ def _add_field(name, c, prefix, required, klass):
                 col = mapped_column(name, sa.String(c.get('maxLength',255)),**kw)
         elif f=='date':
             col = mapped_column(name, sa.Date(),**kw)
+            QCONV[name] = datetime.date.fromisoformat
         elif f=='date-time':
             col = mapped_column(name, sa.DateTime(timezone=True),**kw)
+            QCONV[name] = datetime.datetime.fromisoformat
         elif f=='byte':
             col = mapped_column(name, sa.Text(),**kw)
     elif t=='boolean':

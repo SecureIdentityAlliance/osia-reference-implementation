@@ -47,7 +47,8 @@ class TestDataAccess(TestPr):
             "galleries":["TESTA"],
             "biographicData": {
                 "firstName": "JohnA",
-                "lastName": "Doo"
+                "lastName": "Doo",
+                "dateOfBirth": "1990-12-31"
             }
         }
         with requests.post(self.url+'v1/persons/DA001-1/identities/001', json=data, params={'transactionId': 'T000DA1'},**get_ssl_context()) as r:
@@ -66,7 +67,8 @@ class TestDataAccess(TestPr):
             "galleries":["TESTA"],
             "biographicData": {
                 "firstName": "JohnBA",
-                "lastName": "Doo"
+                "lastName": "Doo",
+                "dateOfBirth": "1992-10-16"
             }
         }
         with requests.post(self.url+'v1/persons/DA001-2/identities/001', json=data, params={'transactionId': 'T000DA1'},**get_ssl_context()) as r:
@@ -79,7 +81,8 @@ class TestDataAccess(TestPr):
             "galleries":["TESTB"],
             "biographicData": {
                 "firstName": "JohnBB",
-                "lastName": "Doo"
+                "lastName": "Doo",
+                "dateOfBirth": "1999-04-30"
             }
         }
         with requests.post(self.url+'v1/persons/DA001-2/identities/002', json=data, params={'transactionId': 'T000DA1'},**get_ssl_context()) as r:
@@ -143,6 +146,16 @@ class TestDataAccess(TestPr):
             assert 400 == r.status_code
             res = r.json()
             assert res['message'].find('undefined') > 0
+
+        # good query, one candidate
+        with requests.get(self.url+'v1/persons', params={'firstName': 'JohnBA', 'dateOfBirth':'1992-10-16', 'names': ['firstName', 'lastName']},**get_ssl_context()) as r:
+            assert 200 == r.status_code
+            res = r.json()
+            assert len(res)==1
+            assert res == [{
+                'firstName': 'JohnBA',
+                'lastName': 'Doo'
+            }]
 
     def test_readPersonAttributes(self):
         # good query, one candidate

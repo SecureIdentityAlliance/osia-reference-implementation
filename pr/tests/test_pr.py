@@ -546,7 +546,8 @@ class TestNominal(TestPr):
             "galleries":["TESTA"],
             "biographicData": {
                 "firstName": "JohnA",
-                "lastName": "Doo"
+                "lastName": "Doo",
+                "dateOfBirth": "1990-12-31"
             }
         }
         with requests.post(self.url+'v1/persons/P0003-1/identities/001', json=data, params={'transactionId': 'T0003'},**get_ssl_context()) as r:
@@ -565,7 +566,8 @@ class TestNominal(TestPr):
             "galleries":["TESTA"],
             "biographicData": {
                 "firstName": "JohnBA",
-                "lastName": "Doo"
+                "lastName": "Doo",
+                "dateOfBirth": "1992-10-16"
             }
         }
         with requests.post(self.url+'v1/persons/P0003-2/identities/001', json=data, params={'transactionId': 'T0003'},**get_ssl_context()) as r:
@@ -578,7 +580,8 @@ class TestNominal(TestPr):
             "galleries":["TESTB"],
             "biographicData": {
                 "firstName": "JohnBB",
-                "lastName": "Doo"
+                "lastName": "Doo",
+                "dateOfBirth": "1999-04-30"
             }
         }
         with requests.post(self.url+'v1/persons/P0003-2/identities/002', json=data, params={'transactionId': 'T0003'},**get_ssl_context()) as r:
@@ -677,6 +680,11 @@ class TestNominal(TestPr):
                 attributeName="firstName",
                 operator="!=",
                 value="Bob"
+            ),
+            dict(
+                attributeName="dateOfBirth",
+                operator=">=",
+                value="1980-01-01"
             ),
         ]
         with requests.post(self.url+'v1/persons', json=data, params={'transactionId': 'T0003'},**get_ssl_context()) as r:

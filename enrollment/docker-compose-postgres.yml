@@ -12,7 +12,7 @@ services:
       - 8080:8080
     environment:
       # See https://docs.sqlalchemy.org/en/20/core/engines.html#postgresql
-      - ENROLLMENT_DATABASE_URL=postgresql+psycopg2://admin:SuperSecret@postgres/plug2db
+      - ENROLLMENT_DATABASE_URL=postgresql+psycopg2://admin:SuperSecret@postgres/testdb
       - ENROLLMENT_CUSTO_FILENAME=/custo/custo.yaml
       - TZ=Europe/Paris
     volumes:
@@ -27,14 +27,14 @@ services:
     ports:
       - 5432:5432
     environment:
-      - POSTGRES_DB=plug2db
+      - POSTGRES_DB=testdb
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=SuperSecret
       - TZ=Europe/Paris
-  pgadmin:
-    image: ${D4R6Y}dpage/pgadmin4:2026-06-18-3
-    ports:
-      - 9080:80
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=ohe@gmail.com
-      - PGADMIN_DEFAULT_PASSWORD=SuperSecret
+  # pgadmin:
+  #   image: ${D4R6Y}dpage/pgadmin4:2026-06-18-3
+  #   ports:
+  #     - 9080:80
+  #   environment:
+  #     - PGADMIN_DEFAULT_EMAIL=osia@secureidentityalliance.org
+  #     - PGADMIN_DEFAULT_PASSWORD=OSIASecret
