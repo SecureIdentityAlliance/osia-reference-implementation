@@ -150,6 +150,11 @@ def main(argv=sys.argv[1:]):
 
     # [---CUSTO---]
     # Extra initialization
+    for n in ['aiosqlite']:
+        wlogger = logging.getLogger(n)
+        wlogger.setLevel(logging.WARNING)
+        wlogger.addHandler(logging.NullHandler())
+
     # [---CUSTO---]
 
     logging.info('Starting')

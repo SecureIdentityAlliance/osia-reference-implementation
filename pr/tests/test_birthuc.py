@@ -1,10 +1,8 @@
-import os
 import unittest
 import sys
+import os
 
 import requests
-
-import pr.pr
 
 URL = "http://localhost:8080/"
 
@@ -14,7 +12,7 @@ if __name__ == '__main__':
     if len(sys.argv)>1:
         URL = sys.argv[1]
 
-    class TestPR(unittest.TestCase):
+    class TestPr(unittest.TestCase):
 
         @property
         def url(self):
@@ -22,7 +20,7 @@ if __name__ == '__main__':
             return URL
 
 else:
-    from . import TestPR
+    from . import TestPr
 
 def get_ssl_context():
     kw = {}
@@ -30,10 +28,7 @@ def get_ssl_context():
     return kw
 
 #_______________________________________________________________________________
-class TestNominal(TestPR):
-
-    def setUp(self):
-        pr.pr.PERSONS = {}
+class TestNominal(TestPr):
 
     def test_birth(self):
         # Create 2 persons
@@ -49,7 +44,7 @@ class TestNominal(TestPR):
             "identityType": "CIVIL",
             "status": "VALID",
             "contextualData": {
-                "enrollmentDate": "2019-01-11",
+                "operationDateTime": "2019-01-11",
             },
             "biographicData": {
                 "firstName": "Albert",
@@ -59,8 +54,13 @@ class TestNominal(TestPR):
                 "nationality": "FRA",
             }
         }
+        if os.environ.get('SQLITE', '0')=='1':
+            # timezone not supported by sqlite
+            data['contextualData']['operationDateTime'] = "2019-01-11T12:00:00"
         with requests.post(self.url+'v1/persons/A/identities/001', json=data, params={'transactionId': 'birth'},**get_ssl_context()) as r:
             assert 201 == r.status_code
+        with requests.put(self.url+'v1/persons/A/identities/001/reference', params={'transactionId': 'birth'},**get_ssl_context()) as r:
+            assert 204 == r.status_code
 
         data = {
             "status": "ACTIVE",
@@ -74,7 +74,7 @@ class TestNominal(TestPR):
             "identityType": "CIVIL",
             "status": "VALID",
             "contextualData": {
-                "enrollmentDate": "2019-01-11",
+                "operationDateTime": "2019-01-11T12:00:00+00:00",
             },
             "biographicData": {
                 "firstName": "Alice",
@@ -84,8 +84,13 @@ class TestNominal(TestPR):
                 "nationality": "FRA",
             }
         }
+        if os.environ.get('SQLITE', '0')=='1':
+            # timezone not supported by sqlite
+            data['contextualData']['operationDateTime'] = "2019-01-11T12:00:00"
         with requests.post(self.url+'v1/persons/B/identities/001', json=data, params={'transactionId': 'birth'},**get_ssl_context()) as r:
             assert 201 == r.status_code
+        with requests.put(self.url+'v1/persons/B/identities/001/reference', params={'transactionId': 'birth'},**get_ssl_context()) as r:
+            assert 204 == r.status_code
 
 
         # match mother

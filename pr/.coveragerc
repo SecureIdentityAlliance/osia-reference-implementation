@@ -1,6 +1,7 @@
 [run]
 omit = tests/*
 data_file = .tox/coverage.data
+concurrency = thread,gevent
 
 [xml]
 output = .tox/coverage.xml

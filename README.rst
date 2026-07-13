@@ -25,7 +25,7 @@ More information about this Use Case can be found `here <https://osia.readthedoc
 To implement this Use Case the following building blocks are necessary:
 
 - A Population Registry: UNDP provides DGIT as a possible Population Registry.
-  The directory ``pr-mock`` contains an implementation of some services from the *PR* and *Data Access* interfaces.
+  The directory ``pr`` contains an implementation of the *PR* and *Data Access* interfaces.
 - A UIN generator: the directory ``uin`` contains an implementation of the OSIA *UIN Management* interface.
 - A notification service: the directory ``notification`` contains an implementation of the OSIA *notification* interface.
 - An orchestrator: the directory ``orchestrator`` contains a service able to dispatch calls to OSIA interfaces in order to implement a Use Case.
