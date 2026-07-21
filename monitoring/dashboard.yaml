@@ -1,10 +1,69 @@
-{% set pr_server = "http://localhost:8010/monitoring/v1" %}
-{% set uin_server = "http://localhost:8020/monitoring/v1" %}
-{% set notification_server = "http://localhost:8030/monitoring/v1" %}
-{% set orchestrator_server = "http://localhost:8040/monitoring/v1" %}
+{% set enrollment_server = "http://enrollment:8080/monitoring/v1" %}
+{% set pr_server = "http://pr:8080/monitoring/v1" %}
+{% set uin_server = "http://uin:8080/monitoring/v1" %}
+{% set notification_server = "http://notification:8080/monitoring/v1" %}
+{% set orchestrator_server = "http://orchestrator:8080/monitoring/v1" %}
 ---
 title: OSIA
 rows:
+- label: Enrollment Server
+  cells:
+  - label: ENR
+    type: label
+  - label: Health
+    server: "{{enrollment_server}}/is_healthy"
+    type: status
+  - label: CPU
+    server: "{{enrollment_server}}/metrics/gauges/cpu/count"
+    type: gauge
+    unit: "%"
+    max: 100
+    gauge_color: green
+    color: "#C0F0C0"
+  - label: Memory
+    server: "{{enrollment_server}}/metrics/gauges/memory/count"
+    type: gauge
+    unit: MB
+    factor: "/1048576"
+    max: 256
+    gauge_color: blue
+    color: "#C0D0F0"
+  - label: Threads
+    server: "{{enrollment_server}}/metrics/gauges/num_threads/count"
+    type: value
+    color: blue
+  - type: empty
+  - label: createEnrollment
+    server: "{{enrollment_server}}/metrics/histograms/createEnrollment"
+    type: histogram
+    unit: ms
+    factor: "*1000"
+    color: "#ff000080"
+    median_color: "#00ff0080"
+  - label: createEnrollment
+    server: ["{{enrollment_server}}/metrics/meters/createEnrollment/201/rate1", "{{enrollment_server}}/metrics/meters/createEnrollment/400/rate1"]
+    type: gauge
+    unit: "/h"
+    factor: "*3600"
+    gauge_color: green
+    color: "#C0F0C0"
+    max: 25000
+  - label: readEnrollment
+    server: "{{enrollment_server}}/metrics/histograms/readEnrollment"
+    type: histogram
+    unit: ms
+    factor: "*1000"
+    color: "#ff000080"
+    median_color: "#00ff0080"
+  - label: readEnrollment
+    server: ["{{enrollment_server}}/metrics/meters/readEnrollment/200/rate1", "{{enrollment_server}}/metrics/meters/readEnrollment/404/rate1"]
+    type: gauge
+    unit: "/h"
+    factor: "*3600"
+    gauge_color: green
+    color: "#C0F0C0"
+    max: 25000
+
 - label: Population Registry
   cells:
   - label: PR
@@ -106,9 +165,9 @@ rows:
     color: "#C0F0C0"
     max: 25000
 
-- label: Notification
+- label: NOTIF
   cells:
-  - label: Notification
+  - label: NOTIF
     type: label
   - label: Health
     server: "{{notification_server}}/is_healthy"
@@ -149,7 +208,7 @@ rows:
     color: "#C0F0C0"
     max: 25000
 
-- label: Orchestrator
+- label: ORCH
   cells:
   - label: Orchestrator
     type: label

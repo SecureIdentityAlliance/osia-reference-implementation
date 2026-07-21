@@ -47,6 +47,7 @@ Execution
 Start the servers with::
 
     docker system prune -f
+    docker compose -f docker-compose.yml build --no-cache
     docker compose -f docker-compose.yml up --build --force-recreate
 
 Start the CR client with::
@@ -60,3 +61,7 @@ Start the CR client with::
     python cr_birth.py
 
 Check the Population Registry content at http://localhost:8100/pr
+
+Check the Grafana dashboard at http://localhost:3000. Login with admin/admin,
+create a Prometheus data source pointing to http://prom:9090
+and then import the dashboard in ``monitoring/OSIA.json``

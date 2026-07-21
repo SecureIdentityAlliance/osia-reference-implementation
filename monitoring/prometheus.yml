@@ -1,0 +1,45 @@
+global:
+  scrape_interval: 1m
+  scrape_timeout: 10s
+  evaluation_interval: 10s
+scrape_configs:
+  # - job_name: 'prometheus'
+  #   scrape_interval: 5s
+  #   static_configs:
+  #     - targets: ['localhost:9090']
+  - job_name: pr
+    scrape_interval: 5s
+    scrape_timeout: 2s
+    scheme: http
+    static_configs:
+    - targets:
+      - pr:8080
+  - job_name: enrollment
+    scrape_interval: 5s
+    scrape_timeout: 2s
+    scheme: http
+    static_configs:
+    - targets:
+      - enrollment:8080
+  - job_name: uin
+    scrape_interval: 5s
+    scrape_timeout: 2s
+    scheme: http
+    static_configs:
+    - targets:
+      - uin:8080
+  - job_name: notification
+    scrape_interval: 5s
+    scrape_timeout: 2s
+    scheme: http
+    static_configs:
+    - targets:
+      - notification:8080
+  - job_name: orchestrator
+    scrape_interval: 5s
+    scrape_timeout: 2s
+    scheme: http
+    static_configs:
+    - targets:
+      - orchestrator:8080
+

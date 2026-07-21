@@ -286,6 +286,7 @@ async def finalize_CB(enrollment_id, transaction_id):
 
 #______________________________________________________________________________
 @routes.post('/v1/enrollments/{enrollment_id}')
+@LM.timer("createEnrollments", ok_status, "error")
 async def createEnrollment(request):
     transaction_id = request.query['transactionId']
     finalize = json.loads(request.query.get('finalize','false'))
@@ -351,6 +352,7 @@ async def findEnrollments(request):
 
 #______________________________________________________________________________
 @routes.get('/v1/enrollments/{enrollment_id}')
+@LM.timer("readEnrollments", ok_status, "error")
 async def readEnrollment(request):
     transaction_id = request.query['transactionId']
     enrollment_id = request.match_info['enrollment_id']
@@ -365,6 +367,7 @@ async def readEnrollment(request):
 
 #______________________________________________________________________________
 @routes.put('/v1/enrollments/{enrollment_id}')
+@LM.timer("updateEnrollments", ok_status, "error")
 async def updateEnrollment(request):
     transaction_id = request.query['transactionId']
     finalize = json.loads(request.query.get('finalize','false'))
@@ -404,6 +407,7 @@ async def updateEnrollment(request):
 
 #______________________________________________________________________________
 @routes.patch('/v1/enrollments/{enrollment_id}')
+@LM.timer("partialUpdateEnrollments", ok_status, "error")
 async def partialUpdateEnrollment(request):
     transaction_id = request.query['transactionId']
     finalize = json.loads(request.query.get('finalize','false'))
@@ -441,6 +445,7 @@ async def partialUpdateEnrollment(request):
 
 #______________________________________________________________________________
 @routes.put('/v1/enrollments/{enrollment_id}/finalize')
+@LM.timer("finalizeEnrollments", ok_status, "error")
 async def finalizeEnrollment(request):
     transaction_id = request.query['transactionId']
     enrollment_id = request.match_info['enrollment_id']
@@ -462,6 +467,7 @@ async def finalizeEnrollment(request):
 
 #______________________________________________________________________________
 @routes.delete('/v1/enrollments/{enrollment_id}')
+@LM.timer("deleteEnrollments", ok_status, "error")
 async def deleteEnrollment(request):
     transaction_id = request.query['transactionId']
     enrollment_id = request.match_info['enrollment_id']
@@ -482,6 +488,7 @@ async def deleteEnrollment(request):
 
 #______________________________________________________________________________
 @routes.post('/v1/enrollments/{enrollment_id}/buffer')
+@LM.timer("createBuffer", ok_status, "error")
 async def createBuffer(request):
     transaction_id = request.query['transactionId']
     enrollment_id = request.match_info['enrollment_id']
@@ -519,6 +526,7 @@ async def createBuffer(request):
 
 #______________________________________________________________________________
 @routes.get('/v1/enrollments/{enrollment_id}/buffer/{buffer_id}')
+@LM.timer("readBuffer", ok_status, "error")
 async def readBuffer(request):
     transaction_id = request.query['transactionId']
     enrollment_id = request.match_info['enrollment_id']

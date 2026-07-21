@@ -141,3 +141,23 @@ services:
     links:
       - pr
       - uin
+  prom:
+    image: ${D4R6Y}prom/prometheus:v3.13.1-distroless
+    volumes:
+      - ./monitoring:/osia
+    command: --config.file=/osia/prometheus.yml
+#    command: --config.file=/osia/prometheus.yml --log.level=debug
+    ports:
+      - "9090:9090"
+    links:
+      - enrollment
+      - pr
+      - uin
+      - notification
+      - orchestrator
+  graf:
+    image: ${D4R6Y}grafana/grafana:11.6.16
+    ports:
+      - "3000:3000"
+    links:
+      - prom
