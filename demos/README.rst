@@ -24,7 +24,7 @@ To implement this Use Case the following building blocks are necessary:
 
 All exchanges are compliant with OSIA specifications and are depicted in the following diagram:
 
-.. image:: birth_uc.png
+.. image:: birth_uc/birth_uc.png
 
 Execution
 ---------
@@ -58,6 +58,7 @@ This Use Case is an extension of the previous Use Case. It is extended with:
 
 - An OSIA-compliant enrollment station is used to enroll the child. The parent's identity
   is checked using the ABIS.
-- After the creation of the child's identity in PR, a new credential is issued
-  through a CMS. Credential can be pysical or digital.
+- An ABIS, used to validate the identity of the parent.
+- A CMS. After the creation of the child's identity in PR, a new credential is requested.
+  This credential can be pysical or digital.
 

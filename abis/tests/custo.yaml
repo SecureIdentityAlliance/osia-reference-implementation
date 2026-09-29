@@ -1,0 +1,43 @@
+---
+# [---CUSTO---]
+BiographicData:
+  type: object
+  required:
+    - firstName
+    - lastName
+  properties:
+    firstName:
+      type: string
+    lastName:
+      type: string
+    dateOfBirth:
+      type: string
+      format: date
+    gender:
+      type: string
+      enum: ['M', 'F']
+    nationality:
+      type: string
+      enum:
+        - FRA
+        - USA
+      default: USA
+ContextualData:
+  type: object
+  properties:
+    operator:
+      type: string
+    operationDateTime:
+      type: string
+      format: date-time
+    device:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        brand:
+          type: string
+  additionalProperties: false
+# [---CUSTO---]

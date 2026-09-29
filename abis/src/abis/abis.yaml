@@ -1,0 +1,3019 @@
+
+# (c) Secure Identity Alliance
+
+openapi: 3.0.0
+info:
+  description:  |
+    The OSIA ABIS Interface.
+    
+    Change log:
+
+    - 1.5.1:
+      - Add missing values in BiometricSubType
+      - Use HTTP code 409 in case of conflict of ID in create/move operations
+    - 1.5.0:
+      - Add service to update only the galleries of an encounter
+      - Change date to date-time
+      - Mark the encounterId as readOnly, add it to biometricData
+      - Add mimeType, template, templateRef, templateFormat to biometricData
+      - rename scoreList to scores in identification result
+      - Do not mix fixed properties and additional properties, use a subobject for the additional properties
+      - Add quality, qualityFormat, algorithm, vendor fields to biometricData
+      - The value 'ALL' is used in searches to represent a search against all the galleries.
+      - New service identifyFromEncounterId (identify using a single encounter present in the database)
+      - Use the taskId in the callbacks
+      - New service moveEncounter
+      - Mark some fields (ID, etc.) as readOnly
+    - 1.4.0:
+      - Add an entity (ExtendablePersonIds) used in the response of create & update operations
+      - Make 202 response more standard: returns an object with at least a taskId, additional properties allowed
+      - Add an entity (PersonIds) to factorize definition of the pair (personId, encounterId)
+      - Allow additional properties in object Candidate.
+      - Change path for updateEncounterStatus operation (added /v1)
+      - Clarify priority value
+      - Add error structure on 400 errors
+      - Add signature in biometricType
+      - Force additionalProperties to false when extension is not allowed
+      - Pagination when accessing gallery content
+      - Add fields on BiometricData: instance, metadata, comment, missing
+    - 1.3.0:
+      - Addition of security
+    - 1.2.2:
+      - Allow free string for template & quality format
+      - Allow additional properties along with the score
+    - 1.2.1:
+      - Change operation ID
+    - 1.2.0:
+      - Add service 'merge'
+      - Add a status in the encounter entity
+    - 1.1.0:
+      - Make transactionId mandatory
+      - Add 'encounters' in the path to reduce ambiguities
+      - Rename operationId to a consistent create/read/update/delete scheme
+      - Move gallery in the encounter entity
+      - Add ability to return errors in the callback
+      - Make the gallery mandatory
+      - Rename 'subject' to 'person'
+      - Remove array of encounters in request body for insert and update
+      - Add service 'readAllEncounters'
+    - 1.0.0: Initial version
+
+  version: 1.5.1
+  title: OSIA ABIS Interface
+  license:
+    name: SIA
+    url: "https://raw.githubusercontent.com/SecureIdentityAlliance/osia/master/LICENSE"
+tags:
+  - name: CRUD
+  - name: Search
+  - name: Gallery
+servers:
+  - url: https://abis.com/
+paths:
+  /v1/persons:
+    post:
+      tags:
+        - CRUD
+      summary: Create one encounter and generate ID for both the person and the encounter
+      operationId: createEncounterNoIds
+      security:
+        - BearerAuth: [abis.encounter.write]
+      parameters:
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+        - name: algorithm
+          in: query
+          description: Hint about the algorithm to be used
+          required: false
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Encounter'
+      responses:
+        '200':
+          description: Operation successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtendablePersonIds'
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operation not allowed
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        createResponse:
+          '${request.query.callback}':
+            post:
+              summary: Create one encounter and generate both IDs response callback
+              operationId: createEncounterNoIdsCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Result of the creation
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/ExtendablePersonIds'
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+
+  /v1/persons/{personId}/encounters:
+    post:
+      tags:
+        - CRUD
+      summary: Create one encounter and generate its ID
+      description: |
+        Create one encounter in the person identified by his/her id.
+        If the person does not yet exist, it is created automatically.
+      operationId: createEncounterNoId
+      security:
+        - BearerAuth: [abis.encounter.write]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+        - name: algorithm
+          in: query
+          description: Hint about the algorithm to be used
+          required: false
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Encounter'
+      responses:
+        '200':
+          description: creation successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtendablePersonIds'
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Creation not allowed
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        createResponse:
+          '${request.query.callback}':
+            post:
+              summary: Create one encounter and generate its ID response callback
+              operationId: createEncounterNoIdCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Result of the creation
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/ExtendablePersonIds'
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - CRUD
+      summary: Read all encounters of one person
+      operationId: readAllEncounters
+      security:
+        - BearerAuth: [abis.encounter.read]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Read successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Encounter'
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Read not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        readAllResponse:
+          '${request.query.callback}':
+            post:
+              summary: Read all encounters response callback
+              operationId: readAllEncountersCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Encounter data
+                content:
+                  application/json:
+                    schema:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Encounter'
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+                        
+  /v1/persons/{personId}/encounters/{encounterId}:
+    post:
+      tags:
+        - CRUD
+      summary: Create one encounter
+      description: |
+        Create one encounter in the person identified by his/her id.
+        If the person does not yet exist, it is created automatically.
+        
+        If the encounter already exists, an error 409 is returned.
+      operationId: createEncounter
+      security:
+        - BearerAuth: [abis.encounter.write]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: encounterId
+          in: path
+          description: the id of the encounter
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+        - name: algorithm
+          in: query
+          description: Hint about the algorithm to be used
+          required: false
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Encounter'
+      responses:
+        '200':
+          description: Creation successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtendablePersonIds'
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operation not allowed
+        '409':
+          description: Creation not allowed, encounterId already exists
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        createResponse:
+          '${request.query.callback}':
+            post:
+              summary: Create one encounter response callback
+              operationId: createEncounterCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Result of the creation
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/ExtendablePersonIds'
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - CRUD
+      summary: Read one encounter
+      operationId: readEncounter
+      security:
+        - BearerAuth: [abis.encounter.read]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: encounterId
+          in: path
+          description: the id of the encounter
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Read successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Encounter'
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Read not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        readResponse:
+          '${request.query.callback}':
+            post:
+              summary: Read one encounter response callback
+              operationId: readEncounterCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Encounter data
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/Encounter'
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - CRUD
+      summary: Update one encounter
+      operationId: updateEncounter
+      security:
+        - BearerAuth: [abis.encounter.write]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: encounterId
+          in: path
+          description: the id of the encounter
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+        - name: algorithm
+          in: query
+          description: Hint about the algorithm to be used
+          required: false
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Encounter'
+      responses:
+        '200':
+          description: Operation successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtendablePersonIds'
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '204':
+          description: Update successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Update not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        updateResponse:
+          '${request.query.callback}':
+            post:
+              summary: Update one encounter response callback
+              operationId: updateEncounterCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Result of the update
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/ExtendablePersonIds'
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - CRUD
+      summary: Delete one encounter
+      description: |
+        Delete one encounter from the person identified by his/her id.
+        If this is the last encounter in the person, the person is also deleted.
+      operationId: deleteEncounter
+      security:
+        - BearerAuth: [abis.encounter.write]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: encounterId
+          in: path
+          description: the id of the encounter
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+      responses:
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '204':
+          description: Delete successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Delete not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        deleteResponse:
+          '${request.query.callback}':
+            post:
+              summary: Delete one encounter response callback
+              operationId: deleteEncounterCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Result of the deletion
+                content:
+                  application/json:
+                    schema:
+                      type: string
+                      enum: [OK]
+                      example: '"OK"'
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+
+  /v1/persons/{personIdTarget}/merge/{personIdSource}:
+    post:
+      tags:
+        - CRUD
+      summary: Merge two sets of encounters
+      description: |
+        Merge two sets of encounters into a single set. Merging a set of *N* encounters with a set of *M* encounters
+        will result in a single set of *N+M* encounters. Encounter ID are preserved and in case of duplicates
+        an error 409 is returned and no changes are done.
+      operationId: mergeEncounter
+      security:
+        - BearerAuth: [abis.encounter.write]
+      parameters:
+        - name: personIdTarget
+          in: path
+          description: the id of the person receiving new encounters
+          required: true
+          schema:
+            type: string
+        - name: personIdSource
+          in: path
+          description: the id of the person giving the encounters
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+      responses:
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '204':
+          description: Merge successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operation not allowed
+        '409':
+          description: Merge not allowed, conflict of encounterId
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        mergeResponse:
+          '${request.query.callback}':
+            post:
+              summary: Merge two persons response callback
+              operationId: mergeEncounterCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Result of the merge
+                content:
+                  application/json:
+                    schema:
+                      type: string
+                      enum: [OK]
+                      example: '"OK"'
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+
+  /v1/persons/{personIdTarget}/move/{personIdSource}/encounters/{encounterId}:
+    post:
+      tags:
+        - CRUD
+      summary: Move one encounter
+      description: |
+        Move one encounter from the source person to the target person.
+        Encounter ID is preserved and in case of duplicate an error 409 is returned and no changes are done.
+      operationId: moveEncounter
+      security:
+        - BearerAuth: [abis.encounter.write]
+      parameters:
+        - name: personIdTarget
+          in: path
+          description: the id of the person receiving the encounter
+          required: true
+          schema:
+            type: string
+        - name: personIdSource
+          in: path
+          description: the id of the person giving the encounter
+          required: true
+          schema:
+            type: string
+        - name: encounterId
+          in: path
+          description: the id of the encounter
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+      responses:
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '204':
+          description: Move successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operation not allowed
+        '409':
+          description: Move not allowed, conflict with the encounterId
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        mergeResponse:
+          '${request.query.callback}':
+            post:
+              summary: Merge two persons response callback
+              operationId: moveEncounterCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Result of the move
+                content:
+                  application/json:
+                    schema:
+                      type: string
+                      enum: [OK]
+                      example: '"OK"'
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+
+  /v1/persons/{personId}/encounters/{encounterId}/status:
+    put:
+      tags:
+        - CRUD
+      summary: Update status of an encounter
+      operationId: updateEncounterStatus
+      security:
+        - BearerAuth: [abis.encounter.write]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: encounterId
+          in: path
+          description: the id of the encounter
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: New status of encounter
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+      responses:
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '204':
+          description: Status has been updated
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Encounter status update not allowed
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        updateEncounterStatusResponse:
+          '${request.query.callback}':
+            post:
+              summary: Update encounter status response callback
+              operationId: updateEncounterStatusCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Result of the status update
+                content:
+                  application/json:
+                    schema:
+                      type: string
+                      enum: [OK]
+                      example: '"OK"'
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+
+  /v1/persons/{personId}/encounters/{encounterId}/galleries:
+    put:
+      tags:
+        - CRUD
+      summary: Update the galleries of an encounter
+      description: |
+        This service is used to move one encounter from one gallery
+        to another one without updating the full encounter, which maybe
+        resource consuming in a biometric system.
+      operationId: updateEncounterGalleries
+      security:
+        - BearerAuth: [abis.encounter.write]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: encounterId
+          in: path
+          description: the id of the encounter
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              description: List of the new galleries for this encounter.
+              items:
+                type: string
+              example: [VIP, CRIMINAL]
+      responses:
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '204':
+          description: Galleries have been updated
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Encounter galleries update not allowed
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        updateEncounterGalleriesResponse:
+          '${request.query.callback}':
+            post:
+              summary: Update encounter galleries response callback
+              operationId: updateEncounterGalleriesCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Result of the gallery update
+                content:
+                  application/json:
+                    schema:
+                      type: string
+                      enum: [OK]
+                      example: '"OK"'
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+
+  /v1/persons/{personId}/encounters/{encounterId}/templates:
+    get:
+      tags:
+        - CRUD
+      summary: Read biometrics templates
+      operationId: readTemplate
+      security:
+        - BearerAuth: [abis.encounter.read]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: encounterId
+          in: path
+          description: the id of the encounter
+          required: true
+          schema:
+            type: string
+        - name: biometricType
+          in: query
+          description: the type of biometrics to return
+          required: false
+          schema:
+            $ref: '#/components/schemas/BiometricType'
+        - name: biometricSubType
+          in: query
+          description: the sub-type of biometrics to return
+          required: false
+          schema:
+            $ref: '#/components/schemas/BiometricSubType'
+        - name: instance
+          in: query
+          description: Used to separate two distincts biometric items of the same type and subtype
+          required: false
+          schema:
+            type: string
+        - name: templateFormat
+          in: query
+          description: the format of the template to return
+          required: false
+          schema:
+            $ref: '#/components/schemas/TemplateFormat'
+        - name: qualityFormat
+          in: query
+          description: the format of the quality to return
+          required: false
+          schema:
+            $ref: '#/components/schemas/QualityFormat'
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Operation successful
+          content:
+            application/json:
+              schema:
+                description: |
+                  An array of computed data (template & quality) found in the system.
+                  If a record exists but has no computed value, nothing is returned.
+                  An empty array is possible if the biometrics exist but have not been encoded and analyzed.
+                type: array
+                items:
+                  $ref: '#/components/schemas/BiometricComputedData'
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Read not allowed
+        '404':
+          description: Unknown record or unkown biometrics
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        readTemplateResponse:
+          '${request.query.callback}':
+            post:
+              summary: Read biometrics templates response callback
+              operationId: readTemplateCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Biometric computed data
+                content:
+                  application/json:
+                    schema:
+                      description: |
+                        An array of computed data (template & quality) found in the system.
+                        If a record exists but has no computed value, nothing is returned.
+                        An empty array is possible if the biometrics exist but have not been encoded and analyzed.
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/BiometricComputedData'
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+
+  /v1/persons/{personId}:
+    delete:
+      tags:
+        - CRUD
+      summary: Delete a person and all its encounters
+      operationId: deleteAll
+      security:
+        - BearerAuth: [abis.encounter.write]
+      parameters:
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+      responses:
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '204':
+          description: Delete successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Delete not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        deleteResponse:
+          '${request.query.callback}':
+            post:
+              summary: Delete a person response callback
+              operationId: deleteAllCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Result of the deletion
+                content:
+                  application/json:
+                    schema:
+                      type: string
+                      enum: [OK]
+                      example: '"OK"'
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+
+  /v1/identify/{galleryId}:
+    post:
+      tags:
+        - Search
+      summary: Biometric identification
+      description: Identification based on biometric data from one gallery
+      operationId: identify
+      security:
+        - BearerAuth: [abis.identify]
+      parameters:
+        - name: galleryId
+          in: path
+          description: the id of the gallery. **The special value 'ALL' is used when the search is done against all galleries**
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+        - name: maxNbCand
+          in: query
+          description: the maximum number of candidates
+          required: false
+          schema:
+            type: integer
+        - name: threshold
+          in: query
+          description: the algorithm threshold
+          required: false
+          schema:
+            type: number
+        - name: accuracyLevel
+          in: query
+          description: the accuracy level expected for this request
+          required: false
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - filter
+                - biometricData
+              properties:
+                filter:
+                  $ref:  '#/components/schemas/Filter'
+                biometricData:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/BiometricData'
+              additionalProperties: false
+      responses:
+        '200':
+          description: Request executed. Identification result is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Candidate'
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Identification not allowed
+        '404':
+          description: Unknown gallery
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        identifyResponse:
+          '${request.query.callback}':
+            post:
+              summary: Biometric identification response callback
+              operationId: identifyCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Result of the identification (list of candidate)
+                content:
+                  application/json:
+                    schema:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Candidate'
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+
+  /v1/identify/{galleryId}/{personId}:
+    post:
+      tags:
+        - Search
+      summary: Biometric identification based on existing data
+      description: Identification based on existing data from one gallery
+      operationId: identifyFromId
+      security:
+        - BearerAuth: [abis.identify]
+      parameters:
+        - name: galleryId
+          in: path
+          description: the id of the gallery. **The special value 'ALL' is used when the search is done against all galleries**
+          required: true
+          schema:
+            type: string
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+        - name: maxNbCand
+          in: query
+          description: the maximum number of candidates
+          required: false
+          schema:
+            type: integer
+        - name: threshold
+          in: query
+          description: the algorithm threshold
+          required: false
+          schema:
+            type: number
+        - name: accuracyLevel
+          in: query
+          description: the accuracy level expected for this request
+          required: false
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref:  '#/components/schemas/Filter'
+      responses:
+        '200':
+          description: Request executed. Identification result is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Candidate'
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Identification not allowed
+        '404':
+          description: Unknown person or gallery
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        identifyResponse:
+          '${request.query.callback}':
+            post:
+              summary: Biometric identification based on existing data response callback
+              operationId: identifyFromIdCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Result of the identification (list of candidate)
+                content:
+                  application/json:
+                    schema:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Candidate'
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+
+  /v1/identify/{galleryId}/{personId}/encounters/{encounterId}:
+    post:
+      tags:
+        - Search
+      summary: Biometric identification based on an existing encounter
+      description: Identification based on an existing encounter from one gallery
+      operationId: identifyFromEncounterId
+      security:
+        - BearerAuth: [abis.identify]
+      parameters:
+        - name: galleryId
+          in: path
+          description: the id of the gallery. **The special value 'ALL' is used when the search is done against all galleries**
+          required: true
+          schema:
+            type: string
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: encounterId
+          in: path
+          description: the id of the encounter
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+        - name: maxNbCand
+          in: query
+          description: the maximum number of candidates
+          required: false
+          schema:
+            type: integer
+        - name: threshold
+          in: query
+          description: the algorithm threshold
+          required: false
+          schema:
+            type: number
+        - name: accuracyLevel
+          in: query
+          description: the accuracy level expected for this request
+          required: false
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref:  '#/components/schemas/Filter'
+      responses:
+        '200':
+          description: Request executed. Identification result is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Candidate'
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Identification not allowed
+        '404':
+          description: Unknown person, gallery or encounter
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        identifyResponse:
+          '${request.query.callback}':
+            post:
+              summary: Biometric identification based on existing data response callback
+              operationId: identifyFromEncounterIdCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Result of the identification (list of candidate)
+                content:
+                  application/json:
+                    schema:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Candidate'
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+
+  /v1/verify/{galleryId}/{personId}:
+    post:
+      tags:
+        - Search
+      summary: Biometric verification
+      description: Verification of one set of biometric data and a record in the system
+      operationId: verifyFromId
+      security:
+        - BearerAuth: [abis.verify]
+      parameters:
+        - name: galleryId
+          in: path
+          description: the id of the gallery. **The special value 'ALL' is used when the verification is done against all galleries**
+          required: true
+          schema:
+            type: string
+        - name: personId
+          in: path
+          description: the id of the person
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+        - name: threshold
+          in: query
+          description: the algorithm threshold
+          required: false
+          schema:
+            type: number
+        - name: accuracyLevel
+          in: query
+          description: the accuracy level expected for this request
+          required: false
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - biometricData
+              properties:
+                biometricData:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/BiometricData'
+              additionalProperties: false
+      responses:
+        '200':
+          description: Verification execution successful
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - decision
+                properties:
+                  decision:
+                    type: boolean
+                  scores:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ScoreDetail'
+                additionalProperties: false
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Unknown person or gallery
+        '403':
+          description: Verification not allowed
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        verifyResponse:
+          '${request.query.callback}':
+            post:
+              summary: Biometric verification response callback
+              operationId: verifyFromIdCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Result of the verification
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      required:
+                        - decision
+                      properties:
+                        decision:
+                          type: boolean
+                        scores:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/ScoreDetail'
+                      additionalProperties: false
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+
+  /v1/verify:
+    post:
+      tags:
+        - Search
+      summary: Biometric verification with two sets of data
+      description: Verification of two sets of biometric data
+      operationId: verifyFromBio
+      security:
+        - BearerAuth: [abis.verify]
+      parameters:
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+        - name: threshold
+          in: query
+          description: the algorithm threshold
+          required: false
+          schema:
+            type: number
+        - name: accuracyLevel
+          in: query
+          description: the accuracy level expected for this request
+          required: false
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - biometricData1
+                - biometricData2
+              properties:
+                biometricData1:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/BiometricData'
+                biometricData2:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/BiometricData'
+              additionalProperties: false
+      responses:
+        '200':
+          description: Verification execution successful
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - decision
+                properties:
+                  decision:
+                    type: boolean
+                  scores:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ScoreDetail'
+                additionalProperties: false
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Verification not allowed
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        verifyResponse:
+          '${request.query.callback}':
+            post:
+              summary: Biometric verification with two sets of data response callback
+              operationId: verifyFromBioCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: Result of the verification
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      required:
+                        - decision
+                      properties:
+                        decision:
+                          type: boolean
+                        scores:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/ScoreDetail'
+                      additionalProperties: false
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+
+  /v1/galleries:
+    get:
+      tags:
+        - Gallery
+      summary: Read the ID of all the galleries
+      operationId: readGalleries
+      security:
+        - BearerAuth: [abis.gallery.read]
+      parameters:
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Operation successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Read not allowed
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        readGalleriesResponse:
+          '${request.query.callback}':
+            post:
+              summary: Read the ID of all the galleries response callback
+              operationId: readGalleriesCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: List of gallery IDs
+                content:
+                  application/json:
+                    schema:
+                      type: array
+                      items:
+                        type: string
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+
+  /v1/galleries/{galleryId}:
+    get:
+      tags:
+        - Gallery
+      summary: Read the content of one gallery
+      operationId: readGalleryContent
+      security:
+        - BearerAuth: [abis.gallery.read]
+      parameters:
+        - name: galleryId
+          in: path
+          description: the id of the gallery.
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+        - name: callback
+          in: query
+          description: the callback address, where the result will be sent when available
+          required: false
+          schema:
+            type: string
+            format: uri
+            example: "http://client.com/callback"
+        - name: priority
+          in: query
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: The offset of the query (first item of the response)
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          description: The maximum number of items to return
+          required: false
+          schema:
+            type: integer
+            default: 1000
+      responses:
+        '200':
+          description: Operation successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PersonIds'
+        '202':
+          description: |
+            Request received successfully and correct, result will be returned through the callback.
+            An internal task ID is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskId'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Read not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        readGalleryContentResponse:
+          '${request.query.callback}':
+            post:
+              summary: Read the content of one gallery response callback
+              operationId: readGalleryContentCB
+              parameters:
+                # query parameters
+                - name: transactionId
+                  in: query
+                  required: true
+                  description: The id of the transaction
+                  schema:
+                    type: string
+                - name: taskId
+                  in: query
+                  required: true
+                  description: The id of the task, used to match this response with the request
+                  schema:
+                    type: string
+              requestBody:
+                required: true
+                description: List of encounters IDs
+                content:
+                  application/json:
+                    schema:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/PersonIds'
+                  application/error+json:
+                    schema:
+                      $ref: '#/components/schemas/Error'
+              responses:
+                '204':
+                  description: Response is received and accepted.
+                '403':
+                  description: Forbidden access to the service
+                '500':
+                  description: Unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          description: Error code
+          type: integer
+          format: int32
+        message:
+          description: Error message
+          type: string
+      additionalProperties: false
+    Encounter:
+      type: object
+      required:
+        - status
+        - encounterId
+        - encounterType
+        - biometricData
+      properties:
+        encounterId:
+          type: string
+          readOnly: true
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+        encounterType:
+          type: string
+          description: Type of the encounter
+        galleries:
+          type: array
+          description: The list of galleries for this object.
+          items:
+            type: string
+          minItems: 1
+          uniqueItems: true
+        clientData:
+          type: string
+          format: byte
+        contextualData:
+          $ref: '#/components/schemas/ContextualData'
+        biographicData:
+          $ref: '#/components/schemas/BiographicData'
+        biometricData:
+          type: array
+          items:
+            $ref: '#/components/schemas/BiometricData'
+      additionalProperties: false
+    ContextualData:
+      type: object
+      additionalProperties: true
+      example:
+        enrollmentDate: "2019-01-11"
+    BiographicData:
+      type: object
+      description: The set of biographic data.
+      additionalProperties: true
+      example:
+        dateOfBirth: "1985-11-30"
+        gender: M
+        nationality: FRA
+    BiometricData:
+      type: object
+      required:
+        - biometricType
+      properties:
+        biometricType:
+          $ref: '#/components/schemas/BiometricType'
+        biometricSubType:
+          $ref: '#/components/schemas/BiometricSubType'
+        instance:
+          type: string
+          description: Used to separate two distincts biometric items of the same type and subtype
+        encounterId:
+          type: string
+          description: the id of the encounter owner of this biometric
+          readOnly: true
+        image:
+          type: string
+          format: byte
+          description: Base64-encoded image
+        imageRef:
+          type: string
+          format: uri
+          description: URI to an image
+          example: "http://imageserver.com/image?id=00003"
+        captureDate:
+          type: string
+          format: date-time
+          example: "2019-05-21T12:00:00Z"
+        captureDevice:
+          type: string
+          description: A string identifying the device used to capture the biometric
+        impressionType:
+          $ref: '#/components/schemas/ImpressionType'
+        width:
+          type: integer
+          description: the width of the image
+        height:
+          type: integer
+          description: the height of the image
+        bitdepth:
+          type: integer
+        mimeType:
+          type: string
+          description: the nature and format of the image. The mime type definitions should be in compliance with RFC 6838.
+        resolution:
+          type: integer
+          description: the image resolution (in DPI)
+        compression:
+          $ref: '#/components/schemas/CompressionType'
+        missing:
+          description: Optional properties indicating if a part of the biometric data is missing
+          type: array
+          items:
+            $ref: '#/components/schemas/MissingType'
+        metadata:
+          type: string
+          description: An optional string used to convey information vendor-specific
+        comment:
+          type: string
+          description: A comment about the biometric data
+        template:
+          type: string
+          format: byte
+          description: Base64-encoded template
+        templateRef:
+          type: string
+          format: uri
+          description: URI to the template when it is managed in a dedicated data server
+          example: "http://dataserver.com/template?id=00014"
+        templateFormat:
+          $ref: '#/components/schemas/TemplateFormat'
+        quality:
+          type: integer
+          format: int64
+          description: Quality, as a number, of the biometric
+        qualityFormat:
+          $ref: '#/components/schemas/QualityFormat'
+        algorithm:
+          type: string
+        vendor:
+          type: string
+      additionalProperties: false
+    TemplateFormat:
+      type: string
+      description: |
+        Format of the template.
+        One of ISO_19794_2, ISO_19794_2_NS, ISO_19794_2_CS, ISO_19794_2_2011, ANSI_378_2009 or ANSI_378.
+        Can be extended to include additional proprietary template format
+    MissingType:
+      type: object
+      properties:
+        biometricSubType:
+          $ref: '#/components/schemas/BiometricSubType'
+        presence:
+          type: string
+          enum: [BANDAGED, AMPUTATED, DAMAGED]
+      additionalProperties: false
+    BiometricComputedData:
+      type: object
+      required:
+        - biometricType
+        - template
+      properties:
+        biometricType:
+          $ref: '#/components/schemas/BiometricType'
+        biometricSubType:
+          $ref: '#/components/schemas/BiometricSubType'
+        instance:
+          type: string
+          description: Used to separate two distincts biometric items of the same type and subtype
+        template:
+          type: string
+          format: byte
+          description: Base64-encoded template
+        templateFormat:
+          $ref: '#/components/schemas/TemplateFormat'
+        quality:
+          type: integer
+          format: int64
+          description: Quality, as a number, of the biometric
+        qualityFormat:
+          $ref: '#/components/schemas/QualityFormat'
+        algorithm:
+          type: string
+        vendor:
+          type: string
+      additionalProperties: false
+    QualityFormat:
+      type: string
+      description: |
+        Format of the quality.
+        One of ISO_19794, NFIQ, or NFIQ2.
+        Can be extended to include additional proprietary quality format
+    CompressionType:
+      type: string
+      enum: [NONE, WSQ, JPEG, JPEG2000, PNG]
+      example: WSQ
+    ImpressionType:
+      type: string
+      enum:
+        - LIVE_SCAN_PLAIN
+        - LIVE_SCAN_ROLLED
+        - NONLIVE_SCAN_PLAIN
+        - NONLIVE_SCAN_ROLLED
+        - LATENT_IMPRESSION
+        - LATENT_TRACING
+        - LATENT_PHOTO
+        - LATENT_LIFT
+        - LIVE_SCAN_SWIPE
+        - LIVE_SCAN_VERTICAL_ROLL
+        - LIVE_SCAN_PALM
+        - NONLIVE_SCAN_PALM
+        - LATENT_PALM_IMPRESSION
+        - LATENT_PALM_TRACING
+        - LATENT_PALM_PHOTO
+        - LATENT_PALM_LIFT
+        - LIVE_SCAN_OPTICAL_CONTACTLESS_PLAIN
+        - OTHER
+        - UNKNOWN
+    BiometricType:
+      type: string
+      enum:
+        - FACE
+        - FINGER
+        - IRIS
+        - SIGNATURE
+        - UNKNOWN
+      example: FINGER
+    BiometricSubType:
+      type: string
+      enum:
+        - UNKNOWN
+        - RIGHT_THUMB
+        - RIGHT_INDEX
+        - RIGHT_MIDDLE
+        - RIGHT_RING
+        - RIGHT_LITTLE
+        - LEFT_THUMB
+        - LEFT_INDEX
+        - LEFT_MIDDLE
+        - LEFT_RING
+        - LEFT_LITTLE
+        - PLAIN_RIGHT_FOUR_FINGERS
+        - PLAIN_LEFT_FOUR_FINGERS
+        - PLAIN_THUMBS
+        
+        - UNKNOWN_PALM
+        - RIGHT_FULL_PALM
+        - RIGHT_WRITERS_PALM
+        - LEFT_FULL_PALM
+        - LEFT_WRITERS_PALM
+        - RIGHT_LOWER_PALM
+        - RIGHT_UPPER_PALM
+        - LEFT_LOWER_PALM
+        - LEFT_UPPER_PALM
+        - RIGHT_OTHER
+        - LEFT_OTHER
+        - RIGHT_INTERDIGITAL
+        - RIGHT_THENAR
+        - RIGHT_HYPOTHENAR
+        - LEFT_INTERDIGITAL
+        - LEFT_THENAR
+        - LEFT_HYPOTHENAR
+        
+        - RIGHT_INDEX_AND_MIDDLE
+        - RIGHT_MIDDLE_AND_RING
+        - RIGHT_RING_AND_LITTLE
+        - LEFT_INDEX_AND_MIDDLE
+        - LEFT_MIDDLE_AND_RING
+        - LEFT_RING_AND_LITTLE
+        - RIGHT_INDEX_AND_LEFT_INDEX
+        - RIGHT_INDEX_AND_MIDDLE_AND_RING
+        - RIGHT_MIDDLE_AND_RING_AND_LITTLE
+        - LEFT_INDEX_AND_MIDDLE_AND_RING
+        - LEFT_MIDDLE_AND_RING_AND_LITTLE
+        
+        - EYE_UNDEF
+        - EYE_RIGHT
+        - EYE_LEFT
+        - EYE_BOTH
+        
+        - PORTRAIT
+        - LEFT_PROFILE
+        - RIGHT_PROFILE
+      example: RIGHT_INDEX
+    Filter:
+      type: object
+      additionalProperties: true
+      example:
+        dateOfBirthMin: "1980-01-01"
+        dateOfBirthMax: "2019-12-31"
+    Candidate:
+      type: object
+      description: |
+        Identification of a candidate result of a biometric search.
+
+        This structure can be extended by vendors able to include additional information
+        to the three mandatory properties.
+      required:
+        - personId
+        - rank
+        - score
+      properties:
+        personId:
+          type: string
+          description: the identifier of the person
+        rank:
+          type: integer
+          format: int32
+          description: >-
+            the rank of the candidate in relation to other candidates for the
+            same biometric identification operation
+        score:
+          type: number
+          format: float
+          description: >-
+            the score of the candidate in relation to other candidates for
+            the same biometric identification operation
+          example: 3500
+        scores:
+          type: array
+          description: >-
+            a list of comparison score(s) and optionally the type and subtype of
+            the relating biometric
+          items:
+            $ref: '#/components/schemas/ScoreDetail'
+        others:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+    ScoreDetail:
+      description: |
+        Scoring information calculated after a biometric search.
+        It includes at least the score (a float) and optionnally the encounterId,
+        type and subtype of the matching bometric item.
+        It can also be extended with proprietary information to better describe
+        the matching result (for instance: rotation needed to align
+        the probe and the candidate)
+      type: object
+      required:
+        - score
+      properties:
+        score:
+          type: number
+          format: float
+          description: the score
+          example: 3500
+        encounterId:
+          type: string
+        biometricType:
+          $ref: '#/components/schemas/BiometricType'
+        biometricSubType:
+          $ref: '#/components/schemas/BiometricSubType'
+        instance:
+          type: string
+          description: Used to separate two distincts biometric items of the same type and subtype
+        others:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+    PersonIds:
+      type: object
+      required:
+        - personId
+        - encounterId
+      properties:
+        personId:
+          type: string
+        encounterId:
+          type: string
+      additionalProperties: false
+    ExtendablePersonIds:
+      description: |
+        The IDs of a record (personId and encounterId) extendable with additional
+        properties if needed by an implementation.
+
+        This is used for the response of insert & update operations, when additional
+        properties (such as: quality evaluation, proof of record, etc.) might be returned
+        by the server.
+      required:
+        - personId
+        - encounterId
+      properties:
+        personId:
+          type: string
+        encounterId:
+          type: string
+        others:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+    TaskId:
+      description: |
+        Information about the asynchronous result. Only the taskId is mandatory but
+        the implementation is free to return additional details such as: expected
+        duration, URL to monitor the task, etc.
+      type: object
+      required:
+        - taskId
+      properties:
+        taskId:
+          type: string
+          example: '123e4567-e89b-12d3-a456-426655440000'
+        others:
+          type: object
+          additionalProperties: true
+      additionalProperties: false

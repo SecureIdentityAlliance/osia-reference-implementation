@@ -1,0 +1,36 @@
+---
+BiographicData:
+  type: object
+  required:
+    - firstName
+    - lastName
+  properties:
+    firstName:
+      type: string
+    lastName:
+      type: string
+    dateOfBirth:
+      type: string
+      format: date
+    gender:
+      type: string
+      enum: ['M', 'F']
+    nationality:
+      type: string
+      enum:
+        - FRA
+        - USA
+    email:
+      type: string
+    mobileNumber:
+      type: string
+    title:
+      type: string
+  additionalProperties: false
+ContextualData:
+  type: object
+  properties:
+    enrollmentDate:
+      type: string
+      format: date
+  additionalProperties: false

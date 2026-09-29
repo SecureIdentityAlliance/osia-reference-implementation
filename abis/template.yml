@@ -1,0 +1,13 @@
+---
+app: abis
+mod: server
+author: Olivier Heurtier
+author_email: olivier.heurtier@secureidentityalliance.org
+license: Apache 2.0
+sql:
+  getters: {}
+  gauges:
+    encounters: Encounter
+    biometricdata: BiometricData
+openapi: 1
+entity: Encounter
