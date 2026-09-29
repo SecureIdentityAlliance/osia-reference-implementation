@@ -259,7 +259,12 @@ async def verifyFromId(request):
     data = await request.json()
     logging.info("[%s] - verifyFromId for personId [%s]/[%s]", transaction_id, gallery_id, person_id)
 
-    msg = validate_json(data, 'Encounter', with_required=False,)
+    # Use Encounter structure to validate the array of BiometricData
+    if 'status' not in data:
+        data['status'] = 'ACTIVE'
+    if 'encounterType' not in data:
+        data['encounterType'] = 'TYPE'
+    msg = validate_json(data, 'Encounter')
     if msg:
         return web.json_response(data={'code': 400, 'message': msg}, status=400)
 
