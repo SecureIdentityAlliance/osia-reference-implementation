@@ -1,0 +1,163 @@
+services:
+  #
+  # OSIA Services
+  #
+  enrollment:
+    build:
+      context: ../../enrollment
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: osia/enrollment
+    environment:
+      ENROLLMENT_CUSTO_FILENAME: "/custo/enrollment.yaml"
+      ENROLLMENT_NOTIFICATION_URL: "http://notification:8080"
+      ENROLLMENT_DATABASE_URL: "postgresql+psycopg2://enrollment:EnrollmentSecret@postgres/osiadb"
+    volumes:
+      - ${PWD}/custo:/custo
+    ports:
+      - "8000:8080"
+    links:
+      - notification
+      - postgres
+    depends_on:
+      - notification
+      - postgres
+    restart: on-failure
+  pr:
+    build:
+      context: ../../pr
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: osia/pr
+    environment:
+      PR_CUSTO_FILENAME: "/custo/pr.yaml"
+      PR_DATABASE_URL: "postgresql+psycopg2://pr:PRSecret@postgres/osiadb"
+    volumes:
+      - ./custo:/custo
+    ports:
+      - "8010:8080"
+    links:
+      - postgres
+    depends_on:
+      - postgres
+    restart: on-failure
+  uin:
+    build:
+      context: ../../uin
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: osia/uin
+    ports:
+      - "8020:8080"
+  notification:
+    build:
+      context: ../../notification
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: osia/notification
+    ports:
+      - "8030:8080"
+    environment:
+      REDIS_URL: "redis://redis/0"
+      ROOT_URL: "http://notification:8080/"
+    links:
+      - redis
+    depends_on:
+      - redis
+
+  #
+  # Middleware
+  #
+  orchestrator:
+    build:
+      context: ../../orchestrator
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: osia/orchestrator
+    ports:
+      - "8040:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      NOTIFICATION_URL: "http://notification:8080/"
+      MY_URL: "http://orchestrator:8080/"
+      REDIS_URL: "redis://redis/1"
+      CR_URL: "http://host.docker.internal:8080/v1/persons"
+      PR_URL: "http://pr:8080/v1/persons"
+    links:
+      - notification
+      - redis
+    depends_on:
+      - notification
+      - redis
+  #
+  # Databases
+  #
+  redis:
+    image: ${D4R6Y}redis:7.0.9-alpine
+  postgres:
+    image: ${D4R6Y}postgres:18.4-alpine3.24
+    environment:
+      - POSTGRES_DB=osiadb
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=SuperSecret
+      - TZ=Europe/Paris
+    volumes:
+      - ../pg_setup.sql:/docker-entrypoint-initdb.d/pg_setup.sql
+  pgadmin:
+    image: ${D4R6Y}dpage/pgadmin4:2026-06-18-3
+    ports:
+      - 9080:80
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=osia@secureidentityalliance.org
+      - PGADMIN_DEFAULT_PASSWORD=OSIASecret
+  #
+  # Non-OSIA components, for testing, monitoring and demonstration
+  #
+  pr-portal:
+    build:
+      context: ../../pr-portal
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: osia/pr-portal
+    environment:
+      - PR_URL=http://pr:8080
+      - UIN_URL=http://uin:8080
+    tty: true
+    ports:
+      - "8100:8080"
+    links:
+      - pr
+      - uin
+  prom:
+    image: ${D4R6Y}prom/prometheus:v3.13.1-distroless
+    volumes:
+      - ../../monitoring:/osia
+    command: --config.file=/osia/prometheus.yml
+#    command: --config.file=/osia/prometheus.yml --log.level=debug
+    ports:
+      - "9090:9090"
+    links:
+      - enrollment
+      - pr
+      - uin
+      - notification
+      - orchestrator
+  graf:
+    image: ${D4R6Y}grafana/grafana:11.6.16
+    ports:
+      - "3000:3000"
+    links:
+      - prom
