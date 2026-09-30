@@ -201,6 +201,7 @@ def validate_json(data, schema_name, with_required=True):
             # [---CUSTO---]
             # patch schemas for readOnly attributes
             schemas['Enrollment']['required'].remove('enrollmentId')
+            schemas['Enrollment']['required'].remove('status')
 
             # [---CUSTO---]
 
@@ -273,7 +274,7 @@ async def finalize_CB(enrollment_id, transaction_id):
         return
     async with aiohttp.ClientSession() as clt_session:
         try:
-            async with clt_session.post(enrollment.args.notification_url+'/v1/topics/enrollment/publish', 
+            async with clt_session.post(enrollment.args.notification_url+'/v1/topics/'+enrollment.args.notification_topic+'/publish', 
                                         json=dict(enrollmentId=enrollment_id, transactionId=transaction_id),
                                         ssl=get_notification_client_ssl_context()) as response:
                 if response.status == 200:
@@ -298,6 +299,8 @@ async def createEnrollment(request):
     if msg:
         return web.json_response(data={'code': 400, 'message': msg}, status=400)
 
+    data['enrollmentId'] = enrollment_id
+    data['status'] = 'IN_PROGRESS'
     logging.info('Receiving enrollment for transaction %s enrollmentId %s', transaction_id, enrollment_id)
 
     import enrollment.serialize
@@ -306,7 +309,7 @@ async def createEnrollment(request):
         res = await enrollment.model.Enrollment.afind_by_id(session, enrollment_id)
         if res:
             logging.error("Enrollment already exists for id %s", enrollment_id)
-            return web.Response(status=400)
+            return web.json_response(data=dict(code=400, message="Enrollment already exists for id %s" % enrollment_id), status=400)
 
         enrollment_schema = enrollment.serialize.EnrollmentSchema()
         np = enrollment_schema.load(data, session=session)
@@ -318,7 +321,7 @@ async def createEnrollment(request):
         # Successful
         if np.status == 'FINALIZED':
             await finalize_CB(enrollment_id, transaction_id)
-    return web.json_response(data=enrollment_id, status=201)
+    return web.json_response(data=enrollment_id, status=204)
 
 # _____________________________________________________________________________
 @routes.post('/v1/enrollments')
@@ -383,7 +386,6 @@ async def updateEnrollment(request):
             return web.json_response(data={'code': 403, 'message': "Already finalized"}, status=403)
 
         data = await request.json()
-
         msg = validate_json(data, 'Enrollment')
         if msg:
             return web.json_response(data={'code': 400, 'message': msg}, status=400)

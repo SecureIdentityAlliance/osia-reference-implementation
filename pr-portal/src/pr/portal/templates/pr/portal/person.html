@@ -26,5 +26,9 @@
     </tbody>
 </table>
 
+{% if 'ABIS_URL'|in_env == '1' %}
+<a href="{% url 'pr:portrait' personId%}">Check the portrait</a>
+<br/>
+{% endif %}
 <a href="{% url 'pr:index' %}" class="btn btn-primary" role="button">Go Back ...</a>
 {% endblock %}

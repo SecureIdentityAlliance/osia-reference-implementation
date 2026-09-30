@@ -62,3 +62,27 @@ This Use Case is an extension of the previous Use Case. It is extended with:
 - A CMS. After the creation of the child's identity in PR, a new credential is requested.
   This credential can be pysical or digital.
 
+Execution
+---------
+
+Start the servers with::
+
+    docker system prune -f
+    docker compose -f docker-compose.yml build --no-cache
+    docker compose -f docker-compose.yml up --build --force-recreate
+
+Innject test data with::
+
+    python3 -m venv .py
+    source .py/bin/activate
+    pip install -r requirements.txt
+    # insert dummy data for the parents
+    python insert_data.py
+    # Then simulate an enrollment
+    python enroll4birth.py --id 001 --fn First --ls Last --dob 2026-09-30 --gender F --parent-uin JF --parent-portrait data/jimmy.jpg
+
+Check the Population Registry content at http://localhost:9100/pr
+
+Check the Grafana dashboard at http://localhost:3000. Login with admin/admin,
+create a Prometheus data source pointing to http://prom:9090
+and then import the dashboard in ``monitoring/OSIA.json``

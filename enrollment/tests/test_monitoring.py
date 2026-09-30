@@ -27,6 +27,8 @@ class TestNominal(TestEnrollment):
         with requests.get(self.mon_url+'monitoring/v1/is_healthy', verify=False) as r:
             assert 200 == r.status_code
 
+        with requests.get(self.mon_url+'metrics', verify=False) as r:
+            assert 200 == r.status_code
 
 
 if __name__ == '__main__':

@@ -1,158 +1,67 @@
 import sys
 import logging
 import argparse
-import asyncio
-import threading
 import datetime
+import pathlib
+import base64
 
 import requests
 
-import aiohttp
-from aiohttp import web
-
 args = None
-routes = web.RouteTableDef()
 
 def get_ssl_context():
     kw = {}
     kw['verify'] = False
     return kw
 
-LOOP = None
-PORT = '8080'
-
-async def runner():
-    app = web.Application()
-    app.add_routes(routes)
-    runner = web.AppRunner(app)
-    await runner.setup()
-
-    site = web.TCPSite(runner, '0.0.0.0', int(PORT), reuse_address=True)
-    await site.start()
-
-def run_server(handler, args):
-    global LOOP
-    global PORT
-    PORT = args.port
-    loop = asyncio.new_event_loop()
-    LOOP = loop
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(handler)
-
-    try:
-        logging.info('Starting...')
-        loop.run_forever()
-
-    finally:
-        loop.run_until_complete(loop.shutdown_asyncgens())
-        loop.close()
-
-FN = None
-# _____________________________________________________________________________
-@routes.get('/v1/persons/{uin}')
-async def readPersonAttributes(request):
-    uin = request.match_info['uin']
-    names = request.query.getall('attributeNames', [])
-
-    logging.info("readPersonAttributes for UIN [%s]", uin)
-
-    dob = datetime.date.today().isoformat()
-    data = {
-        "firstName": FN,
-        "lastName": "Smith",
-        "dateOfBirth": dob,
-        "gender": "M",
-        "nationality": "FRA",
-    }
-
-    ret = {}
-    for k in names:
-        if k in data:
-            ret[k] = data[k]
-    return web.json_response(ret, status=200)
-
-
 def do_birth(args):
 
-    global FN
-    FN = args.firstname
-    
-    # match mother
+    # Check ID of parent
+    if args.parent_portrait_path:
+        logging.info("Confirming parent's identity")
+        with open(args.parent_portrait_path,'rb') as f:
+            portrait = f.read()
+            data = {"biometricData": [
+                    {
+                        "biometricType": "FACE",
+                        "image": base64.b64encode(portrait).decode('ascii')
+                    }
+                ]}
+        with requests.post(args.abis_url+'v1/verify/ALL/'+args.parent_uin, json=data, params={'transactionId': args.id},**get_ssl_context()) as r:
+            assert 200 == r.status_code
+            res = r.json()
+            assert res['decision'] == True
+            logging.info('CONFIRMED')
+    else:
+        logging.info("Cannot confirm parent's identity (no portrait provided)")
+
+    # Get Parent data
+    logging.info("Get parent data")
+    with requests.get(args.pr_url+'v1/persons/'+args.parent_uin+'/reference', params={'transactionId': args.id},**get_ssl_context()) as r:
+        assert 200 == r.status_code
+        parent = r.json()
+        logging.info('Parent name: %s %s' % (parent['biographicData']['firstName'], parent['biographicData']['lastName']))
+
+    # Send data to enrollment server
     data = {
-        "firstName": "Alice",
-        "lastName": "Smith",
+        "enrollmentType": "BABY",
+        "requestData": {},
+        "contextualData": {
+            "enrollmentDate": "2026-09-29",
+        },
+        "biographicData": {
+            "firstName": args.firstname,
+            "lastName": args.lastname,
+            "dateOfBirth": args.dob,
+            "gender": args.gender,
+            "parentUIN": args.parent_uin
+        }
     }
-    with requests.post(args.pr_url+'v1/persons/B/match', json=data,**get_ssl_context()) as r:
-        assert 200 == r.status_code
-        assert [] == r.json()
-    logging.info("Mother data is OK (no error)")
-
-    # match father
-    data = {
-        "firstName": "Albert",
-        "lastName": "Smith",
-    }
-    with requests.post(args.pr_url+'v1/persons/A/match', json=data,**get_ssl_context()) as r:
-        assert 200 == r.status_code
-        assert [] == r.json()
-    logging.info("Father data is OK (no error)")
-
-    # read mother attributes
-    params = {
-        "attributeNames": ["dateOfBirth"]
-    }
-    with requests.get(args.pr_url+'v1/persons/B', params=params,**get_ssl_context()) as r:
-        assert 200 == r.status_code
-        assert {"dateOfBirth": "1987-11-30"} == r.json()
-    logging.info("Get additional mother data")
-
-    # read father attributes
-    params = {
-        "attributeNames": ["dateOfBirth"]
-    }
-    with requests.get(args.pr_url+'v1/persons/A', params=params,**get_ssl_context()) as r:
-        assert 200 == r.status_code
-        assert {"dateOfBirth": "1985-11-30"} == r.json()
-    logging.info("Get additional father data")
-
-    # check if new born exists
-    dob = datetime.date.today().isoformat()
-    params = {
-        "firstName": args.firstname,
-        "lastName": "Smith",
-        "dateOfBirth": dob
-    }
-    with requests.get(args.pr_url+'v1/persons', params=params,**get_ssl_context()) as r:
-        assert 200 == r.status_code
-        if len(r.json()) > 0:
-            logging.info("New born already in database")
-            return
-        assert [] == r.json()
-    logging.info("New born not found in database")
-
-    # get a new UIN for the child
-    data = {
-        "firstName": args.firstname,
-        "lastName": "Smith",
-        "dateOfBirth": dob,
-        "gender": "M"
-    }
-    with requests.post(args.uin_url+'v1/uin', json=data, params={'transactionId': 'birth'},**get_ssl_context()) as r:
-        assert 200 == r.status_code
-        assert 'Server' not in r.headers
-        UIN = r.json()
-        assert '126' == UIN[:3]
-    logging.info("UIN for child: %s", UIN)
-
-    data = {
-        "source": "CR-mock",
-        "uin": UIN,
-        "uin1": "A",
-        "uin2": "B"
-    }
-    with requests.post(args.notification_url+"v1/topics/CR/publish",params={'subject':'liveBirth'},json=data) as r:
-        assert r.status_code == 200
-    logging.info("Notification sent")
+    with requests.post(args.enr_url+'v1/enrollments/'+args.id, json=data, params={'finalize':'true', 'transactionId': args.id},**get_ssl_context()) as r:
+        if r.status_code!=204:
+            logging.error("[%d]: %s" , r.status_code,r.content)
+        else:
+            logging.info("Enrollment successfully submitted")
 
 
 def main(argv=sys.argv[1:]):
@@ -166,13 +75,19 @@ def main(argv=sys.argv[1:]):
     parser.add_argument("--pr-url", dest='pr_url',
                         default='http://localhost:8010/',
                         help='The URL to the PR service')
-    parser.add_argument("--uin-url", dest='uin_url',
-                        default='http://localhost:8020/',
-                        help='The URL to the UIN generator service')
-    parser.add_argument("--notification-url", dest='notification_url',
+    parser.add_argument("--abis-url", dest='abis_url',
                         default='http://localhost:8030/',
-                        help='The URL to the notification service')
+                        help='The URL to the ABIS service')
+    parser.add_argument("--enrollment-url", dest='enr_url',
+                        default='http://localhost:8000/',
+                        help='The URL to the Enrollment Server')
+    parser.add_argument("--id", default='001', dest='id', help="Enrollment/transaction ID")
     parser.add_argument("--fn", default='Baby', dest='firstname', help="First name of the baby")
+    parser.add_argument("--ln", default='Smith', dest='lastname', help="Last name of the baby")
+    parser.add_argument("--dob", default=datetime.date.today().isoformat(), dest='dob', help="Date of birth of the baby")
+    parser.add_argument("--gender", default='M', dest='gender', help="Gender of the baby")
+    parser.add_argument("--parent-uin", default='AH', dest='parent_uin', help="UIN of the parent of the baby")
+    parser.add_argument("--parent-portrait", default=None, type=pathlib.Path, dest='parent_portrait_path', help="Path to the portrait image of the parent")
 
     args = parser.parse_args(argv)
 
@@ -186,12 +101,7 @@ def main(argv=sys.argv[1:]):
         logging.getLogger().addHandler(fh)
 
 
-    t = threading.Thread(target=run_server, args=(runner(), args), daemon=True)
-    t.start()
-
     do_birth(args)
-
-    input('Press enter to close')
 
 if __name__ == '__main__':
     main()

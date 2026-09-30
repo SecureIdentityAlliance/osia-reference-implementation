@@ -1,6 +1,6 @@
 #!/bin/sh
 openssl genrsa -aes256 -out CA.key -passout pass:secret 2048
-openssl req -x509 -new -nodes -key CA.key -sha256 -days 7300 -extensions v3_ca -out CA.pem -subj "/C=FR/ST=IDF/L=Paris/O=Company/CN=ca.com" -passin pass:secret
+openssl req -x509 -new -nodes -key CA.key -sha256 -days 7300 -extensions v3_ca -addext 'keyUsage=critical,keyCertSign,cRLSign' -out CA.pem -subj "/C=FR/ST=IDF/L=Paris/O=Company/CN=ca.com" -passin pass:secret
 
 # server
 openssl genrsa -aes256 -out server.key -passout pass:secret 2048

@@ -15,22 +15,11 @@ BiographicData:
     gender:
       type: string
       enum: ['M', 'F']
-    nationality:
-      type: string
-      enum:
-        - FRA
-        - USA
-    email:
-      type: string
-    mobileNumber:
-      type: string
-    title:
-      type: string
   additionalProperties: false
 ContextualData:
   type: object
   properties:
     enrollmentDate:
       type: string
-      format: date
+      format: date-time
   additionalProperties: false

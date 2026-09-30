@@ -36,8 +36,8 @@ def get_ssl_context():
 class TestNominal(TestEnrollment):
     def test_ok(self):
         data = dict(
-            enrollmentId= "0001",
-            status= "IN_PROGRESS",
+            # enrollmentId= "0001",
+            # status= "IN_PROGRESS",
             enrollmentType= "FULL",
             enrollmentFlags=dict(timeout=3600),
             requestData= dict(requestType= "DEMO"),
@@ -60,9 +60,9 @@ class TestNominal(TestEnrollment):
 
         # Create enrollment
         with requests.post(self.url+'v1/enrollments/0001', json=data, params={'transactionId': 'T0001', 'finalize': 'false'},**get_ssl_context()) as r:
-            assert 201 == r.status_code
+            assert 204 == r.status_code
             assert 'Server' not in r.headers
-            enrollment_id = r.json()
+            enrollment_id = '0001'
 
         # Insert one buffer
         bdata = b'LEFT_INDEX'
@@ -115,7 +115,9 @@ class TestNominal(TestEnrollment):
         with requests.get(self.url+'v1/enrollments/0001', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
             assert 200 == r.status_code
             data2 = r.json()
-            assert data2==data
+            expected_data = {'enrollmentId': '0001', 'status': 'IN_PROGRESS'}
+            expected_data.update(data)
+            assert data2==expected_data
 
         # test partial update
         data3 = {
@@ -128,12 +130,12 @@ class TestNominal(TestEnrollment):
             assert 204 == r.status_code
 
         # Read enrollment
-        data['biographicData']['firstName'] = "John2"
-        data['biographicData']['lastName'] = "Doe2"
+        expected_data['biographicData']['firstName'] = "John2"
+        expected_data['biographicData']['lastName'] = "Doe2"
         with requests.get(self.url+'v1/enrollments/0001', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
             assert 200 == r.status_code
             data2 = r.json()
-            assert data2==data
+            assert data2==expected_data
 
         # Run query, bad input
         dataq = dict(
@@ -178,7 +180,7 @@ class TestNominal(TestEnrollment):
             assert 200 == r.status_code
             res = r.json()
             assert len(res) == 1
-            assert res[0] == data
+            assert res[0] == expected_data
 
         # finalize
         with requests.put(self.url+'v1/enrollments/0001/finalize', params={'transactionId': 'T0001'},**get_ssl_context()) as r:

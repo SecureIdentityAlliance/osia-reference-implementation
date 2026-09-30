@@ -8,9 +8,6 @@ import time
 import threading
 import asyncio
 import os
-import base64
-import json
-import logging
 
 from aiohttp import web
 
@@ -24,7 +21,7 @@ HOSTNAME = 'localhost'
 
 # [---CUSTO---]
 # Custom code used for testing
-# Media Test Server
+# Notification Test Server
 @enrollment.server.routes.post('/v1/topics/enrollment/publish')
 async def notif_publish(request):
     return web.Response(status=200)

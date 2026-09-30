@@ -157,6 +157,8 @@ services:
       - orchestrator
   graf:
     image: ${D4R6Y}grafana/grafana:11.6.16
+    environment:
+      GF_LOG_LEVEL: error
     ports:
       - "3000:3000"
     links:

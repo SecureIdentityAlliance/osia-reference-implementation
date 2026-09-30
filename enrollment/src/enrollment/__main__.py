@@ -138,6 +138,12 @@ def main(argv=sys.argv[1:]):
 
     # [---CUSTO---]
     # Additional arguments
+
+    parser.add_argument("--notification-topic", dest='notification_topic',
+                        env_var='ENROLLMENT_NOTIFICATION_TOPIC',
+                        default='enrollment',
+                        help='Topic to send notification')
+
     # [---CUSTO---]
 
     enrollment.args = parser.parse_args(argv)

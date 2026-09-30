@@ -249,6 +249,27 @@ async def createEncounter(request):
 
         return web.json_response(data={'personId': person_id, 'encounterId': encounter_id}, status=200)
 
+# _____________________________________________________________________________
+@routes.get('/v1/persons/{personId}/encounters')
+@LM.timer("readAllEncounters", ok_status, "error")
+async def readAllEncounters(request):
+    transaction_id = request.query['transactionId']
+    person_id = request.match_info['personId']
+
+    logging.info("[%s] - readAllEncounters for personId [%s]", transaction_id, person_id)
+
+    import abis.serialize
+
+    async with AsyncSession(abis.aengine) as session, session.begin():
+        enc = await abis.model.Encounter.afind_by_pid(session, person_id)
+        ret = []
+        encounter_schema = abis.serialize.EncounterSchema()
+        for e in enc:
+            data = encounter_schema.dump(e)
+            ret.append(data)
+        return web.json_response(ret, status=200)
+
+# _____________________________________________________________________________
 @routes.post('/v1/verify/{galleryId}/{personId}')
 @LM.timer("verifyFromId", ok_status, "error")
 async def verifyFromId(request):

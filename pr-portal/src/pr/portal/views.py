@@ -2,10 +2,12 @@ import logging
 import os
 import datetime
 import random
+import base64
 
 from django.shortcuts import render
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
+from django.template.defaulttags import register
 
 import requests
 
@@ -14,6 +16,9 @@ def pr_url():
 
 def uin_url():
     return os.environ.get('UIN_URL', 'http://localhost:8020')
+
+def abis_url():
+    return os.environ.get('ABIS_URL', 'http://localhost:8030')
 
 def index(request):
     req = requests.post(pr_url()+"/v1/persons?transactionId=portal", json=[{
@@ -34,6 +39,22 @@ def index(request):
             d.update(req2.json()['biographicData'])
             ret.append(d)
     return render(request, "pr/portal/index.html", dict(persons=ret))
+
+def portrait(request, person_id):
+    return render(request, "pr/portal/portrait.html", dict(personId=person_id))
+
+def portrait_image(request, person_id):
+    req = requests.get(abis_url()+"/v1/persons/"+person_id+'/encounters?transactionId=portal')
+    if req.status_code!=200:
+        raise Exception("Failed to contact ABIS (HTTP code: %s)" % req.status_code)
+    data = req.json()
+    if not data:
+        raise Exception("No encounters found in ABIS for %s (HTTP code: %s)" % (person_id, req.status_code) )
+    for bio in data[0]['biometricData']:
+        if bio['biometricType'] == 'FACE':
+            i = base64.b64decode(bio['image'])
+            return HttpResponse(i, content_type='application/octet-stream')
+    raise Exception("No portrait found in ABIS for %s (HTTP code: %s)" % (person_id, req.status_code) )
 
 def person(request, person_id):
     req = requests.get(pr_url()+"/v1/persons/"+person_id+'/identities?transactionId=portal')
@@ -102,3 +123,11 @@ def add_dummy(request):
             raise Exception("Failed to contact Population Registry (HTTP code: %s)" % req.status_code)
 
     return HttpResponseRedirect(reverse("pr:index"))
+
+
+@register.filter(is_safe=True)
+def in_env(value):
+    if value in os.environ:
+        return '1'
+    return '0'
+

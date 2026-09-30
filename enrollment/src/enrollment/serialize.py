@@ -128,7 +128,7 @@ class EnrollmentSchema(SQLAlchemyAutoSchema):
         model = model.Enrollment
         load_instance = True
         include_fk = False
-#        dump_only = ['enrollmentId']
+        # dump_only = ['status', 'enrollmentId']    # do not use otherwise it breaks the required fields in SQLAlchemy schema
         exclude = ['id']
     biometricData = Nested(BiometricDataSchema, many=True)
     documentData = Nested(DocumentDataSchema, many=True)
