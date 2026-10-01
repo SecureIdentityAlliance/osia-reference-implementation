@@ -1,0 +1,7 @@
+configargparse==1.7.7
+aiohttp==3.14.3
+livemetrics[aiohttp]==0.9
+
+
+# [---CUSTO---]
+# [---CUSTO---]

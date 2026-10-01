@@ -16,7 +16,7 @@ def get_ssl_context():
 
 def do_birth(args):
 
-    # Check ID of parent
+    # (1) verify ID of parent
     if args.parent_portrait_path:
         logging.info("Confirming parent's identity")
         with open(args.parent_portrait_path,'rb') as f:
@@ -35,14 +35,14 @@ def do_birth(args):
     else:
         logging.info("Cannot confirm parent's identity (no portrait provided)")
 
-    # Get Parent data
+    # (2) Get Parent data
     logging.info("Get parent data")
     with requests.get(args.pr_url+'v1/persons/'+args.parent_uin+'/reference', params={'transactionId': args.id},**get_ssl_context()) as r:
         assert 200 == r.status_code
         parent = r.json()
         logging.info('Parent name: %s %s' % (parent['biographicData']['firstName'], parent['biographicData']['lastName']))
 
-    # Send data to enrollment server
+    # (3) Send data to enrollment server
     data = {
         "enrollmentType": "BABY",
         "requestData": {},

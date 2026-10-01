@@ -75,6 +75,29 @@ services:
     depends_on:
       - postgres
     restart: on-failure
+  cr:
+    build:
+      context: ../../cr
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: osia/cr
+    environment:
+      MY_URL: "http://cr:8080/"
+      CR_NOTIFICATION_URL: "http://notification:8080/"
+      CR_UIN_URL: "http://uin:8080/"
+      CR_PR_URL: "http://pr:8080/"
+      CR_ENROLLMENT_URL: "http://enrollment:8080/"
+    ports:
+      - "8050:8080"
+    links:
+      - notification
+      - uin
+      - pr
+      - enrollment
+    depends_on:
+      - notification
   notification:
     build:
       context: ../../notification

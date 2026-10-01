@@ -71,7 +71,7 @@ Start the servers with::
     docker compose -f docker-compose.yml build --no-cache
     docker compose -f docker-compose.yml up --build --force-recreate
 
-Innject test data with::
+Inject test data with::
 
     python3 -m venv .py
     source .py/bin/activate
@@ -79,10 +79,11 @@ Innject test data with::
     # insert dummy data for the parents
     python insert_data.py
     # Then simulate an enrollment
-    python enroll4birth.py --id 001 --fn First --ls Last --dob 2026-09-30 --gender F --parent-uin JF --parent-portrait data/jimmy.jpg
+    python enroll4birth.py --fn First --ln Last --dob 2026-09-30 --gender F --parent-uin JF --parent-portrait data/jimmy.jpg --id 001
 
+Logs can be checked with::
+
+    docker logs -f enrol4birth-cr-1 | humanlog
+    
 Check the Population Registry content at http://localhost:9100/pr
 
-Check the Grafana dashboard at http://localhost:3000. Login with admin/admin,
-create a Prometheus data source pointing to http://prom:9090
-and then import the dashboard in ``monitoring/OSIA.json``
