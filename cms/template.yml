@@ -1,0 +1,7 @@
+---
+app: cms
+mod: server
+author: Olivier Heurtier
+author_email: olivier.heurtier@secureidentityalliance.org
+license: Apache 2.0
+openapi: 1

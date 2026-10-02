@@ -345,7 +345,7 @@ async def execute(event):
         )
         logging.info(f"[{transaction_id}] - Child is registered in this CR (UIN={enr['biographicData']['UIN']})")
 
-        # (10) Send notification of new birth registration
+        # (10) Publish event of new birth registration
         data = {
             "source": "CR",
             "uin": enr['biographicData']['UIN'],

@@ -65,6 +65,8 @@ def do_birth(args):
                     "image": base64.b64encode(portrait).decode('ascii')
                 }
             ]
+
+    # (4) Publish event of new enrollment
     with requests.post(args.enr_url+'v1/enrollments/'+args.id, json=data, params={'finalize':'true', 'transactionId': args.id},**get_ssl_context()) as r:
         if r.status_code!=204:
             logging.error("[%d]: %s" , r.status_code,r.content)

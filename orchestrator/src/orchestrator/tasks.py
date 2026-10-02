@@ -11,7 +11,7 @@ import io
 import datetime
 
 from orchestrator.celery import app
-from orchestrator.clients import enrollment, pr, cr, abis
+from orchestrator.clients import enrollment, pr, cr, abis, cms
 
 from celery import chain
 
@@ -131,7 +131,7 @@ def defineReference_PR(self,ctx, url,enrollment_id, transaction_id):
 #______________________________________________________________________________
 @app.task(bind=True)
 def createEncounter_ABIS(self,ctx, url,enrollment_id, transaction_id):
-    if not ctx.get('contextualData', []):
+    if not ctx.get('biometricData', []):
         logging.info("==> [%s] No biometric data for enrollment %s", transaction_id, enrollment_id)
         return
     logging.info("==> [%s] Creating encounter in ABIS for enrollment %s", transaction_id, enrollment_id)
@@ -148,6 +148,32 @@ def createEncounter_ABIS(self,ctx, url,enrollment_id, transaction_id):
         data = io.BytesIO(json.dumps(encounter).encode('latin-1'))
         encounter_id = ctx.get('identityId', None)
         asyncio.run( abis.createEncounter(url+'/v1/persons', transaction_id, ctx['UIN'], encounter_id, data) )
+    except Exception as exc:
+        self.retry(countdown=60.0,max_retries=10,exc=exc)
+    return ctx
+
+#______________________________________________________________________________
+@app.task(bind=True)
+def createCredentialRequest_CMS(self,ctx, url,enrollment_id, transaction_id):
+    logging.info("==> [%s] Creating CredentialRequest in CMS for enrollment %s", transaction_id, enrollment_id)
+    try:
+        request = dict(
+            status='PENDING',
+            requestData={
+                "priority": 1,
+                "credentialProfileId": "ID_CARD",
+                "requestType": "FIRST_ISSUANCE",
+                "validFromDate": datetime.datetime.now().isoformat(),
+                "validToDate": (datetime.datetime.now() + datetime.timedelta(days=4*365+1)).isoformat(),
+                "issuingAuthority": "OSIA",
+            },
+            personId=ctx['UIN'],
+            biographicData=ctx.get('biographicData', {}),
+            biometricData=ctx.get('biometricData', [])
+        )
+
+        data = io.BytesIO(json.dumps(request).encode('latin-1'))
+        asyncio.run( cms.createCredentialRequest(url, transaction_id, enrollment_id, data) )
     except Exception as exc:
         self.retry(countdown=60.0,max_retries=10,exc=exc)
     return ctx
@@ -180,13 +206,21 @@ def workflow_enroll4birth(uin, transaction_id, enrollment_id):
     ctx['identityId'] = datetime.datetime.now().strftime("%m%d%H%M%S%f")
     # See https://docs.celeryproject.org/en/stable/userguide/canvas.html#the-primitives
     chain( 
+        # (12)
         readPersonAttributes_CR.s(ctx, os.environ.get("CR_URL",'http://cr:8080'), enrollment_id, transaction_id),
+        # (13)
         readEnrollment_ENR.s(os.environ.get("ENROLLMENT_URL",'http://enrollment:8080'), enrollment_id, transaction_id),
+        # (14)
         createPerson_PR.s(os.environ.get("PR_URL",'http://pr:8080'), enrollment_id, transaction_id),
+        # (15)
         createIdentity_PR.s(os.environ.get("PR_URL",'http://pr:8080'), enrollment_id, transaction_id),
+        # (16)
         defineReference_PR.s(os.environ.get("PR_URL",'http://pr:8080'), enrollment_id, transaction_id),
+        # (17)
         createEncounter_ABIS.s(os.environ.get("ABIS_URL",'http://abis:8080'), enrollment_id, transaction_id),
-        # Send to CMS
+        # (18) Send to CMS
+        createCredentialRequest_CMS.s(os.environ.get("CMS_URL",'http://cms:8080'), enrollment_id, transaction_id),
+        # (19) delete enrollment
         deleteEnrollment_ENR.s(os.environ.get("ENROLLMENT_URL",'http://enrollment:8080'), enrollment_id, transaction_id),
         done.s(transaction_id),
     )()

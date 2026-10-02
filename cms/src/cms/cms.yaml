@@ -1,0 +1,1065 @@
+
+# (c) Secure Identity Alliance
+
+openapi: 3.0.0
+info:
+  description: |
+    The OSIA Credential Management System Interface.
+    
+    Change log:
+    
+    - 1.2.1:
+      - Add missing values in BiometricSubType
+      - Use HTTP code 409 in case of conflict of ID in create operations
+    - 1.2.0:
+      - Change date to date-time
+      - Add the impressionType, mimeType to biometricData
+      - Do not mix fixed properties and additional properties, use a subobject for the additional properties
+      - Add credentialNumber, issuingAuthority, issuingPlace to the credential
+      - Add quality, qualityFormat, algorithm, vendor, templateRef fields to biometricData
+      - Add fields credentialNumber and deliveryOffice to requestData
+      - Add field credentialIds to credentialRequest
+      - Mark some fields (ID, etc.) as readOnly
+      - Rename entity Credential as CredentialData
+      - Remove deleteCredentialRequest and replace it with cancelCredentialRequest
+      - Change the type of priority from string to integer to be consistent with other OSIA interfaces
+    - 1.1.0:
+      - Add error structure on 400 errors
+      - Add signature in biometricType
+      - Force additionalProperties to false when extension is not allowed
+      - Add fields on BiometricData: instance, metadata, comment, missing, template (needed when inserted in the credential)
+      - Add a requestData entity to group the request of data
+      - Extend the allowed values for the status
+      - Add a service to change the status
+    - 1.0.0: Initial version
+
+  version: 1.2.1
+  title: OSIA Credential Management System Interface
+  license:
+    name: SIA
+    url: "https://raw.githubusercontent.com/SecureIdentityAlliance/osia/master/LICENSE"
+tags:
+  - name: Credential Request
+  - name: Credential
+  - name: Credential Profile
+servers:
+  - url: http://cms.com/
+  - url: https://cms.com/
+paths:
+
+  /v1/credentialRequests/{credentialRequestId}:
+    post:
+      tags:
+        - Credential Request
+      summary: Create a request for a credential
+      operationId: createCredentialRequest
+      security:
+        - BearerAuth: [cms.request.write]
+      parameters:
+        - name: credentialRequestId
+          in: path
+          description: the id of the credential request
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialRequest'
+      responses:
+        '201':
+          description: Operation successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operation not allowed
+        '409':
+          description: Creation not allowed, credentialRequestId already exists
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      tags:
+        - Credential Request
+      summary: Read a credential request
+      operationId: readCredentialRequest
+      security:
+        - BearerAuth: [cms.request.read]
+      parameters:
+        - name: credentialRequestId
+          in: path
+          description: the id of the credential request
+          required: true
+          schema:
+            type: string
+        - name: attributes
+          in: query
+          description: The (optional) set of attributes to retrieve
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            example:
+              - lastname
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Read successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CredentialRequest'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Read not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Credential Request
+      summary: Update a credential request
+      operationId: updateCredentialRequest
+      security:
+        - BearerAuth: [cms.request.write]
+      parameters:
+        - name: credentialRequestId
+          in: path
+          description: the id of the credential request
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialRequest'
+      responses:
+        '204':
+          description: Update successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Update not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/credentialRequests/{credentialRequestId}/cancel:
+    post:
+      tags:
+        - Credential Request
+      summary: Cancel a credential request
+      operationId: cancelCredentialRequest
+      security:
+        - BearerAuth: [cms.request.write]
+      parameters:
+        - name: credentialRequestId
+          in: path
+          description: the id of the credential request
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Cancel successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Cancel not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/credentials:
+    post:
+      tags:
+        - Credential
+      summary: Retrieve a list of credentials that match the given search criteria
+      operationId: findCredentials
+      security:
+        - BearerAuth: [cms.credential.read]
+      parameters:
+        - name: attributes
+          in: query
+          description: The (optional) set of required attributes to retrieve
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Expressions'
+      responses:
+        '200':
+          description: Read successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CredentialData'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Read not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/credentials/{credentialId}:
+    get:
+      tags:
+        - Credential
+      summary: Read a credential
+      operationId: readCredential
+      security:
+        - BearerAuth: [cms.credential.read]
+      parameters:
+        - name: credentialId
+          in: path
+          description: the id of the credential
+          required: true
+          schema:
+            type: string
+        - name: attributes
+          in: query
+          description: The (optional) set of required attributes to retrieve
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Read successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CredentialData'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Read not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/credentials/{credentialId}/suspend:
+    post:
+      tags:
+        - Credential
+      summary: Suspend a credential
+      operationId: suspendCredential
+      security:
+        - BearerAuth: [cms.credential.write]
+      parameters:
+        - name: credentialId
+          in: path
+          description: the id of the credential
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                reason:
+                  type: string
+                  description: the reason for suspension
+      responses:
+        '204':
+          description: Update successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Update not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/credentials/{credentialId}/unsuspend:
+    post:
+      tags:
+        - Credential
+      summary: Unsuspend a credential
+      operationId: unsuspendCredential
+      security:
+        - BearerAuth: [cms.credential.write]
+      parameters:
+        - name: credentialId
+          in: path
+          description: the id of the credential
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                reason:
+                  type: string
+                  description: the reason for unsuspension
+      responses:
+        '204':
+          description: Update successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Update not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/credentials/{credentialId}/revoke:
+    post:
+      tags:
+        - Credential
+      summary: Revoke a credential
+      operationId: revokeCredential
+      security:
+        - BearerAuth: [cms.credential.write]
+      parameters:
+        - name: credentialId
+          in: path
+          description: the id of the credential
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                reason:
+                  type: string
+                  description: the reason for revocation
+
+      responses:
+        '204':
+          description: Update successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Update not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/credentials/{credentialId}/status:
+    post:
+      tags:
+        - Credential
+      summary: Change the status of a credential
+      operationId: setCredentialStatus
+      security:
+        - BearerAuth: [cms.credential.write]
+      parameters:
+        - name: credentialId
+          in: path
+          description: the id of the credential
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  description: The new status of the credential
+                reason:
+                  type: string
+                  description: The reason for the change of status
+                requester:
+                  type: string
+                  description: The ID/name of the entity requesting the change
+                comment:
+                  type: string
+                  description: A free comment
+              additionalProperties: false
+      responses:
+        '204':
+          description: Operation successful
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Operation not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/credentialProfiles:
+    post:
+      tags:
+        - Credential Profile
+      summary: Retrieve a list of credential profiles that match the given search criteria
+      operationId: findCredentialProfiles
+      security:
+        - BearerAuth: [cms.profile.read]
+      parameters:
+        - name: attributes
+          in: query
+          description: The (optional) set of required attributes to retrieve
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: transactionId
+          in: query
+          description: The id of the transaction
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Expressions'
+      responses:
+        '200':
+          description: Read successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CredentialProfile'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Read not allowed
+        '404':
+          description: Unknown record
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          description: Error code
+          type: integer
+          format: int32
+        message:
+          description: Error message
+          type: string
+      additionalProperties: false
+    Address:
+      type: object
+      properties:
+        address1:
+          type: string
+          description: the first line of the address
+        address2:
+          type: string
+          description: the second line of the address
+        city:
+          type: string
+          description: the city of the address
+        state:
+          type: string
+          description: the state of the address
+        postalCode:
+          type: string
+          description: the postal code of the address
+        country:
+          type: string
+          description: the country of the address
+        others:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+      example:
+        address1: 11 Rue des Rosiers
+        address2: '1st floor'
+        city: Libourne
+        state: 'Gironde'
+        postalCode: '33500'
+        country: France
+    BiographicData:
+      type: object
+      description: The set of biographic data.
+      additionalProperties: true
+      example:
+        firstName: John
+        lastName: Doo
+        dateOfBirth: "1985-11-30"
+        gender: M
+        nationality: FRA
+    BiometricData:
+      type: object
+      required:
+        - biometricType
+      properties:
+        biometricType:
+          $ref: '#/components/schemas/BiometricType'
+        biometricSubType:
+          $ref: '#/components/schemas/BiometricSubType'
+        instance:
+          type: string
+          description: Used to separate two distincts biometric items of the same type and subtype
+        encounterId:
+          type: string
+          description: the id of the encounter owner of this biometric
+        image:
+          type: string
+          format: byte
+          description: Base64-encoded image
+        imageRef:
+          type: string
+          format: uri
+          description: URI to an image
+          example: "http://imageserver.com/image?id=00003"
+        captureDate:
+          type: string
+          format: date-time
+          example: "2019-05-21T12:00:00Z"
+        captureDevice:
+          type: string
+          description: A string identifying the device used to capture the biometric
+        impressionType:
+          $ref: '#/components/schemas/ImpressionType'
+        width:
+          type: integer
+          description: the width of the image
+        height:
+          type: integer
+          description: the height of the image
+        bitdepth:
+          type: integer
+        mimeType:
+          type: string
+          description: the nature and format of the image. The mime type definitions should be in compliance with RFC 6838.
+        resolution:
+          type: integer
+          description: the image resolution (in DPI)
+        compression:
+          $ref: '#/components/schemas/CompressionType'
+        missing:
+          description: Optional properties indicating if a part of the biometric data is missing
+          type: array
+          items:
+            $ref: '#/components/schemas/MissingType'
+        metadata:
+          type: string
+          description: An optional string used to convey information vendor-specific
+        comment:
+          type: string
+          description: A comment about the biometric data
+        template:
+          type: string
+          format: byte
+          description: Base64-encoded template
+        templateRef:
+          type: string
+          format: uri
+          description: URI to the template when it is managed in a dedicated data server
+          example: "http://dataserver.com/template?id=00014"
+        templateFormat:
+          $ref: '#/components/schemas/TemplateFormat'
+        quality:
+          type: integer
+          format: int64
+          description: Quality, as a number, of the biometric
+        qualityFormat:
+          $ref: '#/components/schemas/QualityFormat'
+        algorithm:
+          type: string
+        vendor:
+          type: string
+      additionalProperties: false
+    TemplateFormat:
+      type: string
+      description: |
+        Format of the template.
+        One of ISO_19794_2, ISO_19794_2_NS, ISO_19794_2_CS, ISO_19794_2_2011, ANSI_378_2009 or ANSI_378.
+        Can be extended to include additional proprietary template format
+    QualityFormat:
+      type: string
+      description: |
+        Format of the quality.
+        One of ISO_19794, NFIQ, or NFIQ2.
+        Can be extended to include additional proprietary quality format
+    MissingType:
+      type: object
+      properties:
+        biometricSubType:
+          $ref: '#/components/schemas/BiometricSubType'
+        presence:
+          type: string
+          enum: [BANDAGED, AMPUTATED, DAMAGED]
+      additionalProperties: false
+    ImpressionType:
+      type: string
+      enum:
+        - LIVE_SCAN_PLAIN
+        - LIVE_SCAN_ROLLED
+        - NONLIVE_SCAN_PLAIN
+        - NONLIVE_SCAN_ROLLED
+        - LATENT_IMPRESSION
+        - LATENT_TRACING
+        - LATENT_PHOTO
+        - LATENT_LIFT
+        - LIVE_SCAN_SWIPE
+        - LIVE_SCAN_VERTICAL_ROLL
+        - LIVE_SCAN_PALM
+        - NONLIVE_SCAN_PALM
+        - LATENT_PALM_IMPRESSION
+        - LATENT_PALM_TRACING
+        - LATENT_PALM_PHOTO
+        - LATENT_PALM_LIFT
+        - LIVE_SCAN_OPTICAL_CONTACTLESS_PLAIN
+        - OTHER
+        - UNKNOWN
+    BiometricType:
+      type: string
+      enum:
+        - FACE
+        - FINGER
+        - IRIS
+        - SIGNATURE
+        - UNKNOWN
+      example: FINGER
+    BiometricSubType:
+      type: string
+      enum:
+        - UNKNOWN
+        - RIGHT_THUMB
+        - RIGHT_INDEX
+        - RIGHT_MIDDLE
+        - RIGHT_RING
+        - RIGHT_LITTLE
+        - LEFT_THUMB
+        - LEFT_INDEX
+        - LEFT_MIDDLE
+        - LEFT_RING
+        - LEFT_LITTLE
+        - PLAIN_RIGHT_FOUR_FINGERS
+        - PLAIN_LEFT_FOUR_FINGERS
+        - PLAIN_THUMBS
+        
+        - UNKNOWN_PALM
+        - RIGHT_FULL_PALM
+        - RIGHT_WRITERS_PALM
+        - LEFT_FULL_PALM
+        - LEFT_WRITERS_PALM
+        - RIGHT_LOWER_PALM
+        - RIGHT_UPPER_PALM
+        - LEFT_LOWER_PALM
+        - LEFT_UPPER_PALM
+        - RIGHT_OTHER
+        - LEFT_OTHER
+        - RIGHT_INTERDIGITAL
+        - RIGHT_THENAR
+        - RIGHT_HYPOTHENAR
+        - LEFT_INTERDIGITAL
+        - LEFT_THENAR
+        - LEFT_HYPOTHENAR
+        
+        - RIGHT_INDEX_AND_MIDDLE
+        - RIGHT_MIDDLE_AND_RING
+        - RIGHT_RING_AND_LITTLE
+        - LEFT_INDEX_AND_MIDDLE
+        - LEFT_MIDDLE_AND_RING
+        - LEFT_RING_AND_LITTLE
+        - RIGHT_INDEX_AND_LEFT_INDEX
+        - RIGHT_INDEX_AND_MIDDLE_AND_RING
+        - RIGHT_MIDDLE_AND_RING_AND_LITTLE
+        - LEFT_INDEX_AND_MIDDLE_AND_RING
+        - LEFT_MIDDLE_AND_RING_AND_LITTLE
+        
+        - EYE_UNDEF
+        - EYE_RIGHT
+        - EYE_LEFT
+        - EYE_BOTH
+        
+        - PORTRAIT
+        - LEFT_PROFILE
+        - RIGHT_PROFILE
+      example: RIGHT_INDEX
+
+    CompressionType:
+      type: string
+      enum: [NONE, WSQ, JPEG, JPEG2000, PNG]
+      example: WSQ
+
+    RequestData:
+      type: object
+      description: The data describing the request itself
+      required:
+        - priority
+        - credentialProfileId
+        - requestType
+      properties:
+        priority:
+          type: integer
+          description: "the request priority (0: lowest priority; 9: highest priority)"
+        credentialProfileId:
+          type: string
+          description: The id of the credential profile to request
+        requestType:
+          type: string
+          description: The type of request, e.g. first issuance, renewal, etc.
+          enum: [FIRST_ISSUANCE, RENEWAL, REPLACEMENT, OTHER]
+        requestTypeOther:
+          type: string
+          description: Details about the request type when OTHER is selected
+        validFromDate:
+          type: string
+          format: date-time
+          description: May be used to override the default start date of the
+            requested credential.  This must only be later than the current
+            date, not earlier.
+        validToDate:
+          type: string
+          format: date-time
+          description: May be used to override the default expiry date of the
+            requested credential.  This must only be earlier than the default
+            expiry, not later.
+        credentialNumber:
+          type: string
+          description: |
+            Number to be used for the new credentials created.
+            It can be used for example when requesting a digital credential sharing the same
+            number with a physical credential, or when the number is not created by the issuance system.
+        issuingAuthority:
+          type: string
+        deliveryOffice:
+          type: string
+          description: Single code or name identifying the office where the credential has to be delivered
+        deliveryAddress:
+          $ref: '#/components/schemas/Address'
+        parentCredentialId:
+          type: string
+          description: The ID credential used as a reference, or parent, to build a new one
+        others:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+      example:
+        priority: 1
+        credentialProfileId: ABC
+        requestType: "FIRST_ISSUANCE"
+        validFromDate: "2020-10-08T18:38:56Z"
+        validToDate: "2025-10-08T18:38:56Z"
+        issuingAuthority: OSIA
+        deliveryAddress:
+          address1: 11 Rue des Rosiers
+          city: Libourne
+          postalCode: "33500"
+          country: France
+    CredentialRequest:
+      type: object
+      description: A request for a credential
+      required:
+        - personId
+        - biographicData
+        - requestData
+      properties:
+        credentialRequestId:
+          type: string
+          description: The unique id of this credential request
+          readOnly: true
+        status:
+          type: string
+          enum: [PENDING, ISSUED, CANCELLED, FAILED]
+        requestData:
+          $ref: '#/components/schemas/RequestData'
+        personId:
+          type: string
+          description: The id of the person who is the target of the request
+        biographicData:
+          $ref: '#/components/schemas/BiographicData'
+        biometricData:
+          type: array
+          items:
+            $ref: '#/components/schemas/BiometricData'
+        credentialIds:
+          type: array
+          description: The id of the credentials created for this request.
+          items:
+            type: string
+            description: The unique id of the credential
+          readOnly: true
+      additionalProperties: false
+
+    CredentialData:
+      description: A credential
+      type: object
+      required:
+        - credentialId
+        - status
+        - personId
+        - credentialProfileId
+      properties:
+        credentialId:
+          type: string
+          description: The unique id for this credential
+          readOnly: true
+        status:
+          type: string
+          description: The status of the credential
+          enum: [NEW, ACTIVE, SUSPENDED, REVOKED, OTHER]
+          readOnly: true
+        statusOther:
+          type: string
+          description: Details about the status when OTHER is used
+          readOnly: true
+        credentialNumber:
+          type: string
+          description: "The number attached to the credential (ex: passport number)"
+        personId:
+          type: string
+          description: The unique id of the person that the credential request is for
+        credentialProfileId:
+          type: string
+          description: The unique id of the credential profile
+        issuedDate:
+          type: string
+          format: date-time
+          description: The date and time that this credential was issued
+        expiryDate:
+          type: string
+          format: date-time
+          description: The date and time that this credential expires
+        serialNumber:
+          type: string
+          description: the serial number of the credential
+        issuingAuthority:
+          type: string
+          description: "The authority issuing the credential (ex: the Ministry of Interior)"
+        issuingPlace:
+          type: string
+          description: "The place where the credential was issued (ex: Paris)"
+        others:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+    CredentialProfile:
+      description: A credential profile
+      type: object
+      properties:
+        credentialProfileId:
+          type: string
+          description: The unique id for this credential profile
+        name:
+          type: string
+          description: The name of the credential profile
+        description:
+          type: string
+          description: The description of the credential profile
+        credentialType:
+          description: The type of credential that this profile will issue
+          type: string
+          enum:
+            - SMARTCARD
+            - VIRTUAL_SMARTCARD
+            - MOBILE
+            - PASSPORT
+            - ID_CARD
+        defaultLifetime:
+          type: integer
+          description: The default number of days that this credential will be considered valid for after issuance.
+      additionalProperties: false
+    Expression:
+      type: object
+      required:
+        - attributeName
+        - operator
+        - value
+      properties:
+        attributeName:
+          type: string
+        operator:
+          type: string
+          enum: ['<', '>', '=', '>=', '<=', '!=']
+        value:
+          oneOf:
+          - type: string
+          - type: integer
+          - type: number
+          - type: boolean
+      additionalProperties: false
+    Expressions:
+      type: array
+      items:
+        $ref: '#/components/schemas/Expression'
+        

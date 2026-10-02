@@ -98,6 +98,21 @@ services:
       - enrollment
     depends_on:
       - notification
+  cms:
+    build:
+      context: ../../cms
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: osia/cms
+    environment:
+      CMS_CUSTO_FILENAME: "/custo/cms.yaml"
+      CMS_LOGLEVEL: DEBUG
+    volumes:
+      - ./custo:/custo
+    ports:
+      - "8060:8080"
   notification:
     build:
       context: ../../notification
@@ -140,6 +155,7 @@ services:
       # CR_URL: "http://host.docker.internal:8080"
       PR_URL: "http://pr:8080"
       ABIS_URL: "http://abis:8080"
+      CMS_URL: "http://cms:8080"
     links:
       - notification
       - redis
