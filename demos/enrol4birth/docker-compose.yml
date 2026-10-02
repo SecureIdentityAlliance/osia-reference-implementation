@@ -129,17 +129,24 @@ services:
     image: osia/orchestrator
     ports:
       - "8100:8080"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
     environment:
-      NOTIFICATION_URL: "http://notification:8080/"
-      MY_URL: "http://orchestrator:8080/"
+      NOTIFICATION_URL: "http://notification:8080"
+      MY_URL: "http://orchestrator:8080"
       REDIS_URL: "redis://redis/1"
-      CR_URL: "http://host.docker.internal:8080/v1/persons"
-      PR_URL: "http://pr:8080/v1/persons"
+      ENROLLMENT_URL: "http://enrollment:8080"
+      CR_URL: "http://cr:8080"
+      # CR_URL: "http://host.docker.internal:8080"
+      PR_URL: "http://pr:8080"
+      ABIS_URL: "http://abis:8080"
     links:
       - notification
       - redis
+      - enrollment
+      - cr
+      - pr
+      - abis
     depends_on:
       - notification
       - redis
@@ -157,13 +164,14 @@ services:
       - TZ=Europe/Paris
     volumes:
       - ../pg_setup.sql:/docker-entrypoint-initdb.d/pg_setup.sql
-  pgadmin:
-    image: ${D4R6Y}dpage/pgadmin4:2026-06-18-3
-    ports:
-      - 9080:80
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=osia@secureidentityalliance.org
-      - PGADMIN_DEFAULT_PASSWORD=OSIASecret
+  # pgadmin:
+  #   image: ${D4R6Y}dpage/pgadmin4:2026-06-18-3
+  #   ports:
+  #     - 9080:80
+  #   environment:
+  #     - PGADMIN_DEFAULT_EMAIL=osia@secureidentityalliance.org
+  #     - PGADMIN_DEFAULT_PASSWORD=OSIASecret
+
   #
   # Non-OSIA components, for testing, monitoring and demonstration
   #

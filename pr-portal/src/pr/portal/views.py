@@ -99,7 +99,6 @@ def add_dummy(request):
             "lastName": random.choice(names('surname.txt')),
             "dateOfBirth": dob,
             "gender": gender,
-            "nationality": "USA",
         }
     }
 

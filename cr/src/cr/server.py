@@ -217,11 +217,7 @@ async def readPersonAttributes(request):
 
     obj = {}
     for k in names:
-        if k not in ident_data['biographicData'] and \
-            k not in ident_data['contextualData'] and \
-            k not in ident_data:
-            obj[k] = dict(code=2, message="Unknown attribute name [{}]".format(k))
-        elif k in ident_data['biographicData']:
+        if k in ident_data['biographicData']:
             obj[k] = ident_data['biographicData'][k]
         elif k in ident_data['contextualData']:
             obj[k] = ident_data['contextualData'][k]
@@ -297,9 +293,73 @@ async def execute(event):
             else:
                 logging.error(f"[{transaction_id}] - Enrollment not found for id {enrollment_id}")
                 return
-        logging.info("[%s] - Enrollment for [%s]/[%s]" % (transaction_id, enr['biographicData']['firstName'], enr['biographicData']['lastName']) )
+        logging.info("[%s] - Enrollment [%s] for [%s]/[%s]" % (transaction_id, enrollment_id, enr['biographicData']['firstName'], enr['biographicData']['lastName']) )
 
-    logging.info(f"[{transaction_id}] - Enrollment is now processed for id {enrollment_id}")
+        # (7) read parent's attribute to establish the birth certificate
+        params = {
+            "attributeNames": ["firstName", "lastName", "dateOfBirth", "gender"]
+        }
+        async with clt_session.get(cr.args.pr_url+"v1/persons/"+enr['biographicData']['parentUIN'], params=params, ssl=get_pr_client_ssl_context()) as response:
+            if response.status == 200:
+                parent = await response.json()
+            else:
+                logging.error(f"[{transaction_id}] - Parent data not found for UIN {enr['biographicData']['parentUIN']}")
+                return
+        logging.info(f"[{transaction_id}] - Retrieved the parent's data: {parent['firstName']} {parent['lastName']}")
+
+        # (8) Check child does not exist in PR
+        params = {
+            "firstName": enr['biographicData']['firstName'],
+            "lastName": enr['biographicData']['lastName'],
+            "dateOfBirth": enr['biographicData']['dateOfBirth']
+        }
+        async with clt_session.get(cr.args.pr_url+"v1/persons", params=params, ssl=get_pr_client_ssl_context()) as response:
+            if response.status == 200:
+                candidates = await response.json()
+                if len(candidates)>0:
+                    logging.error(f"[{transaction_id}] - Child is already in the databases - Stopping the process")
+                    return
+            else:
+                logging.error(f"[{transaction_id}] - Error checking in PR if the child is already registered")
+                return
+        logging.info(f"[{transaction_id}] - Child not found in database")
+
+        # (9) generate a new UIN for the child
+        data = {
+            "firstName": enr['biographicData']['firstName'],
+            "lastName": enr['biographicData']['lastName'],
+            "dateOfBirth": enr['biographicData']['dateOfBirth'],
+            "gender": enr['biographicData']['gender']
+        }
+        async with clt_session.post(cr.args.uin_url+"v1/uin", json=data, params={'transactionId': transaction_id}, ssl=get_uin_client_ssl_context()) as response:
+            if response.status == 200:
+                enr['biographicData']['UIN'] = await response.json()
+            else:
+                logging.error(f"[{transaction_id}] - Unable to generate a new UIN for the child")
+                return
+
+        # Fake registration of child in the CR
+        PERSONS[enr['biographicData']['UIN']] = dict(
+            biographicData=enr['biographicData'],
+            contextualData=enr['contextualData'],
+        )
+        logging.info(f"[{transaction_id}] - Child is registered in this CR (UIN={enr['biographicData']['UIN']})")
+
+        # (10) Send notification of new birth registration
+        data = {
+            "source": "CR",
+            "uin": enr['biographicData']['UIN'],
+            "uin1": enr['biographicData']['parentUIN'],
+            "uin2": "",
+            "transactionId": transaction_id,
+            "enrollmentId": enrollment_id
+        }
+        async with clt_session.post(cr.args.notification_url+"v1/topics/CR/publish", json=data, params={'subject':'liveBirth'}, ssl=get_notification_client_ssl_context()) as response:
+            if response.status == 200:
+                logging.info(f"[{transaction_id}] - END - notification of liveBirth published")
+            else:
+                logging.error(f"[{transaction_id}] - END - Unable to send notification of liveBirth")
+                return
 
 
 # [---CUSTO---]

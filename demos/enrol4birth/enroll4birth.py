@@ -44,10 +44,10 @@ def do_birth(args):
 
     # (3) Send data to enrollment server
     data = {
-        "enrollmentType": "BABY",
+        "enrollmentType": "CHILD",
         "requestData": {},
         "contextualData": {
-            "enrollmentDate": "2026-09-29",
+            "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
             "firstName": args.firstname,
@@ -57,6 +57,14 @@ def do_birth(args):
             "parentUIN": args.parent_uin
         }
     }
+    with open(args.portrait_path,'rb') as f:
+        portrait = f.read()
+        data["biometricData"] = [
+                {
+                    "biometricType": "FACE",
+                    "image": base64.b64encode(portrait).decode('ascii')
+                }
+            ]
     with requests.post(args.enr_url+'v1/enrollments/'+args.id, json=data, params={'finalize':'true', 'transactionId': args.id},**get_ssl_context()) as r:
         if r.status_code!=204:
             logging.error("[%d]: %s" , r.status_code,r.content)
@@ -82,11 +90,12 @@ def main(argv=sys.argv[1:]):
                         default='http://localhost:8000/',
                         help='The URL to the Enrollment Server')
     parser.add_argument("--id", default='001', dest='id', help="Enrollment/transaction ID")
-    parser.add_argument("--fn", default='Baby', dest='firstname', help="First name of the baby")
-    parser.add_argument("--ln", default='Smith', dest='lastname', help="Last name of the baby")
-    parser.add_argument("--dob", default=datetime.date.today().isoformat(), dest='dob', help="Date of birth of the baby")
-    parser.add_argument("--gender", default='M', dest='gender', help="Gender of the baby")
-    parser.add_argument("--parent-uin", default='AH', dest='parent_uin', help="UIN of the parent of the baby")
+    parser.add_argument("--fn", default='Baby', dest='firstname', help="First name of the child")
+    parser.add_argument("--ln", default='Smith', dest='lastname', help="Last name of the child")
+    parser.add_argument("--dob", default=datetime.date.today().isoformat(), dest='dob', help="Date of birth of the child")
+    parser.add_argument("--gender", default='M', dest='gender', help="Gender of the child")
+    parser.add_argument("--portrait", default=None, type=pathlib.Path, dest='portrait_path', help="Path to the portrait image of the child")
+    parser.add_argument("--parent-uin", default='AH', dest='parent_uin', help="UIN of the parent of the child")
     parser.add_argument("--parent-portrait", default=None, type=pathlib.Path, dest='parent_portrait_path', help="Path to the portrait image of the parent")
 
     args = parser.parse_args(argv)

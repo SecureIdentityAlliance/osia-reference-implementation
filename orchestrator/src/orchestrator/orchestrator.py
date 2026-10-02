@@ -104,16 +104,16 @@ def serve():
 async def register_topic(app):
     await asyncio.sleep(5)
     logging.info("Register for events from topic [CR]")
-    params = {'topic':'CR', 'address': orchestrator.args.my_url+'cr_event', 'policy': '3,10'}
+    params = {'topic':'CR', 'address': orchestrator.args.my_url+'/cr_event', 'policy': '3,10'}
 
     try:
         async with aiohttp.ClientSession() as clt_session:
-            async with clt_session.post(orchestrator.args.notification_url+"v1/topics", params={'name':'CR'}, ssl=False) as response:
+            async with clt_session.post(orchestrator.args.notification_url+"/v1/topics", params={'name':'CR'}, ssl=False) as response:
                 if response.status == 200:
                     await response.read()
                 else:
                     logging.error("Failed to create topic [CR]")
-            async with clt_session.post(orchestrator.args.notification_url+"v1/subscriptions", params=params, ssl=False) as response:
+            async with clt_session.post(orchestrator.args.notification_url+"/v1/subscriptions", params=params, ssl=False) as response:
                 if response.status == 200:
                     await response.read()
                 else:
@@ -147,7 +147,11 @@ async def cr_event(request):
         if m['subject']=='liveBirth':
             event = json.loads(m['message'])
             logging.info("Live birth notification received from [%s] for uin [%s]", event['source'], event['uin'])
-            t = orchestrator.tasks.workflow(event['uin'], 'liveBirth')
+            transaction_id = event.get('transactionId', 'liveBirth')
+            if 'enrollmentId' in event:
+                t = orchestrator.tasks.workflow_enroll4birth(event['uin'], transaction_id, event['enrollmentId'])
+            else:
+                t = orchestrator.tasks.workflow(event['uin'], transaction_id, '1')
         else:
             logging.info("Ignoring event [%s]", m['subject'])
     return web.Response(status=200, body='')

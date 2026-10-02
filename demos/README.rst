@@ -79,7 +79,7 @@ Inject test data with::
     # insert dummy data for the parents
     python insert_data.py
     # Then simulate an enrollment
-    python enroll4birth.py --fn First --ln Last --dob 2026-09-30 --gender F --parent-uin JF --parent-portrait data/jimmy.jpg --id 001
+    python enroll4birth.py --fn First --ln Last --dob 2026-09-30 --gender F --portrait data/aiony.jpg --parent-uin JF --parent-portrait data/jimmy.jpg --id 001
 
 Logs can be checked with::
 
