@@ -5,8 +5,9 @@ Technical Details of Exchanges
 (3) Enrollment Data
 -------------------
 
-The Enrollment Server is expecting from the station::
+The Enrollment Server is expecting from the station:
 
+```json
     {
         "enrollmentType": "CHILD",
         "requestData": {},
@@ -30,7 +31,7 @@ The Enrollment Server is expecting from the station::
             }
         ]
     }
-
+```
 
 (4) Event Published after Enrollment
 ------------------------------------
