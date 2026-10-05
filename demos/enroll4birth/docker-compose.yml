@@ -108,7 +108,7 @@ services:
     image: osia/cms
     environment:
       CMS_CUSTO_FILENAME: "/custo/cms.yaml"
-      CMS_LOGLEVEL: DEBUG
+      # CMS_LOGLEVEL: DEBUG
     volumes:
       - ./custo:/custo
     ports:
@@ -203,7 +203,6 @@ services:
       - PR_URL=http://pr:8080
       - UIN_URL=http://uin:8080
       - ABIS_URL=http://abis:8080
-    tty: true
     ports:
       - "9100:8080"
     links:

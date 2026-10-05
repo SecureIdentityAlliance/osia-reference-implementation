@@ -56,11 +56,16 @@ Enroll for Birth
 
 This Use Case is an extension of the previous Use Case. It is extended with:
 
-- An OSIA-compliant enrollment station is used to enroll the child. The parent's identity
+- An OSIA-compliant enrollment station,  used to enroll the child. The parent's identity
   is checked using the ABIS.
 - An ABIS, used to validate the identity of the parent.
 - A CMS. After the creation of the child's identity in PR, a new credential is requested.
   This credential can be pysical or digital.
+
+All exchanges are compliant with OSIA specifications and are depicted in the following diagram:
+
+.. image:: enroll4birth/enroll4birth.png
+
 
 Execution
 ---------
@@ -83,7 +88,7 @@ Inject test data with::
 
 Logs can be checked with::
 
-    docker logs -f enrol4birth-cr-1 | humanlog
+    docker logs -f enroll4birth-cr-1 | humanlog
     
 Check the Population Registry content at http://localhost:9100/pr
 

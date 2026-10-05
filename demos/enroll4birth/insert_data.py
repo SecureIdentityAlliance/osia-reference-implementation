@@ -25,10 +25,11 @@ def prepare_data(args):
 
     # Create identity
     data = {
-        "identityType": "CIVIL",
+        "identityType": "PARENT",
         "status": "VALID",
+        "galleries": ["DEMO"],
         "contextualData": {
-            "enrollmentDate": "2026-09-29",
+            "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
             "firstName": "Aiony",
@@ -45,14 +46,13 @@ def prepare_data(args):
     # Create encounter
     buf = open('data/aiony.jpg','rb').read()
     data = {
-        "encounterType": "CIVIL",
+        "encounterType": "PARENT",
         "status": "ACTIVE",
+        "galleries": ["DEMO"],
         "contextualData": {
-            "enrollmentDate": "2026-09-29",
+            "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
-            "dateOfBirth": "2005-11-30",
-            "gender": "F",
         },
         "biometricData": [
             {
@@ -80,10 +80,11 @@ def prepare_data(args):
 
     # Create identity
     data = {
-        "identityType": "CIVIL",
+        "identityType": "PARENT",
         "status": "VALID",
+        "galleries": ["DEMO"],
         "contextualData": {
-            "enrollmentDate": "2026-09-29",
+            "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
             "firstName": "Albert",
@@ -100,14 +101,13 @@ def prepare_data(args):
     # Create encounter
     buf = open('data/albert.jpg','rb').read()
     data = {
-        "encounterType": "CIVIL",
+        "encounterType": "PARENT",
         "status": "ACTIVE",
+        "galleries": ["DEMO"],
         "contextualData": {
-            "enrollmentDate": "2026-09-29",
+            "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
-            "dateOfBirth": "2002-09-12",
-            "gender": "M",
         },
         "biometricData": [
             {
@@ -135,10 +135,11 @@ def prepare_data(args):
 
     # Create identity
     data = {
-        "identityType": "CIVIL",
+        "identityType": "PARENT",
         "status": "VALID",
+        "galleries": ["DEMO"],
         "contextualData": {
-            "enrollmentDate": "2026-09-29",
+            "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
             "firstName": "Alyona",
@@ -155,14 +156,13 @@ def prepare_data(args):
     # Create encounter
     buf = open('data/alyona.jpg','rb').read()
     data = {
-        "encounterType": "CIVIL",
+        "encounterType": "PARENT",
         "status": "ACTIVE",
+        "galleries": ["DEMO"],
         "contextualData": {
-            "enrollmentDate": "2026-09-29",
+            "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
-            "dateOfBirth": "2005-11-30",
-            "gender": "M",
         },
         "biometricData": [
             {
@@ -190,10 +190,11 @@ def prepare_data(args):
 
     # Create identity
     data = {
-        "identityType": "CIVIL",
+        "identityType": "PARENT",
         "status": "VALID",
+        "galleries": ["DEMO"],
         "contextualData": {
-            "enrollmentDate": "2026-09-30",
+            "enrollmentDate": "2026-09-30T12:00:00+02:00",
         },
         "biographicData": {
             "firstName": "Jimmy",
@@ -210,14 +211,13 @@ def prepare_data(args):
     # Create encounter
     buf = open('data/jimmy.jpg','rb').read()
     data = {
-        "encounterType": "CIVIL",
+        "encounterType": "PARENT",
         "status": "ACTIVE",
+        "galleries": ["DEMO"],
         "contextualData": {
-            "enrollmentDate": "2026-09-29",
+            "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
-            "dateOfBirth": "1999-05-10",
-            "gender": "F",
         },
         "biometricData": [
             {
@@ -245,10 +245,11 @@ def prepare_data(args):
 
     # Create identity
     data = {
-        "identityType": "CIVIL",
+        "identityType": "PARENT",
         "status": "VALID",
+        "galleries": ["DEMO"],
         "contextualData": {
-            "enrollmentDate": "2026-09-30",
+            "enrollmentDate": "2026-09-30T12:00:00+02:00",
         },
         "biographicData": {
             "firstName": "Jurica",
@@ -265,14 +266,13 @@ def prepare_data(args):
     # Create encounter
     buf = open('data/jurica.jpg','rb').read()
     data = {
-        "encounterType": "CIVIL",
+        "encounterType": "PARENT",
         "status": "ACTIVE",
+        "galleries": ["DEMO"],
         "contextualData": {
-            "enrollmentDate": "2026-09-29",
+            "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
-            "dateOfBirth": "2001-05-10",
-            "gender": "M",
         },
         "biometricData": [
             {
@@ -300,10 +300,11 @@ def prepare_data(args):
 
     # Create identity
     data = {
-        "identityType": "CIVIL",
+        "identityType": "PARENT",
         "status": "VALID",
+        "galleries": ["DEMO"],
         "contextualData": {
-            "enrollmentDate": "2026-09-30",
+            "enrollmentDate": "2026-09-30T12:00:00+02:00",
         },
         "biographicData": {
             "firstName": "Matt",
@@ -320,14 +321,13 @@ def prepare_data(args):
     # Create encounter
     buf = open('data/matt.jpg','rb').read()
     data = {
-        "encounterType": "CIVIL",
+        "encounterType": "PARENT",
         "status": "ACTIVE",
+        "galleries": ["DEMO"],
         "contextualData": {
-            "enrollmentDate": "2026-09-29",
+            "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
-            "dateOfBirth": "2002-03-01",
-            "gender": "F",
         },
         "biometricData": [
             {
@@ -355,10 +355,11 @@ def prepare_data(args):
 
     # Create identity
     data = {
-        "identityType": "CIVIL",
+        "identityType": "PARENT",
         "status": "VALID",
+        "galleries": ["DEMO"],
         "contextualData": {
-            "enrollmentDate": "2026-09-30",
+            "enrollmentDate": "2026-09-30T12:00:00+02:00",
         },
         "biographicData": {
             "firstName": "Rachel",
@@ -375,14 +376,13 @@ def prepare_data(args):
     # Create encounter
     buf = open('data/rachel.jpg','rb').read()
     data = {
-        "encounterType": "CIVIL",
+        "encounterType": "PARENT",
         "status": "ACTIVE",
+        "galleries": ["DEMO"],
         "contextualData": {
-            "enrollmentDate": "2026-09-29",
+            "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
-            "dateOfBirth": "1998-03-01",
-            "gender": "F",
         },
         "biometricData": [
             {
@@ -409,16 +409,12 @@ def prepare_data(args):
 
 def main(argv=sys.argv[1:]):
 
-    parser = argparse.ArgumentParser(description='CR mock')
+    parser = argparse.ArgumentParser(description='Script to insert test data in PR and ABIS')
     parser.add_argument("-l", "--loglevel", default='INFO', dest='loglevel', help="Log level")
-    parser.add_argument("-f", "--logfile", default=None, dest='logfile', help="Log file")
 
     parser.add_argument("--pr-url", dest='pr_url',
                         default='http://localhost:8010/',
                         help='The URL to the PR service')
-    parser.add_argument("--uin-url", dest='uin_url',
-                        default='http://localhost:8020/',
-                        help='The URL to the UIN generator service')
     parser.add_argument("--abis-url", dest='abis_url',
                         default='http://localhost:8030/',
                         help='The URL to the PR service')
@@ -429,13 +425,7 @@ def main(argv=sys.argv[1:]):
     args = parser.parse_args(argv)
 
     logging.basicConfig(format='%(asctime)-15s %(levelname)s - %(message)s',    # NOSONAR
-                        level=logging.getLevelName(args.loglevel))
-    if args.logfile:
-        fh = logging.handlers.RotatingFileHandler(args.logfile, maxBytes=1000000, backupCount=20)
-        fh.setLevel(logging.getLevelName(args.loglevel))
-        formatter = logging.Formatter('%(asctime)-15s %(levelname)s - %(message)s')
-        fh.setFormatter(formatter)
-        logging.getLogger().addHandler(fh)
+                        level=logging.INFO)
 
     return args
 

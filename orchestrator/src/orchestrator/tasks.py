@@ -95,8 +95,8 @@ def createIdentity_PR(self,ctx, url,enrollment_id, transaction_id):
         # Get enrollment data (no biometrics)
         identity = dict(
             status='VALID',
-            identityType=ctx.get('enrollmentType', 'CIVIL'),
-            galleries=['ALL'],
+            identityType=ctx.get('enrollmentType', 'CHILD'),
+            galleries=['DEMO'],
             contextualData=ctx.get('contextualData', dict()),
             biographicData=ctx['biographicData'],
             biometricData=[],
@@ -138,8 +138,8 @@ def createEncounter_ABIS(self,ctx, url,enrollment_id, transaction_id):
     try:
         encounter = dict(
             status='ACTIVE',
-            encounterType=ctx.get('enrollmentType', 'CIVIL'),
-            galleries=['ALL'],
+            encounterType=ctx.get('enrollmentType', 'CHILD'),
+            galleries=['DEMO'],
             contextualData=ctx.get('contextualData', dict()),
             biographicData={},
             biometricData=ctx.get('biometricData', []),

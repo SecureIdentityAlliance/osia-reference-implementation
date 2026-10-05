@@ -275,7 +275,8 @@ async def finalize_CB(enrollment_id, transaction_id):
     async with aiohttp.ClientSession() as clt_session:
         try:
             async with clt_session.post(enrollment.args.notification_url+'/v1/topics/'+enrollment.args.notification_topic+'/publish', 
-                                        json=dict(enrollmentId=enrollment_id, transactionId=transaction_id),
+                                        params={'subject':'birthEnrollment'},
+                                        json=dict(source="EnrollmentServer", enrollmentId=enrollment_id, transactionId=transaction_id),
                                         ssl=get_notification_client_ssl_context()) as response:
                 if response.status == 200:
                     await response.read()
