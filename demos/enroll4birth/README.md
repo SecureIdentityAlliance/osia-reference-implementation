@@ -36,23 +36,22 @@ The Enrollment Server is expecting from the station:
 (4) Event Published after Enrollment
 ------------------------------------
 
-The enrollment server is publishing on the topic ``enrollment`` the event ``birthEnrollment:
+The enrollment server is publishing on the topic ``enrollment`` the event ``birthEnrollment``:
 
-.. code-source:: json
-
+```json
     {
         "source": "EnrollmentServer",
         "enrollmentId": "<enrollment ID>",
         "transactionId": "<transaction ID>"
     }
+```
 
 (10) Event Published after Child Registration in CR
 ---------------------------------------------------
 
 The civil registry is publishing on the topic ``CR`` the event ``liveBirth``:
 
-.. code-source:: json
-
+```json
     {
         "source": "CR",
         "uin": "<UIN of child>",
@@ -61,12 +60,12 @@ The civil registry is publishing on the topic ``CR`` the event ``liveBirth``:
         "enrollmentId": "<enrollment ID>",
         "transactionId": "<transaction ID>"
     }
+```
 
 (15) Create Identity
 --------------------
 
-.. code-source:: json
-
+```json
     {
         "status": "VALID",
         "identityType": "CHILD",
@@ -86,6 +85,7 @@ The civil registry is publishing on the topic ``CR`` the event ``liveBirth``:
         [
         ]
     }
+```
 
 ``identityType`` is copied from the ``enrollmentType`` field.
 ``contextualData`` is copied from the enrollment's contextual data block.
@@ -94,8 +94,7 @@ No biometric data are included in the identity.
 (17) Create Encounter
 ---------------------
 
-.. code-source:: json
-
+```json
     {
         "status": "ACTIVE",
         "encounterType": "CHILD",
@@ -113,6 +112,7 @@ No biometric data are included in the identity.
             }
         ]
     }
+```
 
 ``encounterType`` is copied from the ``enrollmentType`` field.
 ``contextualData`` is copied from the enrollment's contextual data block.
@@ -121,8 +121,7 @@ No biographic data are included in the encounter.
 (18) Create Credential Request
 ------------------------------
 
-.. code-source:: json
-
+```json
     {
         "status": "PENDING",
         "requestData":
@@ -150,5 +149,4 @@ No biographic data are included in the encounter.
             }
         ]
     }
-
-
+```
