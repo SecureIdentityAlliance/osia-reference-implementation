@@ -5,9 +5,7 @@ Technical Details of Exchanges
 (3) Enrollment Data
 -------------------
 
-The Enrollment Server is expecting from the station:
-
-.. code-source:: json
+The Enrollment Server is expecting from the station::
 
     {
         "enrollmentType": "CHILD",

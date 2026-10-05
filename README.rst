@@ -30,7 +30,6 @@ To implement this Use Case the following building blocks are necessary:
 - A notification service: the directory ``notification`` contains an implementation of the OSIA *notification* interface.
 - An orchestrator: the directory ``orchestrator`` contains a service able to dispatch calls to OSIA interfaces in order to implement a Use Case.
 - A Civil Registry: UNDP provides DGIT as a possible Civil Registry.
-  The directory ``cr-mock`` contains a set of scripts to simulate a Civil Registry interacting with the different servers according to the birth use case.
 
 To secure the exchanges between the Civil Registry and the Population Registry, X-Road is used.
 X-Road® is open-source software and ecosystem solution that provides unified and secure data exchange between organisations.
@@ -40,28 +39,7 @@ All exchanges are compliant with OSIA specifications and are depicted in the fol
 
 .. image:: birth_uc.png
 
-
 Execution
 ---------
 
-Start the servers with::
-
-    docker system prune -f
-    docker compose -f docker-compose.yml build --no-cache
-    docker compose -f docker-compose.yml up --build --force-recreate
-
-Start the CR client with::
-
-    python3 -m venv .py
-    source .py/bin/activate
-    pip install -r requirements.txt
-    # insert dummy data for the parents
-    python insert_data.py
-    # declare a new birth
-    python cr_birth.py
-
-Check the Population Registry content at http://localhost:8100/pr
-
-Check the Grafana dashboard at http://localhost:3000. Login with admin/admin,
-create a Prometheus data source pointing to http://prom:9090
-and then import the dashboard in ``monitoring/OSIA.json``
+Technical details for executing this Use Case can be found in the ``demos`` directory.
