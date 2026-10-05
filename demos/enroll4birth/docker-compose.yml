@@ -172,7 +172,7 @@ services:
   redis:
     image: ${D4R6Y}redis:7.0.9-alpine
   postgres:
-    image: ${D4R6Y}postgres:18.4-alpine3.24
+    image: ${D4R6Y}postgres:18.3-alpine3.23
     environment:
       - POSTGRES_DB=osiadb
       - POSTGRES_USER=admin

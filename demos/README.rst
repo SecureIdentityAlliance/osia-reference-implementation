@@ -92,3 +92,28 @@ Logs can be checked with::
     
 Check the Population Registry content at http://localhost:9100/pr
 
+Execution on Another Host
+-------------------------
+
+After building the Docker images, they can be exported with::
+
+    docker save -o osia-refimp-`git rev-parse --short HEAD`.tar osia/enrollment osia/cr osia/pr osia/uin osia/abis osia/cms osia/notification osia/orchestrator osia/pr-portal
+    gzip osia-refimp-`git rev-parse --short HEAD`.tar
+
+On the target execution environment::
+
+    docker load -i osia-refimp*
+
+Transfer also the demo directory::
+
+    zip -r enroll4birth.zip enroll4birth -i enroll4birth/* enroll4birth/custo/* enroll4birth/data/*
+
+And then on the target system::
+
+    unzip enroll4birth.zip
+    cd enroll4birth
+    docker compose -f docker-compose.yml up
+
+Default Docker registry can be configured with ``D4R6Y`` environment server. For example::
+
+    D4R6Y=myregistry.intranet/public/ docker compose -f docker-compose.yml up
