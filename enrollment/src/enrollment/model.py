@@ -295,15 +295,19 @@ def inject_custo(custo):
     for name,c in custo.get('RequestData',{}).get('properties', {}).items():
         _add_field(name,c,'rqd_', custo.get('RequestData',{}).get('required', []), Enrollment)
         CUSTO_RQD[name] = c
+    _add_field('requestData',{'type': 'object'},'', [], Enrollment)
     for name,c in custo.get('EnrollmentFlags',{}).get('properties', {}).items():
         _add_field(name,c,'enf_', custo.get('EnrollmentFlags',{}).get('required', []), Enrollment)
         CUSTO_ENF[name] = c
+    _add_field('enrollmentFlags',{'type': 'object'},'', [], Enrollment)
     for name,c in custo.get('BiographicData',{}).get('properties', {}).items():
         _add_field(name,c,'bgd_', custo.get('BiographicData',{}).get('required', []), Enrollment)
         CUSTO_BGD[name] = c
+    _add_field('biographicData',{'type': 'object'},'', [], Enrollment)
     for name,c in custo.get('ContextualData',{}).get('properties', {}).items():
         _add_field(name,c,'ctx_', custo.get('ContextualData',{}).get('required', []), Enrollment)
         CUSTO_CTX[name] = c
+    _add_field('contextualData',{'type': 'object'},'', [], Enrollment)
     # [---CUSTO---]
 
 custo = None

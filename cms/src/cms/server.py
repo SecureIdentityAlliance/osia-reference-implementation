@@ -151,7 +151,7 @@ def validate_json(data, schema_name, with_required=True):
                 api = yaml.load(f, Loader=yaml.SafeLoader)
             schemas = api['components']['schemas']
 
-            # [---CUSTO---]
+            
             # Load the custo
             if cms.args and cms.args.custo_filename:
                 with io.open(cms.args.custo_filename, 'rt', encoding='utf-8') as stream:
@@ -160,6 +160,8 @@ def validate_json(data, schema_name, with_required=True):
                     for k,v in custo.items():
                         schemas[k] = v
                     logging.info("Custo from file [%s] was loaded", cms.args.custo_filename)
+                    
+            # [---CUSTO---]
             # [---CUSTO---]
 
             registry = referencing.Registry().with_resource(

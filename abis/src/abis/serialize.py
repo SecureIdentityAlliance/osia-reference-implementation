@@ -2,6 +2,7 @@
 # https://marshmallow.readthedocs.io/en/3.x-line/index.html
 
 import base64
+import logging
 
 from . import model
 
@@ -16,25 +17,37 @@ from marshmallow import post_dump, pre_load
 # [---CUSTO---]
 
 # Utilities for embedding custo data with an additional prefix
-def _ext2int(data,key,prefix):
-    # Get all content from data.*key* and copy as bgd_zzz
-    for k,v in data.setdefault(key,{}).items():
-        data[prefix+k] = v
-    del data[key]
+def _ext2int(data,key,prefix, only=[]):
+    logging.debug('_ext2int::IN: %s', data)
+    # Get all content from data.*key*.zzz and copy as data.*prefix*_zzz
+    for k,v in list(data.setdefault(key,{}).items()):
+        if k in only or not only:
+            data[prefix+k] = v
+            del data[key][k]
+    if not data[key] or not only:
+        del data[key]
+    logging.debug('_ext2int::OUT: %s', data)
     return data
 
-def _int2ext(data,key,prefix):
-    # Get all key of the form '*prefix*_zzz' and move it in data.*key*.zzz
-    bgd = {}
-    data2 = {}
+def _int2ext(data,key,prefix, only=[]):
+    logging.debug('_int2ext::IN: %s', data)
+    # Get all key of the form data.*prefix*_zzz and move it in data.*key*.zzz
+    if key in data and data[key] and only:
+        sub_object = data[key]
+    else:
+        sub_object = {}
+    data2 = {key: sub_object}
     for k,v in data.items():
-        if not k.startswith(prefix) and v is not None:
-            data2[k] = v
+        if k==key:
             continue
-        # Do not dump if None (no value in database)
+        if k.startswith(prefix) and v is not None and (not only or k[len(prefix):] in only):
+            sub_object[k[len(prefix):]] = v
+            continue
+        # Do not keep it if None (no value in database)
         if v is not None:
-            bgd[k[len(prefix):]] = v
-    data2[key] = bgd
+            data2[k] = v
+    data2[key].update(sub_object)
+    logging.debug('_int2ext::OUT: %s', data2)
     return data2
 
 # Field that serializes to a base64 encoded string a bytes.
@@ -107,9 +120,21 @@ class EncounterSchema(SQLAlchemyAutoSchema):
         return ext2int(in_data)
 
 def ext2int(data):
-    return _ext2int(_ext2int(data,key='contextualData',prefix='ctx_'), key='biographicData',prefix='bgd_')
+    return _ext2int(
+                _ext2int(
+                    data,
+                    key='contextualData',
+                    prefix='ctx_', only=model.CUSTO_CTX.keys()),
+                key='biographicData',
+                prefix='bgd_', only=model.CUSTO_BGD.keys())
 
 def int2ext(data):
-    return _int2ext(_int2ext(data,key='contextualData',prefix='ctx_'), key='biographicData',prefix='bgd_')
+    return _int2ext(
+                _int2ext(
+                    data,
+                    key='contextualData',
+                    prefix='ctx_', only=model.CUSTO_CTX.keys()),
+                key='biographicData',
+                prefix='bgd_', only=model.CUSTO_BGD.keys())
 
 # [---CUSTO---]

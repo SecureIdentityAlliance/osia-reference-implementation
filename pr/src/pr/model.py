@@ -352,9 +352,11 @@ def inject_custo(custo):
     for name,c in custo.get('BiographicData',{}).get('properties', {}).items():
         _add_field(name,c,'bgd_', custo.get('BiographicData',{}).get('required', []), Identity)
         CUSTO_BGD[name] = c
+    _add_field('biographicData',{'type': 'object'},'', [], Identity)
     for name,c in custo.get('ContextualData',{}).get('properties', {}).items():
         _add_field(name,c,'ctx_', custo.get('ContextualData',{}).get('required', []), Identity)
         CUSTO_CTX[name] = c
+    _add_field('contextualData',{'type': 'object'},'', [], Identity)
     # [---CUSTO---]
 
 custo = None

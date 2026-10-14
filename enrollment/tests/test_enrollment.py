@@ -23,6 +23,9 @@ if __name__ == '__main__':
             global URL
             return URL
 
+        # [---CUSTO---]
+        # [---CUSTO---]
+
 else:
     from . import TestEnrollment
 
@@ -230,6 +233,75 @@ class TestNominal(TestEnrollment):
         with requests.post(self.url+'v1/enrollments/0002', json=data, params={'transactionId': 'T0002', 'finalize': 'false'},**get_ssl_context()) as r:
             assert 400 == r.status_code
             assert "'requestType' is a required property\n'lastName' is a required property" == r.json()['message']
+
+    def test_extra_properties(self):
+        data = dict(
+            # enrollmentId= "0001",
+            # status= "IN_PROGRESS",
+            enrollmentType= "FULL",
+            enrollmentFlags=dict(timeout=3600),
+            requestData= dict(requestType= "DEMO", extra="extra"),
+            contextualData= dict(
+                enrollmentDate= "2019-01-11T17:26:00+00:00"
+            ),
+            biographicData= dict(
+                firstName= "John",
+                lastName= "Doe",
+                dateOfBirth= "1985-11-30",
+                gender= "M",
+                nationality= "FRA"
+            ),
+            biometricData=[],
+            documentData=[]
+        )
+        if os.environ.get('SQLITE', None)=='1':
+            # SQLite is not processing date-time with the offset
+            data['contextualData']['enrollmentDate'] = "2019-01-11T17:26:00"
+
+        # Create enrollment
+        with requests.post(self.url+'v1/enrollments/0003', json=data, params={'transactionId': 'EXTRA', 'finalize': 'false'},**get_ssl_context()) as r:
+            assert 204 == r.status_code
+            assert 'Server' not in r.headers
+
+        # Read and check extra data was saved even if not in schema
+        with requests.get(self.url+'v1/enrollments/0003', params={'transactionId': 'EXTRA'},**get_ssl_context()) as r:
+            assert 200 == r.status_code
+            data2 = r.json()
+            assert data2['requestData']['extra'] == 'extra'
+            assert data2['requestData']['requestType'] == 'DEMO'
+
+        # Delete enrollment
+        with requests.delete(self.url+'v1/enrollments/0003', params={'transactionId': 'EXTRA'},**get_ssl_context()) as r:
+            assert 204 == r.status_code
+
+        # Extra fails if added when additionalProperties is set to false
+        data = dict(
+            # enrollmentId= "0001",
+            # status= "IN_PROGRESS",
+            enrollmentType= "FULL",
+            enrollmentFlags=dict(timeout=3600),
+            requestData= dict(requestType= "DEMO"),
+            contextualData= dict(
+                enrollmentDate= "2019-01-11T17:26:00+00:00",
+                extra="extra"
+            ),
+            biographicData= dict(
+                firstName= "John",
+                lastName= "Doe",
+                dateOfBirth= "1985-11-30",
+                gender= "M",
+                nationality= "FRA"
+            ),
+            biometricData=[],
+            documentData=[]
+        )
+        if os.environ.get('SQLITE', None)=='1':
+            # SQLite is not processing date-time with the offset
+            data['contextualData']['enrollmentDate'] = "2019-01-11T17:26:00"
+
+        # Create enrollment
+        with requests.post(self.url+'v1/enrollments/0004', json=data, params={'transactionId': 'EXTRA', 'finalize': 'false'},**get_ssl_context()) as r:
+            assert 400 == r.status_code
 
 # [---CUSTO---]
 

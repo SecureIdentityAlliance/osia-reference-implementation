@@ -8,9 +8,6 @@ import time
 import threading
 import asyncio
 import os
-import base64
-import json
-import logging
 
 from aiohttp import web
 

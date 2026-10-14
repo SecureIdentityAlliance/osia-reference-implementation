@@ -23,6 +23,9 @@ if __name__ == '__main__':
             global URL
             return URL
 
+        # [---CUSTO---]
+        # [---CUSTO---]
+
 else:
     from . import TestPr
 
