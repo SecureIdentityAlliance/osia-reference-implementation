@@ -112,8 +112,8 @@ And then on the target system::
 
     unzip enroll4birth.zip
     cd enroll4birth
-    docker compose -f docker-compose.yml up
+    docker compose -f docker-compose-run.yml up
 
 Default Docker registry can be configured with ``D4R6Y`` environment server. For example::
 
-    D4R6Y=myregistry.intranet/public/ docker compose -f docker-compose.yml up
+    D4R6Y=myregistry.intranet/public/ docker compose -f docker-compose-run.yml up

@@ -1,0 +1,162 @@
+services:
+  #
+  # OSIA Services
+  #
+  enrollment:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM osia/enrollment
+        RUN mkdir ./custo
+        COPY ./custo/ ./custo
+    environment:
+      ENROLLMENT_CUSTO_FILENAME: "./custo/enrollment.yaml"
+      ENROLLMENT_NOTIFICATION_URL: "http://notification:8080"
+      ENROLLMENT_DATABASE_URL: "postgresql+psycopg2://enrollment:EnrollmentSecret@postgres/osiadb"
+    ports:
+      - "8000:8080"
+    links:
+      - notification
+      - postgres
+    depends_on:
+      - notification
+      - postgres
+    restart: on-failure
+  pr:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM osia/pr
+        RUN mkdir ./custo
+        COPY ./custo/ ./custo
+    environment:
+      PR_CUSTO_FILENAME: "./custo/pr.yaml"
+      PR_DATABASE_URL: "postgresql+psycopg2://pr:PRSecret@postgres/osiadb"
+    ports:
+      - "8010:8080"
+    links:
+      - postgres
+    depends_on:
+      - postgres
+    restart: on-failure
+  uin:
+    image: osia/uin
+    ports:
+      - "8020:8080"
+  abis:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM osia/abis
+        RUN mkdir ./custo
+        COPY ./custo/ ./custo
+    environment:
+      ABIS_CUSTO_FILENAME: "./custo/abis.yaml"
+      ABIS_DATABASE_URL: "postgresql+psycopg2://abis:AbisSecret@postgres/osiadb"
+    ports:
+      - "8030:8080"
+    links:
+      - postgres
+    depends_on:
+      - postgres
+    restart: on-failure
+  cr:
+    image: osia/cr
+    environment:
+      MY_URL: "http://cr:8080/"
+      CR_NOTIFICATION_URL: "http://notification:8080/"
+      CR_UIN_URL: "http://uin:8080/"
+      CR_PR_URL: "http://pr:8080/"
+      CR_ENROLLMENT_URL: "http://enrollment:8080/"
+    ports:
+      - "8050:8080"
+    links:
+      - notification
+      - uin
+      - pr
+      - enrollment
+    depends_on:
+      - notification
+  cms:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM osia/cms
+        RUN mkdir ./custo
+        COPY ./custo/ ./custo
+    environment:
+      CMS_CUSTO_FILENAME: "./custo/cms.yaml"
+      # CMS_LOGLEVEL: DEBUG
+    ports:
+      - "8060:8080"
+  notification:
+    image: osia/notification
+    ports:
+      - "8040:8080"
+    environment:
+      REDIS_URL: "redis://redis/0"
+      ROOT_URL: "http://notification:8080/"
+    links:
+      - redis
+    depends_on:
+      - redis
+
+  #
+  # Middleware
+  #
+  orchestrator:
+    image: osia/orchestrator
+    ports:
+      - "8100:8080"
+    environment:
+      NOTIFICATION_URL: "http://notification:8080"
+      MY_URL: "http://orchestrator:8080"
+      REDIS_URL: "redis://redis/1"
+      ENROLLMENT_URL: "http://enrollment:8080"
+      CR_URL: "http://cr:8080"
+      PR_URL: "http://pr:8080"
+      ABIS_URL: "http://abis:8080"
+      CMS_URL: "http://cms:8080"
+    links:
+      - notification
+      - redis
+      - enrollment
+      - cr
+      - pr
+      - abis
+    depends_on:
+      - notification
+      - redis
+  #
+  # Databases
+  #
+  redis:
+    image: ${D4R6Y}redis:7.0.9-alpine
+  postgres:
+    build:
+       context: .
+       dockerfile_inline: |
+         FROM ${D4R6Y}postgres:18.3-alpine3.23
+         COPY ./pg_setup.sql /docker-entrypoint-initdb.d/pg_setup.sql
+    environment:
+      - POSTGRES_DB=osiadb
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=SuperSecret
+      - TZ=Europe/Paris
+
+  #
+  # Non-OSIA components, for testing and demonstration
+  #
+  pr-portal:
+    image: osia/pr-portal
+    environment:
+      - PR_URL=http://pr:8080
+      - UIN_URL=http://uin:8080
+      - ABIS_URL=http://abis:8080
+    ports:
+      - "9100:8080"
+    links:
+      - pr
+      - uin
+      - abis
+
