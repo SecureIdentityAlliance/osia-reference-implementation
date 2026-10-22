@@ -103,11 +103,11 @@ def serve():
 # _____________________________________________________________________________
 async def register_topic(app):
     await asyncio.sleep(5)
-    logging.info("Register for events from topic [CR]")
-    params = {'topic':'CR', 'address': orchestrator.args.my_url+'/cr_event', 'policy': '3,10'}
 
     try:
         async with aiohttp.ClientSession() as clt_session:
+            logging.info("Register for events from topic [CR]")
+            params = {'topic':'CR', 'address': orchestrator.args.my_url+'/cr_event', 'policy': '3,10'}
             async with clt_session.post(orchestrator.args.notification_url+"/v1/topics", params={'name':'CR'}, ssl=False) as response:
                 if response.status == 200:
                     await response.read()
@@ -118,8 +118,21 @@ async def register_topic(app):
                     await response.read()
                 else:
                     logging.error("Failed to subscribe on topic [CR]")
+
+            logging.info("Register for events from topic [enrollment]")
+            params = {'topic':'enrollment', 'address': orchestrator.args.my_url+'/enrollment_event', 'policy': '3,10'}
+            async with clt_session.post(orchestrator.args.notification_url+"/v1/topics", params={'name':'enrollment'}, ssl=False) as response:
+                if response.status == 200:
+                    await response.read()
+                else:
+                    logging.error("Failed to create topic [enrollment]")
+            async with clt_session.post(orchestrator.args.notification_url+"/v1/subscriptions", params=params, ssl=False) as response:
+                if response.status == 200:
+                    await response.read()
+                else:
+                    logging.error("Failed to subscribe on topic [enrollment]")
     except:
-        logging.exception("Could not subscribe on topic CR")
+        logging.exception("Could not subscribe on topics CR and/or enrollment")
 
 
 # _____________________________________________________________________________
@@ -149,10 +162,41 @@ async def cr_event(request):
             logging.info("Live birth notification received from [%s] for uin [%s]", event['source'], event['uin'])
             transaction_id = event.get('transactionId', 'liveBirth')
             if 'enrollmentId' in event:
-                t = orchestrator.tasks.workflow_enroll4birth(event['uin'], transaction_id, event['enrollmentId'])
+                t = orchestrator.tasks.workflow_enroll4birth_child(event['uin'], transaction_id, event['enrollmentId'])
             else:
                 t = orchestrator.tasks.workflow(event['uin'], transaction_id, '1')
         else:
             logging.info("Ignoring event [%s]", m['subject'])
     return web.Response(status=200, body='')
 
+# _____________________________________________________________________________
+@routes.post('/enrollment_event')
+@LM.timer("enrollment_event", ok_status, "error")
+async def enrollment_event(request):
+    logging.debug('Receiving notification')
+    m = await request.json()
+
+    if m['type']=='SubscriptionConfirmation':
+        logging.info("Confirming subscription")
+        logging.debug('Headers: '+str(request.headers))
+        logging.debug(str(m))
+        async with aiohttp.ClientSession() as clt_session:
+            async with clt_session.get(m['confirmURL'], params={'token': m['token']}, ssl=False) as response:
+                if response.status == 200:
+                    await response.read()
+                else:
+                    logging.error("Failed to confirm subscription %s", m['confirmURL'])
+                    return web.Response(status=400, body='')
+    else:
+        logging.debug("Notification")
+        logging.debug('Headers: '+str(request.headers))
+        logging.debug(str(m))
+
+        if m['subject']=='parentEnrollment':
+            event = json.loads(m['message'])
+            logging.info("Parent enrollment notification received from [%s]", event['source'])
+            transaction_id = event.get('transactionId', 'parentEnrollment')
+            t = orchestrator.tasks.workflow_enroll4birth_parent(transaction_id, event['enrollmentId'])
+        else:
+            logging.info("Ignoring event [%s]", m['subject'])
+    return web.Response(status=200, body='')

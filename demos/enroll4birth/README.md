@@ -5,7 +5,7 @@ Technical Details of Exchanges
 (3) Enrollment Data
 -------------------
 
-The Enrollment Server is expecting from the station:
+The Enrollment Server is expecting from the station, for the child:
 
 ```json
     {
@@ -33,10 +33,46 @@ The Enrollment Server is expecting from the station:
     }
 ```
 
+and for the parent:
+
+```json
+    {
+        "enrollmentType": "PARENT",
+        "requestData": {
+            "UIN": "XXXX"
+        },
+        "contextualData":
+        {
+            "enrollmentDate": "2026-09-29T12:00:00+02:00",
+        },
+        "biographicData":
+        {
+            "firstName": "John",
+            "lastName": "Doe",
+            "dateOfBirth": "2026-10-05",
+            "gender": "M"
+        },
+        "biometricData":
+        [
+            {
+                "biometricType": "FACE",
+                "image": "<base64-encode image>"
+            }
+        ]
+    }
+```
+
+(``UIN`` is optional in ``requestData``)
+
 (4) Event Published after Enrollment
 ------------------------------------
 
-The enrollment server is publishing on the topic ``enrollment`` the event ``birthEnrollment``:
+The enrollment server is publishing on the topic ``enrollment``:
+
+- the event ``birthEnrollment`` if ``enrollmentType`` is ``CHILD``
+- the event ``parentEnrollment`` if ``enrollmentType`` is ``PARENT``
+
+Both events contain:
 
 ```json
     {

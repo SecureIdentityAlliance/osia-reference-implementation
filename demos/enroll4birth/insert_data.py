@@ -16,19 +16,14 @@ def prepare_data(args):
     #
     # AH
     #
+    buf = open('data/aiony.jpg','rb').read()
     data = {
-        "status": "ACTIVE",
-        "physicalStatus": "ALIVE"
-    }
-    with requests.post(args.pr_url+'v1/persons/AH', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [201, 409]
-
-    # Create identity
-    data = {
-        "identityType": "PARENT",
-        "status": "VALID",
-        "galleries": ["DEMO"],
-        "contextualData": {
+        "enrollmentType": "PARENT",
+        "requestData": {
+            "UIN": "AH"
+        },
+        "contextualData":
+        {
             "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
@@ -36,23 +31,7 @@ def prepare_data(args):
             "lastName": "Haust",
             "dateOfBirth": "2005-11-30",
             "gender": "F",
-        }
-    }
-    with requests.post(args.pr_url+'v1/persons/AH/identities/001', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [201, 409]
-    with requests.put(args.pr_url+'v1/persons/AH/identities/001/reference', params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert 204 == r.status_code
-
-    # Create encounter
-    buf = open('data/aiony.jpg','rb').read()
-    data = {
-        "encounterType": "PARENT",
-        "status": "ACTIVE",
-        "galleries": ["DEMO"],
-        "contextualData": {
-            "enrollmentDate": "2026-09-29T12:00:00+02:00",
-        },
-        "biographicData": {
+            "parentUIN": ""
         },
         "biometricData": [
             {
@@ -64,26 +43,25 @@ def prepare_data(args):
             }
         ]
     }
-    with requests.post(args.abis_url+'v1/persons/AH/encounters/001', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [200, 201, 409]
-    logging.info("AH created")
+
+    with requests.post(args.enr_url+'v1/enrollments/AH', json=data, params={'finalize':'true', 'transactionId': 'prepare'},**get_ssl_context()) as r:
+        if r.status_code!=204:
+            logging.error("[%d]: %s" , r.status_code,r.content)
+        else:
+            logging.info("AH successfully enrolled")
+
 
     #
     # AD
     #
+    buf = open('data/albert.jpg','rb').read()
     data = {
-        "status": "ACTIVE",
-        "physicalStatus": "ALIVE"
-    }
-    with requests.post(args.pr_url+'v1/persons/AD', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [201, 409]
-
-    # Create identity
-    data = {
-        "identityType": "PARENT",
-        "status": "VALID",
-        "galleries": ["DEMO"],
-        "contextualData": {
+        "enrollmentType": "PARENT",
+        "requestData": {
+            "UIN": "AD"
+        },
+        "contextualData":
+        {
             "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
@@ -91,23 +69,7 @@ def prepare_data(args):
             "lastName": "Dera",
             "dateOfBirth": "2002-09-12",
             "gender": "M",
-        }
-    }
-    with requests.post(args.pr_url+'v1/persons/AD/identities/001', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [201, 409]
-    with requests.put(args.pr_url+'v1/persons/AD/identities/001/reference', params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert 204 == r.status_code
-
-    # Create encounter
-    buf = open('data/albert.jpg','rb').read()
-    data = {
-        "encounterType": "PARENT",
-        "status": "ACTIVE",
-        "galleries": ["DEMO"],
-        "contextualData": {
-            "enrollmentDate": "2026-09-29T12:00:00+02:00",
-        },
-        "biographicData": {
+            "parentUIN": ""
         },
         "biometricData": [
             {
@@ -119,26 +81,24 @@ def prepare_data(args):
             }
         ]
     }
-    with requests.post(args.abis_url+'v1/persons/AD/encounters/001', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [200, 201, 409]
-    logging.info("AD created")
+
+    with requests.post(args.enr_url+'v1/enrollments/AD', json=data, params={'finalize':'true', 'transactionId': 'prepare'},**get_ssl_context()) as r:
+        if r.status_code!=204:
+            logging.error("[%d]: %s" , r.status_code,r.content)
+        else:
+            logging.info("AD successfully enrolled")
 
     #
     # AG
     #
+    buf = open('data/alyona.jpg','rb').read()
     data = {
-        "status": "ACTIVE",
-        "physicalStatus": "ALIVE"
-    }
-    with requests.post(args.pr_url+'v1/persons/AG', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [201, 409]
-
-    # Create identity
-    data = {
-        "identityType": "PARENT",
-        "status": "VALID",
-        "galleries": ["DEMO"],
-        "contextualData": {
+        "enrollmentType": "PARENT",
+        "requestData": {
+            "UIN": "AG"
+        },
+        "contextualData":
+        {
             "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
@@ -146,23 +106,7 @@ def prepare_data(args):
             "lastName": "Grishina",
             "dateOfBirth": "2005-11-30",
             "gender": "M",
-        }
-    }
-    with requests.post(args.pr_url+'v1/persons/AG/identities/001', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [201, 409]
-    with requests.put(args.pr_url+'v1/persons/AG/identities/001/reference', params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert 204 == r.status_code
-
-    # Create encounter
-    buf = open('data/alyona.jpg','rb').read()
-    data = {
-        "encounterType": "PARENT",
-        "status": "ACTIVE",
-        "galleries": ["DEMO"],
-        "contextualData": {
-            "enrollmentDate": "2026-09-29T12:00:00+02:00",
-        },
-        "biographicData": {
+            "parentUIN": ""
         },
         "biometricData": [
             {
@@ -174,50 +118,32 @@ def prepare_data(args):
             }
         ]
     }
-    with requests.post(args.abis_url+'v1/persons/AG/encounters/001', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [200, 201, 409]
-    logging.info("AG created")
+
+    with requests.post(args.enr_url+'v1/enrollments/AG', json=data, params={'finalize':'true', 'transactionId': 'prepare'},**get_ssl_context()) as r:
+        if r.status_code!=204:
+            logging.error("[%d]: %s" , r.status_code,r.content)
+        else:
+            logging.info("AG successfully enrolled")
 
     #
     # JF
     #
+    buf = open('data/jimmy.jpg','rb').read()
     data = {
-        "status": "ACTIVE",
-        "physicalStatus": "ALIVE"
-    }
-    with requests.post(args.pr_url+'v1/persons/JF', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [201, 409]
-
-    # Create identity
-    data = {
-        "identityType": "PARENT",
-        "status": "VALID",
-        "galleries": ["DEMO"],
-        "contextualData": {
-            "enrollmentDate": "2026-09-30T12:00:00+02:00",
+        "enrollmentType": "PARENT",
+        "requestData": {
+            "UIN": "JF"
+        },
+        "contextualData":
+        {
+            "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
             "firstName": "Jimmy",
             "lastName": "Fermin",
             "dateOfBirth": "1999-05-10",
             "gender": "F",
-        }
-    }
-    with requests.post(args.pr_url+'v1/persons/JF/identities/001', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [201, 409]
-    with requests.put(args.pr_url+'v1/persons/JF/identities/001/reference', params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert 204 == r.status_code
-
-    # Create encounter
-    buf = open('data/jimmy.jpg','rb').read()
-    data = {
-        "encounterType": "PARENT",
-        "status": "ACTIVE",
-        "galleries": ["DEMO"],
-        "contextualData": {
-            "enrollmentDate": "2026-09-29T12:00:00+02:00",
-        },
-        "biographicData": {
+            "parentUIN": ""
         },
         "biometricData": [
             {
@@ -229,50 +155,32 @@ def prepare_data(args):
             }
         ]
     }
-    with requests.post(args.abis_url+'v1/persons/JF/encounters/001', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [200, 201, 409]
-    logging.info("JF created")
+
+    with requests.post(args.enr_url+'v1/enrollments/JF', json=data, params={'finalize':'true', 'transactionId': 'prepare'},**get_ssl_context()) as r:
+        if r.status_code!=204:
+            logging.error("[%d]: %s" , r.status_code,r.content)
+        else:
+            logging.info("JF successfully enrolled")
 
     #
     # JK
     #
+    buf = open('data/jurica.jpg','rb').read()
     data = {
-        "status": "ACTIVE",
-        "physicalStatus": "ALIVE"
-    }
-    with requests.post(args.pr_url+'v1/persons/JK', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [201, 409]
-
-    # Create identity
-    data = {
-        "identityType": "PARENT",
-        "status": "VALID",
-        "galleries": ["DEMO"],
-        "contextualData": {
-            "enrollmentDate": "2026-09-30T12:00:00+02:00",
+        "enrollmentType": "PARENT",
+        "requestData": {
+            "UIN": "JK"
+        },
+        "contextualData":
+        {
+            "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
             "firstName": "Jurica",
             "lastName": "Koletic",
             "dateOfBirth": "2001-05-10",
             "gender": "M",
-        }
-    }
-    with requests.post(args.pr_url+'v1/persons/JK/identities/001', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [201, 409]
-    with requests.put(args.pr_url+'v1/persons/JK/identities/001/reference', params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert 204 == r.status_code
-
-    # Create encounter
-    buf = open('data/jurica.jpg','rb').read()
-    data = {
-        "encounterType": "PARENT",
-        "status": "ACTIVE",
-        "galleries": ["DEMO"],
-        "contextualData": {
-            "enrollmentDate": "2026-09-29T12:00:00+02:00",
-        },
-        "biographicData": {
+            "parentUIN": ""
         },
         "biometricData": [
             {
@@ -284,50 +192,32 @@ def prepare_data(args):
             }
         ]
     }
-    with requests.post(args.abis_url+'v1/persons/JK/encounters/001', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [200, 201, 409]
-    logging.info("JK created")
+
+    with requests.post(args.enr_url+'v1/enrollments/JK', json=data, params={'finalize':'true', 'transactionId': 'prepare'},**get_ssl_context()) as r:
+        if r.status_code!=204:
+            logging.error("[%d]: %s" , r.status_code,r.content)
+        else:
+            logging.info("JK successfully enrolled")
 
     #
     # MR
     #
+    buf = open('data/matt.jpg','rb').read()
     data = {
-        "status": "ACTIVE",
-        "physicalStatus": "ALIVE"
-    }
-    with requests.post(args.pr_url+'v1/persons/MR', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [201, 409]
-
-    # Create identity
-    data = {
-        "identityType": "PARENT",
-        "status": "VALID",
-        "galleries": ["DEMO"],
-        "contextualData": {
-            "enrollmentDate": "2026-09-30T12:00:00+02:00",
+        "enrollmentType": "PARENT",
+        "requestData": {
+            "UIN": "MR"
+        },
+        "contextualData":
+        {
+            "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
             "firstName": "Matt",
             "lastName": "Reiter",
             "dateOfBirth": "2002-03-01",
             "gender": "F",
-        }
-    }
-    with requests.post(args.pr_url+'v1/persons/MR/identities/001', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [201, 409]
-    with requests.put(args.pr_url+'v1/persons/MR/identities/001/reference', params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert 204 == r.status_code
-
-    # Create encounter
-    buf = open('data/matt.jpg','rb').read()
-    data = {
-        "encounterType": "PARENT",
-        "status": "ACTIVE",
-        "galleries": ["DEMO"],
-        "contextualData": {
-            "enrollmentDate": "2026-09-29T12:00:00+02:00",
-        },
-        "biographicData": {
+            "parentUIN": ""
         },
         "biometricData": [
             {
@@ -339,50 +229,32 @@ def prepare_data(args):
             }
         ]
     }
-    with requests.post(args.abis_url+'v1/persons/MR/encounters/001', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [200, 201, 409]
-    logging.info("MR created")
+
+    with requests.post(args.enr_url+'v1/enrollments/MR', json=data, params={'finalize':'true', 'transactionId': 'prepare'},**get_ssl_context()) as r:
+        if r.status_code!=204:
+            logging.error("[%d]: %s" , r.status_code,r.content)
+        else:
+            logging.info("MR successfully enrolled")
 
     #
     # RM
     #
+    buf = open('data/rachel.jpg','rb').read()
     data = {
-        "status": "ACTIVE",
-        "physicalStatus": "ALIVE"
-    }
-    with requests.post(args.pr_url+'v1/persons/RM', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [201, 409]
-
-    # Create identity
-    data = {
-        "identityType": "PARENT",
-        "status": "VALID",
-        "galleries": ["DEMO"],
-        "contextualData": {
-            "enrollmentDate": "2026-09-30T12:00:00+02:00",
+        "enrollmentType": "PARENT",
+        "requestData": {
+            # "UIN": "RM"
+        },
+        "contextualData":
+        {
+            "enrollmentDate": "2026-09-29T12:00:00+02:00",
         },
         "biographicData": {
             "firstName": "Rachel",
             "lastName": "MacDermott",
             "dateOfBirth": "1998-03-01",
             "gender": "F",
-        }
-    }
-    with requests.post(args.pr_url+'v1/persons/RM/identities/001', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [201, 409]
-    with requests.put(args.pr_url+'v1/persons/RM/identities/001/reference', params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert 204 == r.status_code
-
-    # Create encounter
-    buf = open('data/rachel.jpg','rb').read()
-    data = {
-        "encounterType": "PARENT",
-        "status": "ACTIVE",
-        "galleries": ["DEMO"],
-        "contextualData": {
-            "enrollmentDate": "2026-09-29T12:00:00+02:00",
-        },
-        "biographicData": {
+            "parentUIN": ""
         },
         "biometricData": [
             {
@@ -394,33 +266,31 @@ def prepare_data(args):
             }
         ]
     }
-    with requests.post(args.abis_url+'v1/persons/RM/encounters/001', json=data, params={'transactionId': 'prepare'},**get_ssl_context()) as r:
-        assert r.status_code in [200, 201, 409]
-    logging.info("RM created")
 
-    # Create Topic
-    with requests.post(args.notification_url+"v1/topics",params={'name':'enrollment'}) as r:
-        assert r.status_code == 200
-    logging.info("Topic [enrollment] created")
-    with requests.post(args.notification_url+"v1/topics",params={'name':'CR'}) as r:
-        assert r.status_code == 200
-    logging.info("Topic [CR] created")
+    with requests.post(args.enr_url+'v1/enrollments/RM', json=data, params={'finalize':'true', 'transactionId': 'prepare'},**get_ssl_context()) as r:
+        if r.status_code!=204:
+            logging.error("[%d]: %s" , r.status_code,r.content)
+        else:
+            logging.info("RM successfully enrolled")
+
+
+    # # Create Topic
+    # with requests.post(args.notification_url+"v1/topics",params={'name':'enrollment'}) as r:
+    #     assert r.status_code == 200
+    # logging.info("Topic [enrollment] created")
+    # with requests.post(args.notification_url+"v1/topics",params={'name':'CR'}) as r:
+    #     assert r.status_code == 200
+    # logging.info("Topic [CR] created")
 
 
 def main(argv=sys.argv[1:]):
 
-    parser = argparse.ArgumentParser(description='Script to insert test data in PR and ABIS')
+    parser = argparse.ArgumentParser(description='Script to insert test data')
     parser.add_argument("-l", "--loglevel", default='INFO', dest='loglevel', help="Log level")
 
-    parser.add_argument("--pr-url", dest='pr_url',
-                        default='http://localhost:8010/',
-                        help='The URL to the PR service')
-    parser.add_argument("--abis-url", dest='abis_url',
-                        default='http://localhost:8030/',
-                        help='The URL to the PR service')
-    parser.add_argument("--notification-url", dest='notification_url',
-                        default='http://localhost:8040/',
-                        help='The URL to the notification service')
+    parser.add_argument("--enr-url", dest='enr_url',
+                        default='http://localhost:8000/',
+                        help='The URL to the enrollment server')
 
     args = parser.parse_args(argv)
 

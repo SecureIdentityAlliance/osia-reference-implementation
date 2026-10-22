@@ -247,8 +247,9 @@ async def enrollment_event(request):
         logging.debug("Notification")
         logging.debug('Headers: '+str(request.headers))
         logging.debug(str(m))
-        event = json.loads(m['message'])
-        await execute(event)
+        if m['subject']=='birthEnrollment':
+            event = json.loads(m['message'])
+            await execute(event)
     return web.Response(status=200, body='')
 
 # _____________________________________________________________________________

@@ -11,9 +11,30 @@ import io
 import datetime
 
 from orchestrator.celery import app
-from orchestrator.clients import enrollment, pr, cr, abis, cms
+from orchestrator.clients import enrollment, pr, cr, abis, cms, uin
 
 from celery import chain
+
+#______________________________________________________________________________
+@app.task(bind=True)
+def generate_UIN(self,ctx, url, enrollment_id, transaction_id):
+    logging.info("==> [%s] generate UIN if not found in enrollment", transaction_id)
+    if 'requestData' in ctx and 'UIN' in ctx['requestData']:
+        ctx['UIN'] = ctx['requestData']['UIN']
+        return ctx
+    res = None
+    try:
+        # Generate new UIN
+        res = asyncio.run( uin.generate(url+'/v1/uin', transaction_id, ctx.get('biographicData', {})) )
+    except Exception as exc:
+        logging.exception("error")
+        self.retry(countdown=60.0,max_retries=10,exc=exc)
+    if not res:
+        logging.error("[%s] Could not generate new UIN", transaction_id)
+        raise Exception("Could not generate new UIN")
+    ctx['UIN'] = res
+    return ctx
+
 
 #______________________________________________________________________________
 @app.task(bind=True)
@@ -46,9 +67,14 @@ def readEnrollment_ENR(self,ctx, url, enrollment_id, transaction_id):
     if not res:
         logging.error("[%s] Could not read enrollment", transaction_id)
         raise Exception("Could not read enrollment")
-    ctx['biometricData'] = res['biometricData']
-    ctx['contextualData'] = res['contextualData']
     ctx['enrollmentType'] = res['enrollmentType']
+    ctx['requestData'] = res['requestData']
+    ctx['contextualData'] = res['contextualData']
+    if 'biographicData' not in ctx:
+        ctx['biographicData'] = res['biographicData']
+        if 'parentUIN' in ctx['biographicData']:
+            del ctx['biographicData']['parentUIN']
+    ctx['biometricData'] = res['biometricData']
     return ctx
 
 #______________________________________________________________________________
@@ -199,7 +225,25 @@ def workflow(uin, transaction_id, enrollment_id):
     )()
 
 #______________________________________________________________________________
-def workflow_enroll4birth(uin, transaction_id, enrollment_id):
+def workflow_enroll4birth_parent(transaction_id, enrollment_id):
+    logging.info('[%s] - Starting workflow "enroll4birth_parent"', transaction_id)
+    ctx = {}
+    ctx['UIN'] = None
+    ctx['identityId'] = datetime.datetime.now().strftime("%m%d%H%M%S%f")
+    # See https://docs.celeryproject.org/en/stable/userguide/canvas.html#the-primitives
+    chain( 
+        readEnrollment_ENR.s(ctx, os.environ.get("ENROLLMENT_URL",'http://enrollment:8080'), enrollment_id, transaction_id),
+        generate_UIN.s(os.environ.get("UIN_URL",'http://uin:8080'), enrollment_id, transaction_id),
+        createPerson_PR.s(os.environ.get("PR_URL",'http://pr:8080'), enrollment_id, transaction_id),
+        createIdentity_PR.s(os.environ.get("PR_URL",'http://pr:8080'), enrollment_id, transaction_id),
+        defineReference_PR.s(os.environ.get("PR_URL",'http://pr:8080'), enrollment_id, transaction_id),
+        createEncounter_ABIS.s(os.environ.get("ABIS_URL",'http://abis:8080'), enrollment_id, transaction_id),
+        # deleteEnrollment_ENR.s(os.environ.get("ENROLLMENT_URL",'http://enrollment:8080'), enrollment_id, transaction_id),
+        done.s(transaction_id),
+    )()
+
+#______________________________________________________________________________
+def workflow_enroll4birth_child(uin, transaction_id, enrollment_id):
     logging.info('[%s] - Starting workflow "enroll4birth" for UIN [%s]', transaction_id, uin)
     ctx = {}
     ctx['UIN'] = uin

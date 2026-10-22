@@ -264,7 +264,7 @@ async def _aget_enrollment(session, enrollment_id):
 # [---CUSTO---]
 
 #______________________________________________________________________________
-async def finalize_CB(enrollment_id, transaction_id):
+async def finalize_CB(enrollment_id, transaction_id, enrollment_type):
     """
     Function called when an enrollment is finalized.
     To be replaced with a real implementation
@@ -274,8 +274,12 @@ async def finalize_CB(enrollment_id, transaction_id):
         return
     async with aiohttp.ClientSession() as clt_session:
         try:
+            if enrollment_type=='PARENT':
+                params = {'subject':'parentEnrollment'}
+            else:
+                params = {'subject':'birthEnrollment'}
             async with clt_session.post(enrollment.args.notification_url+'/v1/topics/'+enrollment.args.notification_topic+'/publish', 
-                                        params={'subject':'birthEnrollment'},
+                                        params=params,
                                         json=dict(source="EnrollmentServer", enrollmentId=enrollment_id, transactionId=transaction_id),
                                         ssl=get_notification_client_ssl_context()) as response:
                 if response.status == 200:
@@ -321,7 +325,7 @@ async def createEnrollment(request):
 
         # Successful
         if np.status == 'FINALIZED':
-            await finalize_CB(enrollment_id, transaction_id)
+            await finalize_CB(enrollment_id, transaction_id, np.enrollmentType)
     return web.json_response(data=enrollment_id, status=204)
 
 # _____________________________________________________________________________
@@ -405,7 +409,7 @@ async def updateEnrollment(request):
 
         # Successful
         if finalize:
-            await finalize_CB(enrollment_id, transaction_id)
+            await finalize_CB(enrollment_id, transaction_id, np.enrollmentType)
     return web.json_response(status=204)
 
 #______________________________________________________________________________
@@ -443,7 +447,7 @@ async def partialUpdateEnrollment(request):
 
         # Successful
         if finalize:
-            await finalize_CB(enrollment_id, transaction_id)
+            await finalize_CB(enrollment_id, transaction_id, p.enrollmentType)
     return web.json_response(status=204)
 
 #______________________________________________________________________________
@@ -464,7 +468,7 @@ async def finalizeEnrollment(request):
         p.status = 'FINALIZED'
         session.add(p)
 
-    await finalize_CB(enrollment_id, transaction_id)
+    await finalize_CB(enrollment_id, transaction_id, p.enrollmentType)
 
     return web.Response(status=204)
 

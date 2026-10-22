@@ -28,3 +28,9 @@ ContextualData:
       type: string
       format: date-time
   additionalProperties: false
+RequestData:
+  type: object
+  properties:
+    UIN:
+      type: string
+  additionalProperties: false
