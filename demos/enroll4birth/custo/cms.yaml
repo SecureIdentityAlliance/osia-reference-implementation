@@ -16,10 +16,3 @@ BiographicData:
       type: string
       enum: ['M', 'F']
   additionalProperties: false
-ContextualData:
-  type: object
-  properties:
-    enrollmentDate:
-      type: string
-      format: date-time
-  additionalProperties: false

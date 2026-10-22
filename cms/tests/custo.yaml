@@ -23,13 +23,4 @@ BiographicData:
         - USA
       default: USA
   additionalProperties: false
-ContextualData:
-  type: object
-  properties:
-    operator:
-      type: string
-    operationDateTime:
-      type: string
-      format: date-time
-  additionalProperties: false
 # [---CUSTO---]
