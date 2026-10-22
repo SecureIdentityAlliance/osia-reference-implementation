@@ -24,6 +24,7 @@ def do_birth(args):
             data = {"biometricData": [
                     {
                         "biometricType": "FACE",
+                        "biometricSubType": "PORTRAIT",
                         "image": base64.b64encode(portrait).decode('ascii')
                     }
                 ]}
@@ -62,6 +63,7 @@ def do_birth(args):
         data["biometricData"] = [
                 {
                     "biometricType": "FACE",
+                    "biometricSubType": "PORTRAIT",
                     "image": base64.b64encode(portrait).decode('ascii')
                 }
             ]

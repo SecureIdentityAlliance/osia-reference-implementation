@@ -27,6 +27,7 @@ The Enrollment Server is expecting from the station, for the child:
         [
             {
                 "biometricType": "FACE",
+                "biometricSubType": "PORTRAIT",
                 "image": "<base64-encode image>"
             }
         ]
@@ -50,12 +51,14 @@ and for the parent:
             "firstName": "John",
             "lastName": "Doe",
             "dateOfBirth": "2026-10-05",
-            "gender": "M"
+            "gender": "M",
+            "parentUIN": ""
         },
         "biometricData":
         [
             {
                 "biometricType": "FACE",
+                "biometricSubType": "PORTRAIT",
                 "image": "<base64-encode image>"
             }
         ]
@@ -144,6 +147,7 @@ No biometric data are included in the identity.
         [
             {
                 "biometricType": "FACE",
+                "biometricSubType": "PORTRAIT",
                 "image": "<base64-encode image>"
             }
         ]
@@ -181,6 +185,7 @@ No biographic data are included in the encounter.
         [
             {
                 "biometricType": "FACE",
+                "biometricSubType": "PORTRAIT",
                 "image": "<base64-encode image>"
             }
         ]

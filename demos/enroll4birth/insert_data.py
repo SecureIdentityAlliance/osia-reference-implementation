@@ -36,6 +36,7 @@ def prepare_data(args):
         "biometricData": [
             {
                 "biometricType": "FACE",
+                "biometricSubType": "PORTRAIT",
                 "image": base64.b64encode(buf).decode('ascii'),
                 "width": 300,
                 "height": 389,
@@ -74,6 +75,7 @@ def prepare_data(args):
         "biometricData": [
             {
                 "biometricType": "FACE",
+                "biometricSubType": "PORTRAIT",
                 "image": base64.b64encode(buf).decode('ascii'),
                 "width": 294,
                 "height": 400,
@@ -111,6 +113,7 @@ def prepare_data(args):
         "biometricData": [
             {
                 "biometricType": "FACE",
+                "biometricSubType": "PORTRAIT",
                 "image": base64.b64encode(buf).decode('ascii'),
                 "width": 300,
                 "height": 389,
@@ -148,6 +151,7 @@ def prepare_data(args):
         "biometricData": [
             {
                 "biometricType": "FACE",
+                "biometricSubType": "PORTRAIT",
                 "image": base64.b64encode(buf).decode('ascii'),
                 "width": 300,
                 "height": 389,
@@ -185,6 +189,7 @@ def prepare_data(args):
         "biometricData": [
             {
                 "biometricType": "FACE",
+                "biometricSubType": "PORTRAIT",
                 "image": base64.b64encode(buf).decode('ascii'),
                 "width": 300,
                 "height": 389,
@@ -222,6 +227,7 @@ def prepare_data(args):
         "biometricData": [
             {
                 "biometricType": "FACE",
+                "biometricSubType": "PORTRAIT",
                 "image": base64.b64encode(buf).decode('ascii'),
                 "width": 300,
                 "height": 389,
@@ -259,6 +265,7 @@ def prepare_data(args):
         "biometricData": [
             {
                 "biometricType": "FACE",
+                "biometricSubType": "PORTRAIT",
                 "image": base64.b64encode(buf).decode('ascii'),
                 "width": 300,
                 "height": 389,
