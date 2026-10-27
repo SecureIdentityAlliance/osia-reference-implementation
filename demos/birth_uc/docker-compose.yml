@@ -12,7 +12,7 @@ services:
     image: osia/enrollment
     environment:
       ENROLLMENT_CUSTO_FILENAME: "/custo/enrollment.yaml"
-      ENROLLMENT_NOTIFICATION_URL: "http://notification:8080"
+      ENROLLMENT_NOTIFICATION_URL: "http://notification:8080/"
       ENROLLMENT_DATABASE_URL: "postgresql+psycopg2://enrollment:EnrollmentSecret@postgres/osiadb"
     volumes:
       - ${PWD}/custo:/custo
@@ -92,8 +92,8 @@ services:
       NOTIFICATION_URL: "http://notification:8080/"
       MY_URL: "http://orchestrator:8080/"
       REDIS_URL: "redis://redis/1"
-      CR_URL: "http://host.docker.internal:8080/v1/persons"
-      PR_URL: "http://pr:8080/v1/persons"
+      CR_URL: "http://host.docker.internal:8080/"
+      PR_URL: "http://pr:8080/"
     links:
       - notification
       - redis
@@ -133,8 +133,8 @@ services:
         APK_ARGS: ${APK_ARGS}
     image: osia/pr-portal
     environment:
-      - PR_URL=http://pr:8080
-      - UIN_URL=http://uin:8080
+      - PR_URL=http://pr:8080/
+      - UIN_URL=http://uin:8080/
     tty: true
     ports:
       - "8100:8080"

@@ -107,26 +107,26 @@ async def register_topic(app):
     try:
         async with aiohttp.ClientSession() as clt_session:
             logging.info("Register for events from topic [CR]")
-            params = {'topic':'CR', 'address': orchestrator.args.my_url+'/cr_event', 'policy': '3,10'}
-            async with clt_session.post(orchestrator.args.notification_url+"/v1/topics", params={'name':'CR'}, ssl=False) as response:
+            params = {'topic':'CR', 'address': orchestrator.args.my_url+'cr_event', 'policy': '3,10'}
+            async with clt_session.post(orchestrator.args.notification_url+"v1/topics", params={'name':'CR'}, ssl=False) as response:
                 if response.status == 200:
                     await response.read()
                 else:
                     logging.error("Failed to create topic [CR]")
-            async with clt_session.post(orchestrator.args.notification_url+"/v1/subscriptions", params=params, ssl=False) as response:
+            async with clt_session.post(orchestrator.args.notification_url+"v1/subscriptions", params=params, ssl=False) as response:
                 if response.status == 200:
                     await response.read()
                 else:
                     logging.error("Failed to subscribe on topic [CR]")
 
             logging.info("Register for events from topic [enrollment]")
-            params = {'topic':'enrollment', 'address': orchestrator.args.my_url+'/enrollment_event', 'policy': '3,10'}
-            async with clt_session.post(orchestrator.args.notification_url+"/v1/topics", params={'name':'enrollment'}, ssl=False) as response:
+            params = {'topic':'enrollment', 'address': orchestrator.args.my_url+'enrollment_event', 'policy': '3,10'}
+            async with clt_session.post(orchestrator.args.notification_url+"v1/topics", params={'name':'enrollment'}, ssl=False) as response:
                 if response.status == 200:
                     await response.read()
                 else:
                     logging.error("Failed to create topic [enrollment]")
-            async with clt_session.post(orchestrator.args.notification_url+"/v1/subscriptions", params=params, ssl=False) as response:
+            async with clt_session.post(orchestrator.args.notification_url+"v1/subscriptions", params=params, ssl=False) as response:
                 if response.status == 200:
                     await response.read()
                 else:

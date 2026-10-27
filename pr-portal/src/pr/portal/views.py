@@ -11,17 +11,22 @@ from django.template.defaulttags import register
 
 import requests
 
+def get_url(name, default):
+    u = os.environ.get(name, default)
+    u = u+'/' if u and u[-1]!='/' else u
+    return u
+
 def pr_url():
-    return os.environ.get('PR_URL', 'http://localhost:8010')
+    return get_url('PR_URL', 'http://localhost:8010/')
 
 def uin_url():
-    return os.environ.get('UIN_URL', 'http://localhost:8020')
+    return get_url('UIN_URL', 'http://localhost:8020/')
 
 def abis_url():
-    return os.environ.get('ABIS_URL', 'http://localhost:8030')
+    return get_url('ABIS_URL', 'http://localhost:8030/')
 
 def index(request):
-    req = requests.post(pr_url()+"/v1/persons?transactionId=portal", json=[{
+    req = requests.post(pr_url()+"v1/persons?transactionId=portal", json=[{
         "attributeName":"firstName",
         "operator":"!=",
         "value":""
@@ -31,7 +36,7 @@ def index(request):
     ret = []
     for x in req.json():
         pid = x['personId']
-        req2 = requests.get(pr_url()+"/v1/persons/"+pid+"/reference?transactionId=portal")
+        req2 = requests.get(pr_url()+"v1/persons/"+pid+"/reference?transactionId=portal")
         if req2.status_code!=200:
             logging.error("Failed to contact Population Registry (HTTP code: %s)" % req2.status_code)
         else:
@@ -44,7 +49,7 @@ def portrait(request, person_id):
     return render(request, "pr/portal/portrait.html", dict(personId=person_id))
 
 def portrait_image(request, person_id):
-    req = requests.get(abis_url()+"/v1/persons/"+person_id+'/encounters?transactionId=portal')
+    req = requests.get(abis_url()+"v1/persons/"+person_id+'/encounters?transactionId=portal')
     if req.status_code!=200:
         raise Exception("Failed to contact ABIS (HTTP code: %s)" % req.status_code)
     data = req.json()
@@ -57,7 +62,7 @@ def portrait_image(request, person_id):
     raise Exception("No portrait found in ABIS for %s (HTTP code: %s)" % (person_id, req.status_code) )
 
 def person(request, person_id):
-    req = requests.get(pr_url()+"/v1/persons/"+person_id+'/identities?transactionId=portal')
+    req = requests.get(pr_url()+"v1/persons/"+person_id+'/identities?transactionId=portal')
     if req.status_code!=200:
         raise Exception("Failed to contact Population Registry (HTTP code: %s)" % req.status_code)
     data = req.json()
@@ -103,21 +108,21 @@ def add_dummy(request):
     }
 
     # get a new UIN
-    with requests.post(uin_url()+'/v1/uin', json=datai['biographicData'], params={'transactionId': 'portal'},verify=False) as req:
+    with requests.post(uin_url()+'v1/uin', json=datai['biographicData'], params={'transactionId': 'portal'},verify=False) as req:
         if req.status_code!=200:
             raise Exception("Failed to contact UIN Generator (HTTP code: %s)" % req.status_code)
         UIN = req.json()
 
     # Create person
-    with requests.post(pr_url()+'/v1/persons/'+UIN, json=datap, params={'transactionId': 'portal'},verify=False) as req:
+    with requests.post(pr_url()+'v1/persons/'+UIN, json=datap, params={'transactionId': 'portal'},verify=False) as req:
         if req.status_code!=201:
             raise Exception("Failed to contact Population Registry (HTTP code: %s)" % req.status_code)
 
     # Create identity
-    with requests.post(pr_url()+'/v1/persons/'+UIN+'/identities/001', json=datai, params={'transactionId': 'portal'},verify=False) as req:
+    with requests.post(pr_url()+'v1/persons/'+UIN+'/identities/001', json=datai, params={'transactionId': 'portal'},verify=False) as req:
         if req.status_code!=201:
             raise Exception("Failed to contact Population Registry (HTTP code: %s)" % req.status_code)
-    with requests.put(pr_url()+'/v1/persons/'+UIN+'/identities/001/reference', params={'transactionId': 'portal'},verify=False) as req:
+    with requests.put(pr_url()+'v1/persons/'+UIN+'/identities/001/reference', params={'transactionId': 'portal'},verify=False) as req:
         if req.status_code!=204:
             raise Exception("Failed to contact Population Registry (HTTP code: %s)" % req.status_code)
 

@@ -11,7 +11,7 @@ logger = logging.getLogger('cms')
 #______________________________________________________________________________
 async def createCredentialRequest(url, transaction_id, enrollment_id, request, target=None):
     async with aiohttp.ClientSession() as session:
-        async with session.post(url+'/v1/credentialRequests/'+enrollment_id,
+        async with session.post(url+'v1/credentialRequests/'+enrollment_id,
                                 data=request,
                                 headers={'content-type': 'application/json'},
                                 params={'transactionId': transaction_id}) as resp:

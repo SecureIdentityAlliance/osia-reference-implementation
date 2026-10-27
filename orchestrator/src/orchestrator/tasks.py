@@ -15,6 +15,11 @@ from orchestrator.clients import enrollment, pr, cr, abis, cms, uin
 
 from celery import chain
 
+def get_url(name, default):
+    u = os.environ.get(name, default)
+    u = u+'/' if u and u[-1]!='/' else u
+    return u
+
 #______________________________________________________________________________
 @app.task(bind=True)
 def generate_UIN(self,ctx, url, enrollment_id, transaction_id):
@@ -25,7 +30,7 @@ def generate_UIN(self,ctx, url, enrollment_id, transaction_id):
     res = None
     try:
         # Generate new UIN
-        res = asyncio.run( uin.generate(url+'/v1/uin', transaction_id, ctx.get('biographicData', {})) )
+        res = asyncio.run( uin.generate(url+'v1/uin', transaction_id, ctx.get('biographicData', {})) )
     except Exception as exc:
         logging.exception("error")
         self.retry(countdown=60.0,max_retries=10,exc=exc)
@@ -43,7 +48,7 @@ def readPersonAttributes_CR(self,ctx, url, enrollment_id, transaction_id):
     res = None
     try:
         # Build person data
-        res = asyncio.run( cr.readPersonAttributes(url+'/v1/persons', transaction_id, ctx['UIN']) )
+        res = asyncio.run( cr.readPersonAttributes(url+'v1/persons', transaction_id, ctx['UIN']) )
     except Exception as exc:
         logging.exception("error")
         self.retry(countdown=60.0,max_retries=10,exc=exc)
@@ -60,7 +65,7 @@ def readEnrollment_ENR(self,ctx, url, enrollment_id, transaction_id):
     res = None
     try:
         # Get data
-        res = asyncio.run( enrollment.readEnrollment(url+'/v1/enrollments', transaction_id, enrollment_id) )
+        res = asyncio.run( enrollment.readEnrollment(url+'v1/enrollments', transaction_id, enrollment_id) )
     except Exception as exc:
         logging.exception("error")
         self.retry(countdown=60.0,max_retries=10,exc=exc)
@@ -84,7 +89,7 @@ def deleteEnrollment_ENR(self,ctx, url, enrollment_id, transaction_id):
     res = None
     try:
         # Get data
-        res = asyncio.run( enrollment.deleteEnrollment(url+'/v1/enrollments', transaction_id, enrollment_id) )
+        res = asyncio.run( enrollment.deleteEnrollment(url+'v1/enrollments', transaction_id, enrollment_id) )
     except Exception as exc:
         logging.exception("error")
         self.retry(countdown=60.0,max_retries=10,exc=exc)
@@ -104,7 +109,7 @@ def createPerson_PR(self,ctx, url,enrollment_id, transaction_id):
         person['status'] = 'ACTIVE'
         person['physicalStatus'] = 'ALIVE'
         data = io.BytesIO(json.dumps(person).encode('latin-1'))
-        res = asyncio.run( pr.createPerson(url+'/v1/persons', transaction_id, ctx['UIN'], data) )
+        res = asyncio.run( pr.createPerson(url+'v1/persons', transaction_id, ctx['UIN'], data) )
     except Exception as exc:
         logging.exception("error")
         self.retry(countdown=60.0,max_retries=10,exc=exc)
@@ -132,9 +137,9 @@ def createIdentity_PR(self,ctx, url,enrollment_id, transaction_id):
         data = io.BytesIO(json.dumps(identity).encode('latin-1'))
         identity_id = ctx.get('identityId', None)
         if identity_id is None:
-            identity_id = asyncio.run( pr.createIdentity(url+'/v1/persons', transaction_id, ctx['UIN'], data) )
+            identity_id = asyncio.run( pr.createIdentity(url+'v1/persons', transaction_id, ctx['UIN'], data) )
         else:
-            if not asyncio.run( pr.createIdentityWithId(url+'/v1/persons', transaction_id, ctx['UIN'], identity_id, data) ):
+            if not asyncio.run( pr.createIdentityWithId(url+'v1/persons', transaction_id, ctx['UIN'], identity_id, data) ):
                 identity_id = None
     except Exception as exc:
         self.retry(countdown=60.0,max_retries=10,exc=exc)
@@ -149,7 +154,7 @@ def createIdentity_PR(self,ctx, url,enrollment_id, transaction_id):
 def defineReference_PR(self,ctx, url,enrollment_id, transaction_id):
     logging.info("==> [%s] define reference identity in PR for enrollment %s", transaction_id, enrollment_id)
     try:
-        asyncio.run( pr.defineReference(url+'/v1/persons', transaction_id, ctx['UIN'], ctx['identityId']) )
+        asyncio.run( pr.defineReference(url+'v1/persons', transaction_id, ctx['UIN'], ctx['identityId']) )
     except Exception as exc:
         self.retry(countdown=60.0,max_retries=10,exc=exc)
     return ctx
@@ -173,7 +178,7 @@ def createEncounter_ABIS(self,ctx, url,enrollment_id, transaction_id):
 
         data = io.BytesIO(json.dumps(encounter).encode('latin-1'))
         encounter_id = ctx.get('identityId', None)
-        asyncio.run( abis.createEncounter(url+'/v1/persons', transaction_id, ctx['UIN'], encounter_id, data) )
+        asyncio.run( abis.createEncounter(url+'v1/persons', transaction_id, ctx['UIN'], encounter_id, data) )
     except Exception as exc:
         self.retry(countdown=60.0,max_retries=10,exc=exc)
     return ctx
@@ -217,10 +222,10 @@ def workflow(uin, transaction_id, enrollment_id):
     ctx['identityId'] = datetime.datetime.now().strftime("%m%d%H%M%S%f")
     # See https://docs.celeryproject.org/en/stable/userguide/canvas.html#the-primitives
     chain( 
-        readPersonAttributes_CR.s(ctx, os.environ.get("CR_URL",'http://cr:8080'), enrollment_id, transaction_id),
-        createPerson_PR.s(os.environ.get("PR_URL",'http://pr:8080'), enrollment_id, transaction_id),
-        createIdentity_PR.s(os.environ.get("PR_URL",'http://pr:8080'), enrollment_id, transaction_id),
-        defineReference_PR.s(os.environ.get("PR_URL",'http://pr:8080'), enrollment_id, transaction_id),
+        readPersonAttributes_CR.s(ctx, get_url("CR_URL",'http://cr:8080/'), enrollment_id, transaction_id),
+        createPerson_PR.s(get_url("PR_URL",'http://pr:8080/'), enrollment_id, transaction_id),
+        createIdentity_PR.s(get_url("PR_URL",'http://pr:8080/'), enrollment_id, transaction_id),
+        defineReference_PR.s(get_url("PR_URL",'http://pr:8080/'), enrollment_id, transaction_id),
         done.s(transaction_id),
     )()
 
@@ -232,13 +237,13 @@ def workflow_enroll4birth_parent(transaction_id, enrollment_id):
     ctx['identityId'] = datetime.datetime.now().strftime("%m%d%H%M%S%f")
     # See https://docs.celeryproject.org/en/stable/userguide/canvas.html#the-primitives
     chain( 
-        readEnrollment_ENR.s(ctx, os.environ.get("ENROLLMENT_URL",'http://enrollment:8080'), enrollment_id, transaction_id),
-        generate_UIN.s(os.environ.get("UIN_URL",'http://uin:8080'), enrollment_id, transaction_id),
-        createPerson_PR.s(os.environ.get("PR_URL",'http://pr:8080'), enrollment_id, transaction_id),
-        createIdentity_PR.s(os.environ.get("PR_URL",'http://pr:8080'), enrollment_id, transaction_id),
-        defineReference_PR.s(os.environ.get("PR_URL",'http://pr:8080'), enrollment_id, transaction_id),
-        createEncounter_ABIS.s(os.environ.get("ABIS_URL",'http://abis:8080'), enrollment_id, transaction_id),
-        # deleteEnrollment_ENR.s(os.environ.get("ENROLLMENT_URL",'http://enrollment:8080'), enrollment_id, transaction_id),
+        readEnrollment_ENR.s(ctx, get_url("ENROLLMENT_URL",'http://enrollment:8080/'), enrollment_id, transaction_id),
+        generate_UIN.s(get_url("UIN_URL",'http://uin:8080/'), enrollment_id, transaction_id),
+        createPerson_PR.s(get_url("PR_URL",'http://pr:8080/'), enrollment_id, transaction_id),
+        createIdentity_PR.s(get_url("PR_URL",'http://pr:8080/'), enrollment_id, transaction_id),
+        defineReference_PR.s(get_url("PR_URL",'http://pr:8080/'), enrollment_id, transaction_id),
+        createEncounter_ABIS.s(get_url("ABIS_URL",'http://abis:8080/'), enrollment_id, transaction_id),
+        # deleteEnrollment_ENR.s(get_url("ENROLLMENT_URL",'http://enrollment:8080/'), enrollment_id, transaction_id),
         done.s(transaction_id),
     )()
 
@@ -251,21 +256,21 @@ def workflow_enroll4birth_child(uin, transaction_id, enrollment_id):
     # See https://docs.celeryproject.org/en/stable/userguide/canvas.html#the-primitives
     chain( 
         # (12)
-        readPersonAttributes_CR.s(ctx, os.environ.get("CR_URL",'http://cr:8080'), enrollment_id, transaction_id),
+        readPersonAttributes_CR.s(ctx, get_url("CR_URL",'http://cr:8080/'), enrollment_id, transaction_id),
         # (13)
-        readEnrollment_ENR.s(os.environ.get("ENROLLMENT_URL",'http://enrollment:8080'), enrollment_id, transaction_id),
+        readEnrollment_ENR.s(get_url("ENROLLMENT_URL",'http://enrollment:8080/'), enrollment_id, transaction_id),
         # (14)
-        createPerson_PR.s(os.environ.get("PR_URL",'http://pr:8080'), enrollment_id, transaction_id),
+        createPerson_PR.s(get_url("PR_URL",'http://pr:8080/'), enrollment_id, transaction_id),
         # (15)
-        createIdentity_PR.s(os.environ.get("PR_URL",'http://pr:8080'), enrollment_id, transaction_id),
+        createIdentity_PR.s(get_url("PR_URL",'http://pr:8080/'), enrollment_id, transaction_id),
         # (16)
-        defineReference_PR.s(os.environ.get("PR_URL",'http://pr:8080'), enrollment_id, transaction_id),
+        defineReference_PR.s(get_url("PR_URL",'http://pr:8080/'), enrollment_id, transaction_id),
         # (17)
-        createEncounter_ABIS.s(os.environ.get("ABIS_URL",'http://abis:8080'), enrollment_id, transaction_id),
+        createEncounter_ABIS.s(get_url("ABIS_URL",'http://abis:8080/'), enrollment_id, transaction_id),
         # (18) Send to CMS
-        createCredentialRequest_CMS.s(os.environ.get("CMS_URL",'http://cms:8080'), enrollment_id, transaction_id),
+        createCredentialRequest_CMS.s(get_url("CMS_URL",'http://cms:8080/'), enrollment_id, transaction_id),
         # (19) delete enrollment
-        deleteEnrollment_ENR.s(os.environ.get("ENROLLMENT_URL",'http://enrollment:8080'), enrollment_id, transaction_id),
+        deleteEnrollment_ENR.s(get_url("ENROLLMENT_URL",'http://enrollment:8080/'), enrollment_id, transaction_id),
         done.s(transaction_id),
     )()
 

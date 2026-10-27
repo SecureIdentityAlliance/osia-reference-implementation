@@ -58,10 +58,12 @@ def main(argv=sys.argv[1:]):
     parser.add_argument("--notification-url", dest='notification_url',
                         env_var='NOTIFICATION_URL',
                         default='http://localhost:8890/',
+                        type=lambda s: s+'/' if s and s[-1]!='/' else s,
                         help='The URL to the notification service')
     parser.add_argument("--my-url", dest='my_url',
                         env_var='MY_URL',
                         default='http://orchestrator:8900/',
+                        type=lambda s: s+'/' if s and s[-1]!='/' else s,
                         help='The URL to reach me')
 
     orchestrator.args = parser.parse_args(argv)
