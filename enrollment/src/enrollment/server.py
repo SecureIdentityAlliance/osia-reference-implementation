@@ -278,7 +278,7 @@ async def finalize_CB(enrollment_id, transaction_id, enrollment_type):
                 params = {'subject':'parentEnrollment'}
             else:
                 params = {'subject':'birthEnrollment'}
-            async with clt_session.post(enrollment.args.notification_url+'/v1/topics/'+enrollment.args.notification_topic+'/publish', 
+            async with clt_session.post(enrollment.args.notification_url+'v1/topics/'+enrollment.args.notification_topic+'/publish', 
                                         params=params,
                                         json=dict(source="EnrollmentServer", enrollmentId=enrollment_id, transactionId=transaction_id),
                                         ssl=get_notification_client_ssl_context()) as response:
@@ -468,7 +468,7 @@ async def finalizeEnrollment(request):
         p.status = 'FINALIZED'
         session.add(p)
 
-    await finalize_CB(enrollment_id, transaction_id, p.enrollmentType)
+        await finalize_CB(enrollment_id, transaction_id, p.enrollmentType)
 
     return web.Response(status=204)
 

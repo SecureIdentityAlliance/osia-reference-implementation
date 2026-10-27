@@ -57,7 +57,8 @@ def main(argv=sys.argv[1:]):
                         help='The URL to the redis service')
     parser.add_argument("--root-url", dest='root_url',
                         env_var='ROOT_URL',
-                        default='http://localhost:8080',
+                        default='http://localhost:8080/',
+                        type=lambda s: s+'/' if s and s[-1]!='/' else s,
                         help='The URL used to reach this service')
 
     notification.args = parser.parse_args(argv)

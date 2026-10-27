@@ -104,7 +104,8 @@ def main(argv=sys.argv[1:]):
     # arguments to connect to the notification service
     parser.add_argument("--notification-url", dest='notification_url',
                         env_var='CR_NOTIFICATION_URL',
-                        default='http://localhost:8080',
+                        default='http://localhost:8080/',
+                        type=lambda s: s+'/' if s and s[-1]!='/' else s,
                         help='The path to the notification service')
     parser.add_argument("--notification-certfile", dest='notification_certfile',
                         env_var='CR_NOTIFICATION_CERTFILE',
@@ -126,7 +127,8 @@ def main(argv=sys.argv[1:]):
     # arguments to connect to the pr service
     parser.add_argument("--pr-url", dest='pr_url',
                         env_var='CR_PR_URL',
-                        default='http://localhost:8080',
+                        default='http://localhost:8080/',
+                        type=lambda s: s+'/' if s and s[-1]!='/' else s,
                         help='The path to the pr service')
     parser.add_argument("--pr-certfile", dest='pr_certfile',
                         env_var='CR_PR_CERTFILE',
@@ -148,7 +150,8 @@ def main(argv=sys.argv[1:]):
     # arguments to connect to the uin service
     parser.add_argument("--uin-url", dest='uin_url',
                         env_var='CR_UIN_URL',
-                        default='http://localhost:8080',
+                        default='http://localhost:8080/',
+                        type=lambda s: s+'/' if s and s[-1]!='/' else s,
                         help='The path to the uin service')
     parser.add_argument("--uin-certfile", dest='uin_certfile',
                         env_var='CR_UIN_CERTFILE',
@@ -170,7 +173,8 @@ def main(argv=sys.argv[1:]):
     # arguments to connect to the enrollment service
     parser.add_argument("--enrollment-url", dest='enrollment_url',
                         env_var='CR_ENROLLMENT_URL',
-                        default='http://localhost:8080',
+                        default='http://localhost:8080/',
+                        type=lambda s: s+'/' if s and s[-1]!='/' else s,
                         help='The path to the enrollment service')
     parser.add_argument("--enrollment-certfile", dest='enrollment_certfile',
                         env_var='CR_ENROLLMENT_CERTFILE',

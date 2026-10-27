@@ -106,7 +106,8 @@ def main(argv=sys.argv[1:]):
     # arguments to connect to the notification service
     parser.add_argument("--notification-url", dest='notification_url',
                         env_var='ENROLLMENT_NOTIFICATION_URL',
-                        default='http://localhost:8080',
+                        default='http://localhost:8080/',
+                        type=lambda s: s+'/' if s and s[-1]!='/' else s,
                         help='The path to the notification service')
     parser.add_argument("--notification-certfile", dest='notification_certfile',
                         env_var='ENROLLMENT_NOTIFICATION_CERTFILE',

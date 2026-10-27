@@ -40,7 +40,7 @@ class TestNominal(TestEnrollment):
     def test_ok(self):
         data = dict(
             # enrollmentId= "0001",
-            # status= "IN_PROGRESS",
+            status= "IN_PROGRESS",
             enrollmentType= "FULL",
             enrollmentFlags=dict(timeout=3600),
             requestData= dict(requestType= "DEMO"),
