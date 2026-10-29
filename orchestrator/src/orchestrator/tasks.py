@@ -133,7 +133,8 @@ def createIdentity_PR(self,ctx, url,enrollment_id, transaction_id):
             biometricData=[],
             documentData=[]
         )
-
+        # Insert only the portrait in PR (enroll4birth demo)
+        identity['biometricData'] = filter(lambda x: x['biometricType']=='FACE', ctx.get('biometricData', []))
         data = io.BytesIO(json.dumps(identity).encode('latin-1'))
         identity_id = ctx.get('identityId', None)
         if identity_id is None:
@@ -270,7 +271,7 @@ def workflow_enroll4birth_child(uin, transaction_id, enrollment_id):
         # (18) Send to CMS
         createCredentialRequest_CMS.s(get_url("CMS_URL",'http://cms:8080/'), enrollment_id, transaction_id),
         # (19) delete enrollment
-        deleteEnrollment_ENR.s(get_url("ENROLLMENT_URL",'http://enrollment:8080/'), enrollment_id, transaction_id),
+        # deleteEnrollment_ENR.s(get_url("ENROLLMENT_URL",'http://enrollment:8080/'), enrollment_id, transaction_id),
         done.s(transaction_id),
     )()
 
