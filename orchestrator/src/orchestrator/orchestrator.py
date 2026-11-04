@@ -197,6 +197,11 @@ async def enrollment_event(request):
             logging.info("Parent enrollment notification received from [%s]", event['source'])
             transaction_id = event.get('transactionId', 'parentEnrollment')
             t = orchestrator.tasks.workflow_enroll4birth_parent(transaction_id, event['enrollmentId'])
+        elif m['subject']=='deleteEnrollment':
+            event = json.loads(m['message'])
+            logging.info("Delete enrollment notification received from [%s]", event['source'])
+            transaction_id = event.get('transactionId', 'deleteEnrollment')
+            t = orchestrator.tasks.workflow_enroll4birth_delete(transaction_id, event['uin'])
         else:
             logging.info("Ignoring event [%s]", m['subject'])
     return web.Response(status=200, body='')

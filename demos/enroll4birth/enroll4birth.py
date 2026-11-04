@@ -7,6 +7,8 @@ import base64
 
 import requests
 
+# XXX setup proxy for readAttributes
+
 args = None
 
 def get_ssl_context():

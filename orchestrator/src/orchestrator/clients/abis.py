@@ -28,6 +28,22 @@ async def createEncounter(url, transaction_id, person_id, encounter_id, encounte
             raise Exception("Could not create encounter:\n" + error['message'])
 
 #______________________________________________________________________________
+async def deleteAll(url, transaction_id, person_id, target=None):
+    async with aiohttp.ClientSession() as session:
+        async with session.delete(url+'/'+person_id,
+                                params={'transactionId': transaction_id}) as resp:
+            if resp.status == 204:
+                return True
+            if resp.status in [400, 404]:
+                logger.error("ABIS::deleteAll error %d with url %s", resp.status, resp.real_url)
+                return False
+            try:
+                error = await resp.json()
+            except:
+                error = {'message': ''}
+            raise Exception("Could not delete all encounters:\n" + error['message'])
+
+#______________________________________________________________________________
 def main(argv):
     parser = argparse.ArgumentParser(description="ABIS client")
 

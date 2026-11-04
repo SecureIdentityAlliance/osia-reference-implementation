@@ -72,11 +72,20 @@ class TestNominal(TestAbis):
             # assert list(res.keys()) == ['identityId']
             assert 'Server' not in r.headers
 
-        # read the encounters
+        # read all the encounters
         with requests.get(self.url+'v1/persons/P0001/encounters', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
             assert 200 == r.status_code
             res = r.json()
             assert len(res) == 1
+
+        # delete all encounters
+        with requests.delete(self.url+'v1/persons/P0001', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 204 == r.status_code
+
+        with requests.get(self.url+'v1/persons/P0001/encounters', params={'transactionId': 'T0001'},**get_ssl_context()) as r:
+            assert 200 == r.status_code
+            res = r.json()
+            assert len(res) == 0
 
     def test_verify_by_id(self):
 

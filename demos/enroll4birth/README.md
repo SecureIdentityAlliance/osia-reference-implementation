@@ -191,3 +191,19 @@ No biographic data are included in the encounter.
         ]
     }
 ```
+
+Data Deletion
+-------------
+
+It is possible to publish a ``deleteEnrollment`` event on the
+topic ``enrollment`` to clean all databases for a given UIN.
+
+This event must contain:
+
+```json
+    {
+        "source": "script",
+        "uin": "<UIN of record to delete>",
+        "transactionId": "<transaction ID>"
+    }
+```

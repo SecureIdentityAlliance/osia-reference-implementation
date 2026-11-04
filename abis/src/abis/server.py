@@ -270,6 +270,22 @@ async def readAllEncounters(request):
         return web.json_response(ret, status=200)
 
 # _____________________________________________________________________________
+@routes.delete('/v1/persons/{personId}')
+@LM.timer("deleteAll", ok_status, "error")
+async def deleteAll(request):
+    transaction_id = request.query['transactionId']
+    person_id = request.match_info['personId']
+
+    logging.info("[%s] - deleteAll for personId [%s]", transaction_id, person_id)
+
+    async with AsyncSession(abis.aengine) as session, session.begin():
+        all = await abis.model.Encounter.afind_by_pid(session, person_id)
+        for e in all:
+            await session.delete(e)
+
+    return web.Response(status=204)
+
+# _____________________________________________________________________________
 @routes.post('/v1/verify/{galleryId}/{personId}')
 @LM.timer("verifyFromId", ok_status, "error")
 async def verifyFromId(request):

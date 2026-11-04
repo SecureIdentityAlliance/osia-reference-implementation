@@ -62,8 +62,15 @@ async def deletePerson(url, transaction_id, person_id, target=None):
                                 params={'transactionId': transaction_id}) as resp:
             if resp.status == 204:
                 logger.info("delete successful: %s", person_id)
-                return
-            raise Exception("Could not delete person")
+                return True
+            if resp.status in [400, 404]:
+                logger.error("PR::deletePerson error %d with url %s", resp.status, resp.real_url)
+                return False
+            try:
+                error = await resp.json()
+            except:
+                error = {'message': ''}
+            raise Exception("Could not delete person:\n" + error['message'])
 
 #______________________________________________________________________________
 async def createIdentity(url, transaction_id, person_id, identity, target=None):

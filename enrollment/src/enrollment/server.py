@@ -347,6 +347,7 @@ async def findEnrollments(request):
     import enrollment.serialize
     async with AsyncSession(enrollment.aengine) as session, session.begin():
         sel = enrollment.model._build_predicate(data, limit, offset)
+        logging.debug("%s", str(sel))
         if type(sel) is dict:
             logging.error(sel)
             return web.json_response(sel, status=400)

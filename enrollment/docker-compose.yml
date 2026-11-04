@@ -9,4 +9,7 @@ services:
       - ENROLLMENT_PORT=8080
       - ENROLLMENT_LOGLEVEL=DEBUG
 # [---CUSTO---]
+      - ENROLLMENT_CUSTO_FILENAME=/tests/custo.yaml
+    volumes:
+      - ./tests:/tests
 # [---CUSTO---]

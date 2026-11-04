@@ -27,6 +27,29 @@ async def readEnrollment(url, transaction_id, enrollment_id, target=None):
             raise Exception("Could not read enrollment:\n" + error['message'])
 
 #______________________________________________________________________________
+async def findEnrollment_by_UIN(url, transaction_id, UIN, target=None):
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url,
+                                headers={'content-type': 'application/json'},
+                                json=[dict(
+                                    attributeName="UIN",
+                                    operator="=",
+                                    value=UIN
+                                )],
+                                params={'transactionId': transaction_id}) as resp:
+            if resp.status == 200:
+                res = await resp.json()
+                return res
+            if resp.status in [400, 404]:
+                logger.error("Enrollment::findEnrollment error %d with url %s", resp.status, resp.real_url)
+                return False
+            try:
+                error = await resp.json()
+            except:
+                error = {'message': ''}
+            raise Exception("Could not find enrollment:\n" + error['message'])
+
+#______________________________________________________________________________
 async def deleteEnrollment(url, transaction_id, enrollment_id, target=None):
     async with aiohttp.ClientSession() as session:
         async with session.delete(url+'/'+enrollment_id,

@@ -84,7 +84,28 @@ def readEnrollment_ENR(self,ctx, url, enrollment_id, transaction_id):
 
 #______________________________________________________________________________
 @app.task(bind=True)
+def findEnrollment_ENR(self,ctx, url, enrollment_id, transaction_id):
+    logging.info("==> [%s] finding enrollment from Enrollment Server for UIN [%s]", transaction_id, ctx['UIN'])
+    res = None
+    try:
+        # Make the query
+        res = asyncio.run( enrollment.findEnrollment_by_UIN(url+'v1/enrollments', transaction_id, ctx['UIN']) )
+    except Exception as exc:
+        logging.exception("error")
+        self.retry(countdown=60.0,max_retries=10,exc=exc)
+    if not res:
+        logging.info("[%s] Could not find enrollment", transaction_id)
+        return ctx
+    ctx['enrollmentId'] = res[0]['enrollmentId']
+    return ctx
+
+#______________________________________________________________________________
+@app.task(bind=True)
 def deleteEnrollment_ENR(self,ctx, url, enrollment_id, transaction_id):
+    if 'enrollmentId' in ctx:
+        enrollment_id = ctx['enrollmentId']
+    if not enrollment_id:
+        return ctx
     logging.info("==> [%s] deleting enrollment from Enrollment Server for enrollmentId %s", transaction_id, enrollment_id)
     res = None
     try:
@@ -120,6 +141,22 @@ def createPerson_PR(self,ctx, url,enrollment_id, transaction_id):
 
 #______________________________________________________________________________
 @app.task(bind=True)
+def deletePerson_PR(self,ctx, url, enrollment_id, transaction_id):
+    uin = ctx['UIN']
+    logging.info("==> [%s] deleting person from Population Registry for UIN [%s]", transaction_id, uin)
+    res = None
+    try:
+        res = asyncio.run( pr.deletePerson(url+'v1/persons', transaction_id, uin) )
+    except Exception as exc:
+        logging.exception("error")
+        self.retry(countdown=60.0,max_retries=10,exc=exc)
+    if not res:
+        logging.error("[%s] Could not delete person", transaction_id)
+        raise Exception("Could not delete person")
+    return ctx
+
+#______________________________________________________________________________
+@app.task(bind=True)
 def createIdentity_PR(self,ctx, url,enrollment_id, transaction_id):
     logging.info("==> [%s] Creating identity in PR for enrollment %s", transaction_id, enrollment_id)
     try:
@@ -134,7 +171,7 @@ def createIdentity_PR(self,ctx, url,enrollment_id, transaction_id):
             documentData=[]
         )
         # Insert only the portrait in PR (enroll4birth demo)
-        identity['biometricData'] = filter(lambda x: x['biometricType']=='FACE', ctx.get('biometricData', []))
+        identity['biometricData'] = list(filter(lambda x: x['biometricType']=='FACE', ctx.get('biometricData', [])))
         data = io.BytesIO(json.dumps(identity).encode('latin-1'))
         identity_id = ctx.get('identityId', None)
         if identity_id is None:
@@ -182,6 +219,22 @@ def createEncounter_ABIS(self,ctx, url,enrollment_id, transaction_id):
         asyncio.run( abis.createEncounter(url+'v1/persons', transaction_id, ctx['UIN'], encounter_id, data) )
     except Exception as exc:
         self.retry(countdown=60.0,max_retries=10,exc=exc)
+    return ctx
+
+#______________________________________________________________________________
+@app.task(bind=True)
+def deleteAll_ABIS(self,ctx, url, enrollment_id, transaction_id):
+    uin = ctx['UIN']
+    logging.info("==> [%s] deleting all encounters from ABIS for UIN [%s]", transaction_id, uin)
+    res = None
+    try:
+        res = asyncio.run( abis.deleteAll(url+'v1/persons', transaction_id, uin) )
+    except Exception as exc:
+        logging.exception("error")
+        self.retry(countdown=60.0,max_retries=10,exc=exc)
+    if not res:
+        logging.error("[%s] Could not delete person", transaction_id)
+        raise Exception("Could not delete person")
     return ctx
 
 #______________________________________________________________________________
@@ -245,6 +298,21 @@ def workflow_enroll4birth_parent(transaction_id, enrollment_id):
         defineReference_PR.s(get_url("PR_URL",'http://pr:8080/'), enrollment_id, transaction_id),
         createEncounter_ABIS.s(get_url("ABIS_URL",'http://abis:8080/'), enrollment_id, transaction_id),
         # deleteEnrollment_ENR.s(get_url("ENROLLMENT_URL",'http://enrollment:8080/'), enrollment_id, transaction_id),
+        done.s(transaction_id),
+    )()
+
+#______________________________________________________________________________
+def workflow_enroll4birth_delete(transaction_id, uin):
+    logging.info('[%s] - Starting workflow "enroll4birth_delete" for UIN [%s]', transaction_id, uin)
+    ctx = {}
+    ctx['UIN'] = uin
+    enrollment_id = None
+    # See https://docs.celeryproject.org/en/stable/userguide/canvas.html#the-primitives
+    chain(
+        findEnrollment_ENR.s(ctx, get_url("ENROLLMENT_URL",'http://enrollment:8080/'), enrollment_id, transaction_id),
+        deleteEnrollment_ENR.s(get_url("ENROLLMENT_URL",'http://enrollment:8080/'), enrollment_id, transaction_id),
+        deletePerson_PR.s(get_url("PR_URL",'http://pr:8080/'), enrollment_id, transaction_id),
+        deleteAll_ABIS.s(get_url("ABIS_URL",'http://abis:8080/'), enrollment_id, transaction_id),
         done.s(transaction_id),
     )()
 

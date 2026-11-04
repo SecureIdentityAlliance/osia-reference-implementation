@@ -86,6 +86,10 @@ Inject test data with::
     # Then simulate an enrollment
     python enroll4birth.py --fn First --ln Last --dob 2026-09-30 --gender F --portrait data/aiony.jpg --parent-uin JF --parent-portrait data/jimmy.jpg --id 001
 
+To delete a record::
+
+    python delete_data.py --uin AH
+
 Logs can be checked with::
 
     docker logs -f enroll4birth-cr-1 | humanlog
