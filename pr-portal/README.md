@@ -1,3 +1,0 @@
-
-# Population Registry Portal
-

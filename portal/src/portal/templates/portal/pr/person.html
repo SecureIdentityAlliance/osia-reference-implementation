@@ -1,6 +1,6 @@
-{% extends "pr/portal/base.html" %}
+{% extends "portal/base.html" %}
 {% block content %}
-{% load pr_portal %}
+{% load portal %}
 <h3 class="title-deco-center">Details for person {{personId}}</h3>
 
 <table class="table table-osia">
@@ -11,6 +11,7 @@
             <th scope="col" class="col-3">Last Name</th>
             <th scope="col" class="col-1">Gender</th>
             <th scope="col" class="col-2">Date of Birth</th>
+            <th scope="col" class="col-2">Portrait</th>
         </tr>
     </thead>
     <tbody>
@@ -21,14 +22,11 @@
             <td>{{identity.biographicData.lastName}}</td>
             <td>{{identity.biographicData.gender}}</td>
             <td>{{identity.biographicData.dateOfBirth|date}} ({{identity.biographicData.dateOfBirth|age}})</td>
+            <td><a href="{% url 'pr:portrait' personId identity.identityId %}"><img height="32px" src="{% url 'pr:portrait-image' personId identity.identityId %}"></img></a></td>
         </tr>
       {% endfor %}
     </tbody>
 </table>
 
-{% if 'ABIS_URL'|in_env == '1' %}
-<a href="{% url 'pr:portrait' personId%}">Check the portrait</a>
-<br/>
-{% endif %}
 <a href="{% url 'pr:index' %}" class="btn btn-primary" role="button">Go Back ...</a>
 {% endblock %}

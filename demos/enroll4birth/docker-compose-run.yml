@@ -147,8 +147,8 @@ services:
   #
   # Non-OSIA components, for testing and demonstration
   #
-  pr-portal:
-    image: osia/pr-portal
+  portal:
+    image: osia/portal
     environment:
       - PR_URL=http://pr:8080
       - UIN_URL=http://uin:8080

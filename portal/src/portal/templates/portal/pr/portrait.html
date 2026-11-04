@@ -1,0 +1,11 @@
+{% extends "portal/base.html" %}
+{% block content %}
+{% load portal %}
+<h3 class="title-deco-center">Portrait of person {{personId}}, identity {{identityId}}</h3>
+
+<img src="{% url 'pr:portrait-image' personId identityId %}"></img>
+
+<br/>
+
+<a href="{% url 'pr:person' personId %}" class="btn btn-primary" role="button">Go Back ...</a>
+{% endblock %}

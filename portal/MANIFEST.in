@@ -1,0 +1,2 @@
+recursive-include src/portal/static *
+recursive-include src/portal/templates *

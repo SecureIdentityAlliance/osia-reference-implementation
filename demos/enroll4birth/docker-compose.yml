@@ -191,14 +191,14 @@ services:
   #
   # Non-OSIA components, for testing, monitoring and demonstration
   #
-  pr-portal:
+  portal:
     build:
-      context: ../../pr-portal
+      context: ../../portal
       args:
         D4R6Y: ${D4R6Y}
         PIP_CONF: ${PIP_CONF}
         APK_ARGS: ${APK_ARGS}
-    image: osia/pr-portal
+    image: osia/portal
     environment:
       - PR_URL=http://pr:8080/
       - UIN_URL=http://uin:8080/

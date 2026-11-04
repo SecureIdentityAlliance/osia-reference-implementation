@@ -1,4 +1,4 @@
-{% extends "pr/portal/base.html" %}
+{% extends "portal/base.html" %}
 {% block content %}
 <h3 class="title-deco-center">Records in the Population Registry</h3>
 
@@ -6,7 +6,8 @@
     <thead>
         <tr>
             <th scope="col" class="col-1">UIN</th>
-            <th scope="col" class="col-11">Full name</th>
+            <th scope="col" class="col-9">Full name</th>
+            <th scope="col" class="col-2">Portrait</th>
         </tr>
     </thead>
     <tbody>
@@ -14,6 +15,7 @@
         <tr>
             <td>{{person.personId}}</td>
             <td><a href="{% url 'pr:person' person.personId %}">{{person.firstName}} {{person.lastName}}</a></td>
+            <td><img height="32px" src="{% url 'pr:portrait-image' person.personId 'reference' %}"></img></td>
         </tr>
       {% endfor %}
     </tbody>

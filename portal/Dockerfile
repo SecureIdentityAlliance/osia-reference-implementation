@@ -24,12 +24,12 @@ COPY --chown=portal:portal src/ src/
 RUN .py/bin/pip install --no-cache-dir -e .
 
 USER portal:portal
-RUN mkdir prsite \
-    && .py/bin/django-admin startproject prsite prsite \
-    && echo -e "\nINSTALLED_APPS += ['bootstrap5','pr.portal']" >> prsite/prsite/settings.py \
-    && echo -e "\nALLOWED_HOSTS=['*']" >> prsite/prsite/settings.py \
-    && echo -e "\nfrom django.urls import include\nurlpatterns+=[path('pr/', include('pr.portal.urls'))]" >> prsite/prsite/urls.py \
-    && .py/bin/python prsite/manage.py migrate
+RUN mkdir osiasite \
+    && .py/bin/django-admin startproject osiasite osiasite \
+    && echo -e "\nINSTALLED_APPS += ['bootstrap5','portal']" >> osiasite/osiasite/settings.py \
+    && echo -e "\nALLOWED_HOSTS=['*']" >> osiasite/osiasite/settings.py \
+    && echo -e "\nfrom django.urls import include\nurlpatterns+=[path('osia/', include('portal.urls'))]" >> osiasite/osiasite/urls.py \
+    && .py/bin/python osiasite/manage.py migrate
 
-ENTRYPOINT [".py/bin/python", "prsite/manage.py"]
+ENTRYPOINT [".py/bin/python", "osiasite/manage.py"]
 CMD ["runserver", "0.0.0.0:8080"]

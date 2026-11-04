@@ -94,14 +94,14 @@ Logs can be checked with::
 
     docker logs -f enroll4birth-cr-1 | humanlog
     
-Check the Population Registry content at http://localhost:9100/pr
+Check the Population Registry content at http://localhost:9100/osia/pr
 
 Execution on Another Host
 -------------------------
 
 After building the Docker images, they can be exported with::
 
-    docker save -o osia-refimp-`git rev-parse --short HEAD`.tar osia/enrollment osia/cr osia/pr osia/uin osia/abis osia/cms osia/notification osia/orchestrator osia/pr-portal
+    docker save -o osia-refimp-`git rev-parse --short HEAD`.tar osia/enrollment osia/cr osia/pr osia/uin osia/abis osia/cms osia/notification osia/orchestrator osia/portal
     gzip osia-refimp-`git rev-parse --short HEAD`.tar
 
 On the target execution environment::
