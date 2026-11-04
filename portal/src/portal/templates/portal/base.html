@@ -2,12 +2,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>{% block title %}Population Registry Portal{% endblock %}</title>
+    <title>{% block title %}OSIA Portal{% endblock %}</title>
     {% load bootstrap5 %}
     {% bootstrap_css %}
     {% bootstrap_javascript %}
     <link rel="stylesheet" href="{% static 'portal/style.css' %}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% block extrastyle %}{% endblock %}
+    {% block extrahead %}{% endblock %}
 </head>
 
 <body>

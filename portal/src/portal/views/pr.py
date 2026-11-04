@@ -7,7 +7,6 @@ import base64
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
-from django.template.defaulttags import register
 
 import requests
 
@@ -118,11 +117,3 @@ def add_dummy(request):
             raise Exception("Failed to contact Population Registry (HTTP code: %s)" % req.status_code)
 
     return HttpResponseRedirect(reverse("pr:index"))
-
-
-@register.filter(is_safe=True)
-def in_env(value):
-    if value in os.environ:
-        return '1'
-    return '0'
-

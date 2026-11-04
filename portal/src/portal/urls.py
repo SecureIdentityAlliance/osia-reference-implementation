@@ -1,6 +1,7 @@
 from django.urls import path, include
 
 import portal.views.pr
+import portal.views.osia
 
 pr_patterns = ([
     path("", portal.views.pr.index, name="index"),
@@ -12,7 +13,13 @@ pr_patterns = ([
 "pr",
 )
 
+osia_patterns = ([
+    path("", portal.views.osia.index, name="index"),
+],
+"osia",
+)
 
 urlpatterns = [
-    path("pr/", include(pr_patterns, namespace="pr"))
+    path("osia/", include(osia_patterns, namespace="osia")),
+    path("pr/", include(pr_patterns, namespace="pr")),
 ]

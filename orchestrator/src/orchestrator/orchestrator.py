@@ -205,3 +205,10 @@ async def enrollment_event(request):
         else:
             logging.info("Ignoring event [%s]", m['subject'])
     return web.Response(status=200, body='')
+
+# XXX is_healthy using control.ping: https://docs.celeryq.dev/en/stable/reference/celery.app.control.html#celery.app.control.Control.ping
+# app.control.inspect().ping()
+# XXX use control.inspect: https://docs.celeryq.dev/en/stable/reference/celery.app.control.html#celery.app.control.Inspect
+# report()?
+# app.control.inspect().stats()['host']['total']: https://docs.celeryq.dev/en/stable/reference/celery.app.control.html#celery.app.control.Inspect.stats
+

@@ -1,0 +1,31 @@
+{% extends "portal/base.html" %}
+
+{% block extrahead %}
+<meta http-equiv="refresh" content="5">
+{% endblock %}
+
+{% block content %}
+<h3 class="title-deco-center">OSIA Dashboard</h3>
+
+<div class="row">
+    <div class="col-md-3">
+
+        <div class="card">
+        <div class="card-header">
+            Enrollment Server
+            {% if is_healthy %}
+            <span class="badge bg-success">OK</span>
+            {% else %}
+            <span class="badge bg-danger">KO</span>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Number of Enrollments</h5>
+            <p class="card-text"><b>{{ count }}</b></p>
+        </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
