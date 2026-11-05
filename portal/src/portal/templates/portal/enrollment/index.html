@@ -1,0 +1,25 @@
+{% extends "portal/base.html" %}
+
+{% block extrahead %}
+<meta http-equiv="refresh" content="5">
+{% endblock %}
+
+{% block body %}
+<div class="row row-cols-6 g-4">
+{% for enr in enrollments %}
+  <div class="col">
+    <div class="card h-100">
+        <img class="card-img-top" src="{% url 'enrollment:portrait-image' enr.enrollmentId %}"></img>
+        <div class="card-body">
+            <p class="card-text"><b>{{enr.biographicData.firstName}}</b></p>
+            <p class="card-text"><b>{{enr.biographicData.lastName}}</b></p>
+        </div>
+        <div class="card-footer">
+            <small class="fg-2">{{enr.contextualData.enrollmentDate|date:"H:i:s"}}</small>
+        </div>
+    </div>
+  </div>
+{% endfor %}
+</div>
+
+{% endblock %}
