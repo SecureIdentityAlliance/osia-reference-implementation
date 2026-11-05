@@ -8,12 +8,12 @@
 <h3 class="title-deco-center">OSIA Dashboard</h3>
 
 <div class="row">
-    <div class="col-md-3">
 
+    <div class="col-md-3">
         <div class="card">
         <div class="card-header">
             Enrollment Server
-            {% if is_healthy %}
+            {% if enrollment.is_healthy %}
             <span class="badge bg-success">OK</span>
             {% else %}
             <span class="badge bg-danger">KO</span>
@@ -21,11 +21,66 @@
         </div>
         <div class="card-body">
             <h5 class="card-title">Number of Enrollments</h5>
-            <p class="card-text"><b>{{ count }}</b></p>
+            <p class="card-text"><b>{{ enrollment.count }}</b></p>
         </div>
         </div>
-
     </div>
+
+    <div class="col-md-3">
+        <div class="card">
+        <div class="card-header">
+            UIN Generator
+            {% if uin.is_healthy %}
+            <span class="badge bg-success">OK</span>
+            {% else %}
+            <span class="badge bg-danger">KO</span>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Number of UIN Generated</h5>
+            <p class="card-text"><b>{{ uin.count }}</b></p>
+        </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card">
+        <div class="card-header">
+            Notification
+            {% if notification.is_healthy %}
+            <span class="badge bg-success">OK</span>
+            {% else %}
+            <span class="badge bg-danger">KO</span>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Number of events published</h5>
+            <p class="card-text"><b>{{ notification.count }}</b></p>
+        </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card">
+        <div class="card-header">
+            Orchestrator
+            {% if orchestrator.is_healthy %}
+            <span class="badge bg-success">OK</span>
+            {% else %}
+            <span class="badge bg-danger">KO</span>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Persons Created</h5>
+            <p class="card-text"><b>{{ orchestrator.stats.createPerson_PR|default:0 }}</b></p>
+            <h5 class="card-title">Encounters Created</h5>
+            <p class="card-text"><b>{{ orchestrator.stats.createEncounter_ABIS|default:0 }}</b></p>
+            <h5 class="card-title">Credentials Created</h5>
+            <p class="card-text"><b>{{ orchestrator.stats.createCredentialRequest_CMS|default:0 }}</b></p>
+        </div>
+        </div>
+    </div>
+
 </div>
 
 {% endblock %}

@@ -201,13 +201,17 @@ services:
     image: osia/portal
     environment:
       - ENROLLMENT_URL=http://enrollment:8080/
-      - PR_URL=http://pr:8080/
+      - ORCHESTRATOR_URL=http://orchestrator:8080/
+      - NOTIFICATION_URL=http://notification:8080/
       - UIN_URL=http://uin:8080/
+      - PR_URL=http://pr:8080/
       - ABIS_URL=http://abis:8080/
     ports:
       - "9100:8080"
     links:
-      - pr
+      - enrollment
       - uin
+      - orchestrator
+      - pr
       - abis
 

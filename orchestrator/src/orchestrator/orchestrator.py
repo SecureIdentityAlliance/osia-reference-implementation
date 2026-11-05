@@ -14,7 +14,12 @@ import livemetrics.publishers.aiohttp
 
 routes = web.RouteTableDef()
 
+# is_healthy using control.ping: https://docs.celeryq.dev/en/stable/reference/celery.app.control.html#celery.app.control.Control.ping
 def is_healthy():
+    # ping: {'celery@ca172565cf52': {'ok': 'pong'}}
+    for k, v in orchestrator.tasks.app.control.inspect().ping().items():
+        if 'ok' not in v:
+            return False
     return True
 
 LM = livemetrics.LiveMetrics(json.dumps(dict(version=orchestrator.__version__)), "orchestrator", is_healthy)
@@ -206,9 +211,16 @@ async def enrollment_event(request):
             logging.info("Ignoring event [%s]", m['subject'])
     return web.Response(status=200, body='')
 
-# XXX is_healthy using control.ping: https://docs.celeryq.dev/en/stable/reference/celery.app.control.html#celery.app.control.Control.ping
-# app.control.inspect().ping()
-# XXX use control.inspect: https://docs.celeryq.dev/en/stable/reference/celery.app.control.html#celery.app.control.Inspect
-# report()?
-# app.control.inspect().stats()['host']['total']: https://docs.celeryq.dev/en/stable/reference/celery.app.control.html#celery.app.control.Inspect.stats
+# _____________________________________________________________________________
+@routes.get('/stats/total')
+async def stats(request):
+    logging.debug('stats/total')
+    # See https://docs.celeryq.dev/en/stable/reference/celery.app.control.html#celery.app.control.Inspect.stats
+    # stats: stats: {'celery@e74ee63c3034': {'total': {'orchestrator.tasks.findEnrollment_ENR': 1, 'orchestrator.tasks.deleteEnrollment_ENR': 1, 'orchestrator.tasks.deletePerson_PR': 1, 'orchestrator.tasks.deleteAll_ABIS': 1, 'orchestrator.tasks.done': 1}, 'pid': 7, 'clock': '67', 'uptime': 65, 'pool': {'implementation': 'celery.concurrency.prefork:TaskPool', 'max-concurrency': 12, 'processes': [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21], 'max-tasks-per-child': 'N/A', 'put-guarded-by-semaphore': False, 'timeouts': [0, 0], 'writes': {'total': 5, 'avg': '0.50', 'all': '0.60, 0.40', 'raw': '3, 2', 'strategy': 'fair', 'inqueues': {'total': 12, 'active': 0}}}, 'broker': {'hostname': 'redis', 'userid': None, 'virtual_host': '1', 'port': 6379, 'insist': False, 'ssl': False, 'transport': 'redis', 'connect_timeout': 4, 'transport_options': {}, 'login_method': None, 'uri_prefix': None, 'heartbeat': 120.0, 'failover_strategy': 'round-robin', 'alternates': [], 'credential_provider': None}, 'prefetch_count': 48, 'rusage': {'utime': 0.8181569999999999, 'stime': 0.652096, 'maxrss': 62988, 'ixrss': 0, 'idrss': 0, 'isrss': 0, 'minflt': 115966, 'majflt': 0, 'nswap': 0, 'inblock': 0, 'oublock': 24, 'msgsnd': 0, 'msgrcv': 0, 'nsignals': 0, 'nvcsw': 244, 'nivcsw': 41}}}
+    for k,v in orchestrator.tasks.app.control.inspect().stats().items():
+        stats = {}
+        for k2, v2 in v['total'].items():
+            stats[k2.split('.')[-1]] = v2
+        return web.json_response(data=stats, status=200)
+    return web.Response(status=500, body='')
 

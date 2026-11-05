@@ -10,11 +10,17 @@ def get_url(name, default):
 def enr_url():
     return get_url('ENROLLMENT_URL', 'http://enrollment:8080/')
 
-def pr_url():
-    return get_url('PR_URL', 'http://pr:8080/')
-
 def uin_url():
     return get_url('UIN_URL', 'http://uin:8080/')
+
+def orch_url():
+    return get_url('ORCHESTRATOR_URL', 'http://orchestrator:8080/')
+
+def notif_url():
+    return get_url('NOTIFICATION_URL', 'http://notification:8080/')
+
+def pr_url():
+    return get_url('PR_URL', 'http://pr:8080/')
 
 def abis_url():
     return get_url('ABIS_URL', 'http://abis:8080/')
