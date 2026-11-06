@@ -1,0 +1,132 @@
+services:
+  #
+  # OSIA Services
+  #
+  enrollment:
+    build:
+      context: ../../enrollment
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: osia/enrollment
+    environment:
+      ENROLLMENT_CUSTO_FILENAME: "/custo/enrollment.yaml"
+      ENROLLMENT_NOTIFICATION_URL: "http://notification:8080/"
+      ENROLLMENT_DATABASE_URL: "postgresql+psycopg2://enrollment:EnrollmentSecret@postgres/osiadb"
+    volumes:
+      - ${PWD}/custo:/custo
+    ports:
+      - "8000:8080"
+    links:
+      - notification
+      - postgres
+    depends_on:
+      - notification
+      - postgres
+    restart: on-failure
+  uin:
+    build:
+      context: ../../uin
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: osia/uin
+    ports:
+      - "8020:8080"
+  notification:
+    build:
+      context: ../../notification
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: osia/notification
+    ports:
+      - "8040:8080"
+    environment:
+      REDIS_URL: "redis://redis/0"
+      ROOT_URL: "http://notification:8080/"
+    links:
+      - redis
+    depends_on:
+      - redis
+
+  #
+  # Middleware
+  #
+  orchestrator:
+    build:
+      context: ../../orchestrator
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: osia/orchestrator
+    ports:
+      - "8100:8080"
+    env_file: day1.env
+    environment:
+      NOTIFICATION_URL: "http://notification:8080/"
+      MY_URL: "http://orchestrator:8080/"
+      REDIS_URL: "redis://redis/1"
+      ENROLLMENT_URL: "http://enrollment:8080/"
+    links:
+      - notification
+      - redis
+      - enrollment
+    depends_on:
+      - notification
+      - redis
+  #
+  # Infra
+  #
+  haproxy:
+    image: ${D4R6Y}haproxy:3.4.7-alpine3.24
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+    env_file: day1.env
+    ports:
+      - "80:8080"
+
+  #
+  # Databases
+  #
+  redis:
+    image: ${D4R6Y}redis:7.0.9-alpine
+  postgres:
+    image: ${D4R6Y}postgres:18.3-alpine3.23
+    environment:
+      - POSTGRES_DB=osiadb
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=SuperSecret
+      - TZ=Europe/Paris
+    volumes:
+      - ../pg_setup.sql:/docker-entrypoint-initdb.d/pg_setup.sql
+
+  #
+  # Non-OSIA components, for testing, monitoring and demonstration
+  #
+  portal:
+    build:
+      context: ../../portal
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: osia/portal
+    environment:
+      - ENROLLMENT_URL=http://enrollment:8080/
+      - ORCHESTRATOR_URL=http://orchestrator:8080/
+      - NOTIFICATION_URL=http://notification:8080/
+      - UIN_URL=http://uin:8080/
+    env_file: day1.env
+    ports:
+      - "9100:8080"
+    links:
+      - enrollment
+      - uin
+      - orchestrator
+      - notification
+

@@ -174,7 +174,7 @@ services:
     volumes:
       - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
     environment:
-      PR_URL: "pr:8080"
+      PR_HOST: "pr:8080"
     ports:
       - "80:8080"
 
