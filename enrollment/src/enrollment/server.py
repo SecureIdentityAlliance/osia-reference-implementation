@@ -297,6 +297,7 @@ async def createEnrollment(request):
     transaction_id = request.query['transactionId']
     finalize = json.loads(request.query.get('finalize','false'))
     enrollment_id = request.match_info['enrollment_id']
+    enrollment_type = 'CHILD'   # default value
     data = await request.json()
     logging.info("[%s] - createEnrollment for enrollmentId [%s]", transaction_id, enrollment_id)
 
@@ -322,10 +323,11 @@ async def createEnrollment(request):
         if finalize:
             np.status = 'FINALIZED'
         session.add(np)
+        enrollment_type = np.enrollmentType
 
     # after the commit
     if finalize:
-        await finalize_CB(enrollment_id, transaction_id, np.enrollmentType)
+        await finalize_CB(enrollment_id, transaction_id, enrollment_type)
     return web.json_response(data=enrollment_id, status=204)
 
 # _____________________________________________________________________________
@@ -381,6 +383,7 @@ async def updateEnrollment(request):
     transaction_id = request.query['transactionId']
     finalize = json.loads(request.query.get('finalize','false'))
     enrollment_id = request.match_info['enrollment_id']
+    enrollment_type = 'CHILD'   # default value
 
     logging.info("[%s] - updateEnrollment for enrollmentId [%s]", transaction_id, enrollment_id)
 
@@ -406,11 +409,12 @@ async def updateEnrollment(request):
         enrollment_schema = enrollment.serialize.EnrollmentSchema()
         np = enrollment_schema.load(data, session=session)
         np.enrollmentId = enrollment_id
+        enrollment_type = np.enrollmentType
         session.add(np)
 
-    # Successful
+    # After the commit
     if finalize:
-        await finalize_CB(enrollment_id, transaction_id, np.enrollmentType)
+        await finalize_CB(enrollment_id, transaction_id, enrollment_type)
     return web.json_response(status=204)
 
 #______________________________________________________________________________
@@ -420,6 +424,7 @@ async def partialUpdateEnrollment(request):
     transaction_id = request.query['transactionId']
     finalize = json.loads(request.query.get('finalize','false'))
     enrollment_id = request.match_info['enrollment_id']
+    enrollment_type = 'CHILD'   # default value
 
     logging.info("[%s] - partialUpdateEnrollment for enrollmentId [%s]", transaction_id, enrollment_id)
 
@@ -444,11 +449,12 @@ async def partialUpdateEnrollment(request):
         enrollment_schema = enrollment.serialize.EnrollmentSchema()
         enrollment_schema.load(data, instance=p, session=session, partial=True)
         p.enrollmentId = enrollment_id
+        enrollment_type = p.enrollmentType
         session.add(p)
 
     # Successful
     if finalize:
-        await finalize_CB(enrollment_id, transaction_id, p.enrollmentType)
+        await finalize_CB(enrollment_id, transaction_id, enrollment_type)
     return web.json_response(status=204)
 
 #______________________________________________________________________________
@@ -457,6 +463,7 @@ async def partialUpdateEnrollment(request):
 async def finalizeEnrollment(request):
     transaction_id = request.query['transactionId']
     enrollment_id = request.match_info['enrollment_id']
+    enrollment_type = 'CHILD'   # default value
 
     logging.info("[%s] - finalizeEnrollment for enrollmentId [%s]", transaction_id, enrollment_id)
 
@@ -467,9 +474,10 @@ async def finalizeEnrollment(request):
             return web.json_response(data={'code': 403, 'message': "Already finalized"}, status=403)
 
         p.status = 'FINALIZED'
+        enrollment_type = p.enrollmentType
         session.add(p)
 
-    await finalize_CB(enrollment_id, transaction_id, p.enrollmentType)
+    await finalize_CB(enrollment_id, transaction_id, enrollment_type)
 
     return web.Response(status=204)
 
