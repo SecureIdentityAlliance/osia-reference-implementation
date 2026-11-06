@@ -192,6 +192,14 @@ No biographic data are included in the encounter.
     }
 ```
 
+ID Verification
+---------------
+
+Reference identity, including the portrait, can be retrieved from the
+Population Registry with a simple GET request::
+
+    curl -X GET http://<OSIA server>/v1/persons/<UIN>/reference?transactionId=<ID>
+
 Data Deletion
 -------------
 

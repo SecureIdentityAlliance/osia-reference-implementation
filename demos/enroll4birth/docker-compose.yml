@@ -167,6 +167,18 @@ services:
       - notification
       - redis
   #
+  # Infra
+  #
+  haproxy:
+    image: ${D4R6Y}haproxy:3.4.7-alpine3.24
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+    environment:
+      PR_URL: "pr:8080"
+    ports:
+      - "80:8080"
+
+  #
   # Databases
   #
   redis:

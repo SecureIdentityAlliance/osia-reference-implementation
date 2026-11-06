@@ -12,7 +12,7 @@ logger = logging.getLogger('cr')
 #______________________________________________________________________________
 async def readPersonAttributes(url, transaction_id, person_id):
     params = {
-            'transactionId': transaction_id,
+            # 'transactionId': transaction_id,
             "attributeNames": ["firstName", "lastName", "dateOfBirth", "gender", "nationality"]
         }
     async with aiohttp.ClientSession() as session:
