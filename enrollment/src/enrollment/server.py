@@ -323,9 +323,9 @@ async def createEnrollment(request):
             np.status = 'FINALIZED'
         session.add(np)
 
-        # Successful
-        if np.status == 'FINALIZED':
-            await finalize_CB(enrollment_id, transaction_id, np.enrollmentType)
+    # after the commit
+    if finalize:
+        await finalize_CB(enrollment_id, transaction_id, np.enrollmentType)
     return web.json_response(data=enrollment_id, status=204)
 
 # _____________________________________________________________________________
@@ -408,9 +408,9 @@ async def updateEnrollment(request):
         np.enrollmentId = enrollment_id
         session.add(np)
 
-        # Successful
-        if finalize:
-            await finalize_CB(enrollment_id, transaction_id, np.enrollmentType)
+    # Successful
+    if finalize:
+        await finalize_CB(enrollment_id, transaction_id, np.enrollmentType)
     return web.json_response(status=204)
 
 #______________________________________________________________________________
@@ -446,9 +446,9 @@ async def partialUpdateEnrollment(request):
         p.enrollmentId = enrollment_id
         session.add(p)
 
-        # Successful
-        if finalize:
-            await finalize_CB(enrollment_id, transaction_id, p.enrollmentType)
+    # Successful
+    if finalize:
+        await finalize_CB(enrollment_id, transaction_id, p.enrollmentType)
     return web.json_response(status=204)
 
 #______________________________________________________________________________
@@ -469,7 +469,7 @@ async def finalizeEnrollment(request):
         p.status = 'FINALIZED'
         session.add(p)
 
-        await finalize_CB(enrollment_id, transaction_id, p.enrollmentType)
+    await finalize_CB(enrollment_id, transaction_id, p.enrollmentType)
 
     return web.Response(status=204)
 
