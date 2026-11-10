@@ -6,7 +6,7 @@ BiographicData:
     - lastName
     - dateOfBirth
     - gender
-    - parentUIN
+    # - parentUIN
   properties:
     firstName:
       type: string
@@ -33,4 +33,4 @@ RequestData:
   properties:
     UIN:
       type: string
-  additionalProperties: false
+  additionalProperties: true
