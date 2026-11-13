@@ -36,8 +36,12 @@ services:
     environment:
       PR_CUSTO_FILENAME: "/custo/pr.yaml"
       PR_DATABASE_URL: "postgresql+psycopg2://pr:PRSecret@postgres/osiadb"
+      # PR_SERVER_CERTFILE: "/pr_CA/server.pem"
+      # PR_SERVER_KEYFILE: "/pr_CA/server.key"
+      # PR_SERVER_CA_CERTFILE: "/pr_CA/client.pem"
     volumes:
       - ./custo:/custo
+      - ./CA:/pr_CA
     ports:
       - "8010:8080"
     links:
@@ -173,8 +177,7 @@ services:
     image: ${D4R6Y}haproxy:3.4.7-alpine3.24
     volumes:
       - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
-    environment:
-      PR_HOST: "pr:8080"
+      - ./CA:/ha_CA
     ports:
       - "80:8080"
 
