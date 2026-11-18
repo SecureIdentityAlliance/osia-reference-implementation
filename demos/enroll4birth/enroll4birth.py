@@ -4,6 +4,8 @@ import argparse
 import datetime
 import pathlib
 import base64
+import datetime
+from zoneinfo import ZoneInfo
 
 import requests
 
@@ -48,7 +50,7 @@ def do_birth(args):
         "enrollmentType": "CHILD",
         "requestData": {},
         "contextualData": {
-            "enrollmentDate": "2026-09-29T12:00:00+02:00",
+            "enrollmentDate": datetime.datetime.now(tz=ZoneInfo('Europe/Paris')).isoformat('T'),
         },
         "biographicData": {
             "firstName": args.firstname,
@@ -74,6 +76,43 @@ def do_birth(args):
             logging.error("[%d]: %s" , r.status_code,r.content)
         else:
             logging.info("Enrollment successfully submitted")
+
+def do_parent(args):
+
+    # Send data to enrollment server
+    data = {
+        "enrollmentType": "PARENT",
+        "requestData": {
+            "UIN": args.parent_uin
+        },
+        "contextualData": {
+            "enrollmentDate": datetime.datetime.now(tz=ZoneInfo('Europe/Paris')).isoformat('T')
+        },
+        "biographicData": {
+            "firstName": args.firstname,
+            "lastName": args.lastname,
+            "dateOfBirth": args.dob,
+            "gender": args.gender,
+            "parentUIN": ""
+        }
+    }
+    with open(args.portrait_path,'rb') as f:
+        portrait = f.read()
+        data["biometricData"] = [
+                {
+                    "biometricType": "FACE",
+                    "biometricSubType": "PORTRAIT",
+                    "image": base64.b64encode(portrait).decode('ascii')
+                }
+            ]
+
+    # Publish event of new enrollment
+    with requests.post(args.enr_url+'v1/enrollments/'+args.id, json=data, params={'finalize':'true', 'transactionId': args.id},**get_ssl_context()) as r:
+        if r.status_code!=204:
+            logging.error("[%d]: %s" , r.status_code,r.content)
+        else:
+            logging.info("Enrollment successfully submitted")
+
 
 
 def main(argv=sys.argv[1:]):
@@ -101,6 +140,7 @@ def main(argv=sys.argv[1:]):
     parser.add_argument("--portrait", default=None, type=pathlib.Path, dest='portrait_path', help="Path to the portrait image of the child")
     parser.add_argument("--parent-uin", default='AH', dest='parent_uin', help="UIN of the parent of the child")
     parser.add_argument("--parent-portrait", default=None, type=pathlib.Path, dest='parent_portrait_path', help="Path to the portrait image of the parent")
+    parser.add_argument("--type", default='CHILD', dest='type', help="Enrollment type (CHILD or PARENT)")
 
     args = parser.parse_args(argv)
 
@@ -114,7 +154,10 @@ def main(argv=sys.argv[1:]):
         logging.getLogger().addHandler(fh)
 
 
-    do_birth(args)
+    if args.type=='CHILD':
+        do_birth(args)
+    else:
+        do_parent(args)
 
 if __name__ == '__main__':
     main()

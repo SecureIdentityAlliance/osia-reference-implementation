@@ -1,0 +1,35 @@
+<div id="{{enrollment.enrollmentId}}" class="card id-card mx-auto nouveau">
+
+    <div class="id-card-header">
+        {% if enrollment.enrollmentType == "PARENT" %}IDENTITY CARD{% else %}BIRTH CERTIFICATE{% endif %}
+    </div>
+
+    <div class="card-body {% if enrollment.enrollmentType == "PARENT" %}id-card-parent{% endif %}">
+        <div class="row align-items-center">
+
+            <div class="col-md-4 text-center photo-container mb-3 mb-md-0">
+                <img src="{% url 'enrollment:portrait-image' enrollment.enrollmentId %}" alt="Photo" class="img-fluid rounded">
+                <div class="field-value">{{enrollment.requestData.UIN | default:"&nbsp;"}}</div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="mb-3">
+                    <div class="field-label">Last Name</div>
+                    <div class="field-value">{{enrollment.biographicData.lastName}}</div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="field-label">First Name</div>
+                    <div class="field-value">{{enrollment.biographicData.firstName}}</div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="field-label">Date of Birth</div>
+                    <div class="field-value">{{enrollment.biographicData.dateOfBirth}}</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>

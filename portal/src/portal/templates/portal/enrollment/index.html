@@ -1,25 +1,97 @@
 {% extends "portal/base.html" %}
 
-{% block extrahead %}
-<meta http-equiv="refresh" content="5">
+{% block extrastyle %}
+    <style>
+        .id-card-parent {
+          background-color:#be4e8f6b;
+        }
+        .id-card {
+            max-width: 450px;
+            border: 2px solid #BE4E90;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,.15);
+            padding: 0px;
+        }
+
+        .id-card-header {
+            background: #BE4E90;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            padding: 12px;
+        }
+
+        .photo-container img {
+            width: 140px;
+            /* height: 180px; */
+            object-fit: cover;
+            border: 1px solid #ccc;
+        }
+
+        .field-label {
+            color: #6c757d;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .field-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        @keyframes notification {
+            0% {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.9);
+                background: #ffe082;
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                background: white;
+            }
+        }
+
+        .nouveau {
+            animation: notification 1.0s ease;
+        }
+
+    </style>
 {% endblock %}
 
 {% block body %}
-<div class="row row-cols-6 g-4">
-{% for enr in enrollments %}
-  <div class="col">
-    <div class="card h-100">
-        <img class="card-img-top" src="{% url 'enrollment:portrait-image' enr.enrollmentId %}"></img>
-        <div class="card-body">
-            <p class="card-text"><b>{{enr.biographicData.firstName}}</b></p>
-            <p class="card-text"><b>{{enr.biographicData.lastName}}</b></p>
-        </div>
-        <div class="card-footer">
-            <small class="fg-2">{{enr.contextualData.enrollmentDate|date:"H:i:s"}}</small>
-        </div>
-    </div>
-  </div>
-{% endfor %}
+
+<script>
+async function refreshData() {
+    try {
+        const response = await fetch("{% url 'enrollment:list-ids' %}");
+        const data = await response.json();
+        my_root = document.getElementById('enr_root');
+
+        for (const enr_id of data) {
+
+          my_enr = document.getElementById(enr_id);
+          if (my_enr === null) {
+            const html = await fetch("card/"+enr_id).then(r => r.text());
+
+          const temp = document.createElement('div');
+          temp.innerHTML = html;
+          const newNode = temp.firstElementChild;
+          my_root.prepend(newNode);
+          }
+        }
+    } catch (e) {
+        console.error(e);
+    }
+
+    setTimeout(refreshData, 2000);
+}
+
+refreshData();
+</script>
+
+<div id="enr_root" class="row row-cols-4 g-4">
 </div>
 
 {% endblock %}

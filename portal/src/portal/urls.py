@@ -16,6 +16,8 @@ pr_patterns = ([
 
 enrollment_patterns = ([
     path("", portal.views.enrollment.index, name="index"),
+    path("list-ids/", portal.views.enrollment.list_ids, name="list-ids"),
+    path("card/<str:enrollment_id>/", portal.views.enrollment.card, name="card"),
     path("portrait-image/<str:enrollment_id>/", portal.views.enrollment.portrait_image, name="portrait-image"),
 ],
 "enrollment",

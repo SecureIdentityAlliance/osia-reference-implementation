@@ -1,12 +1,7 @@
-import logging
-import os
-import datetime
-import random
 import base64
 
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect
-from django.urls import reverse
+from django.http import HttpResponse, JsonResponse
 
 import requests
 
@@ -22,6 +17,25 @@ def index(request):
         raise Exception("Failed to contact Enrollment Server (HTTP code: %s)" % req.status_code)
     ret = reversed(req.json())
     return render(request, "portal/enrollment/index.html", dict(enrollments=ret))
+
+def list_ids(request):
+    req = requests.post(enr_url()+"v1/enrollments?transactionId=portal", json=[{
+        "attributeName":"firstName",
+        "operator":"!=",
+        "value":""
+    }])
+    if req.status_code!=200:
+        raise Exception("Failed to contact Enrollment Server (HTTP code: %s)" % req.status_code)
+    ret = [x['enrollmentId'] for x in req.json()]
+    ret = list(ret)
+    return JsonResponse(ret, safe=False)
+
+def card(request, enrollment_id):
+    req = requests.get(enr_url()+"v1/enrollments/"+enrollment_id+'?transactionId=portal')
+    if req.status_code!=200:
+        raise Exception("Failed to contact Enrollment Server (HTTP code: %s)" % req.status_code)
+    data = req.json()
+    return render(request, "portal/enrollment/card.html", dict(enrollment=data))
 
 def portrait_image(request, enrollment_id):
     req = requests.get(enr_url()+"v1/enrollments/"+enrollment_id+'?transactionId=portal')
