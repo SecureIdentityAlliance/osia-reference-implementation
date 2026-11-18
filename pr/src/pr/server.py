@@ -823,6 +823,8 @@ async def queryPersonList(request):
                 elif k in ident_data:
                     obj[k] = ident_data[k]
             ret.append(obj)
+        if len(ret)==0:
+            return web.Response(status=404)
         return web.json_response(ret, status=200)
 
 

@@ -134,8 +134,7 @@ class TestNominal(TestPr):
             "dateOfBirth": "2023-04-15"
         }
         with requests.get(self.url+'v1/persons', params=params,**get_ssl_context()) as r:
-            assert 200 == r.status_code
-            assert [] == r.json()
+            assert 404 == r.status_code
 
 
 if __name__ == '__main__':

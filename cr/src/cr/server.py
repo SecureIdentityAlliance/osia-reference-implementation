@@ -320,6 +320,9 @@ async def execute(event):
                 if len(candidates)>0:
                     logging.error(f"[{transaction_id}] - Child is already in the databases - Stopping the process")
                     return
+            elif response.status == 404:
+                # No candidate, as per OSIA specs
+                pass
             else:
                 logging.error(f"[{transaction_id}] - Error checking in PR if the child is already registered")
                 return
