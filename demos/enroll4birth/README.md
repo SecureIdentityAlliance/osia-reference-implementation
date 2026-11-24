@@ -179,7 +179,8 @@ No biographic data are included in the encounter.
             "firstName": "John",
             "lastName": "Doe",
             "dateOfBirth": "2026-10-05",
-            "gender": "M"
+            "gender": "M",
+            "parentUIN": "<PARENT_UIN>"
         },
         "biometricData":
         [
