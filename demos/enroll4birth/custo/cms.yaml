@@ -15,4 +15,4 @@ BiographicData:
     gender:
       type: string
       enum: ['M', 'F']
-  additionalProperties: false
+  additionalProperties: true

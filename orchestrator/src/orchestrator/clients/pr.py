@@ -128,6 +128,23 @@ async def defineReference(url, transaction_id, person_id, identity_id):
                 error = {'message': ''}
             raise Exception("Could not define reference identity:\n" + error['message'])
 
+#______________________________________________________________________________
+async def readReference(url, transaction_id, person_id):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url+'/'+person_id+'/reference',
+                                headers={'content-type': 'application/json'},
+                                params={'transactionId': transaction_id}) as resp:
+            if resp.status == 200:
+                res = await resp.json()
+                return res
+            if resp.status in [400, 404]:
+                logger.error("PR::readReference error %d with url %s", resp.status, resp.real_url)
+                return False
+            try:
+                error = await resp.json()
+            except:
+                error = {'message': ''}
+            raise Exception("Could not read reference identity:\n" + error['message'])
 
 #______________________________________________________________________________
 def main(argv):

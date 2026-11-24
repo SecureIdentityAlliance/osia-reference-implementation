@@ -170,16 +170,6 @@ services:
     depends_on:
       - notification
       - redis
-  #
-  # Infra
-  #
-  haproxy:
-    image: ${D4R6Y}haproxy:3.4.7-alpine3.24
-    volumes:
-      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
-      - ./CA:/ha_CA
-    ports:
-      - "80:8080"
 
   #
   # Databases

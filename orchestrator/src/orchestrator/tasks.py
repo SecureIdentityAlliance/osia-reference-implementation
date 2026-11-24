@@ -77,8 +77,10 @@ def readEnrollment_ENR(self,ctx, url, enrollment_id, transaction_id):
     ctx['contextualData'] = res['contextualData']
     if 'biographicData' not in ctx:
         ctx['biographicData'] = res['biographicData']
-        if 'parentUIN' in ctx['biographicData']:
-            del ctx['biographicData']['parentUIN']
+    if 'parentUIN' in res['biographicData']:
+        ctx['parentUIN'] = res['biographicData']['parentUIN']
+    if 'parentUIN' in ctx['biographicData']:
+        del ctx['biographicData']['parentUIN']
     ctx['biometricData'] = res['biometricData']
     return ctx
 
@@ -154,6 +156,26 @@ def deletePerson_PR(self,ctx, url, enrollment_id, transaction_id):
         logging.error("[%s] Could not delete person", transaction_id)
         raise Exception("Could not delete person")
     return ctx
+
+#______________________________________________________________________________
+@app.task(bind=True)
+def readParentIdentity_PR(self,ctx, url,enrollment_id, transaction_id):
+    if 'parentUIN' not in ctx:
+        logging.info("==> [%s] No parent's identity to read from PR", transaction_id)
+        return ctx
+    logging.info("==> [%s] Reading parent's identity from PR", transaction_id)
+    res = None
+    try:
+        # Get data
+        res = asyncio.run( pr.readReference(url+'v1/persons', transaction_id, ctx['parentUIN']) )
+        ctx['parentBiographicData'] = res['biographicData']
+        return ctx
+    except Exception as exc:
+        logging.exception("error")
+        self.retry(countdown=60.0,max_retries=10,exc=exc)
+    if not res:
+        logging.error("[%s] Could not read parent's identity", transaction_id)
+        raise Exception("Could not read parent's identity")
 
 #______________________________________________________________________________
 @app.task(bind=True)
@@ -256,7 +278,9 @@ def createCredentialRequest_CMS(self,ctx, url,enrollment_id, transaction_id):
             biographicData=ctx.get('biographicData', {}),
             biometricData=ctx.get('biometricData', [])
         )
-
+        if 'parentBiographicData' in ctx:
+            request['biographicData']['parent'] = ctx['parentBiographicData']
+            request['biographicData']['parent']['UIN'] = ctx['parentUIN']
         data = io.BytesIO(json.dumps(request).encode('latin-1'))
         asyncio.run( cms.createCredentialRequest(url, transaction_id, enrollment_id, data) )
     except Exception as exc:
@@ -336,6 +360,8 @@ def workflow_enroll4birth_child(uin, transaction_id, enrollment_id):
         defineReference_PR.s(get_url("PR_URL",'http://pr:8080/'), enrollment_id, transaction_id),
         # (17)
         createEncounter_ABIS.s(get_url("ABIS_URL",'http://abis:8080/'), enrollment_id, transaction_id),
+        # Get parent biographic data (needed in the VDS)
+        readParentIdentity_PR.s(get_url("PR_URL",'http://pr:8080/'), enrollment_id, transaction_id),
         # (18) Send to CMS
         createCredentialRequest_CMS.s(get_url("CMS_URL",'http://cms:8080/'), enrollment_id, transaction_id),
         # (19) delete enrollment

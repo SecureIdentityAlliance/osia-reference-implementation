@@ -28,6 +28,7 @@ RUN mkdir osiasite \
     && .py/bin/django-admin startproject osiasite osiasite \
     && echo -e "\nINSTALLED_APPS += ['bootstrap5','portal']" >> osiasite/osiasite/settings.py \
     && echo -e "\nALLOWED_HOSTS=['*']" >> osiasite/osiasite/settings.py \
+    && echo -e "\nLOGGING = {'version': 1,'handlers':{'console': {'class':'logging.StreamHandler'}}, 'root': {'handlers': ['console'],'level': 'ERROR', },}" >> osiasite/osiasite/settings.py \
     && echo -e "\nfrom django.urls import include\nurlpatterns+=[path('osia/', include('portal.urls'))]" >> osiasite/osiasite/urls.py \
     && .py/bin/python osiasite/manage.py migrate
 

@@ -86,7 +86,7 @@ Inject test data with::
     # Then simulate an enrollment
     python enroll4birth.py --fn First --ln Last --dob 2026-09-30 --gender F --portrait data/aiony.jpg --parent-uin JF --parent-portrait data/jimmy.jpg --id 001
     # Or enroll a new parent (with --type added)
-    python enroll4birth.py --fn First --ln last --dob 2024-12-03 --gender F --portrait data/jimmy.jpg --parent-uin FL --type PARENT --id 001
+    python enroll4birth.py --fn First --ln Last --dob 2004-12-03 --gender F --portrait data/jimmy.jpg --parent-uin FL --type PARENT --id 001
 
 To delete a record::
 
