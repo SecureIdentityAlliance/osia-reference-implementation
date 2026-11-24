@@ -77,8 +77,8 @@ def readEnrollment_ENR(self,ctx, url, enrollment_id, transaction_id):
     ctx['contextualData'] = res['contextualData']
     if 'biographicData' not in ctx:
         ctx['biographicData'] = res['biographicData']
-        if 'parentUIN' in ctx['biographicData']:
-            del ctx['biographicData']['parentUIN']
+    if 'parentUIN' in res['biographicData']:
+        ctx['biographicData']['parentUIN'] = res['biographicData']['parentUIN']
     ctx['biometricData'] = res['biometricData']
     return ctx
 
