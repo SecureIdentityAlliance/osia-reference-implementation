@@ -148,12 +148,13 @@ async def cr_event(request):
     m = await request.json()
 
     if m['type']=='SubscriptionConfirmation':
-        logging.info("Confirming subscription")
+        logging.info("Confirming subscription (CR)")
         logging.debug('Headers: '+str(request.headers))
         logging.debug(str(m))
         async with aiohttp.ClientSession() as clt_session:
             async with clt_session.get(m['confirmURL'], params={'token': m['token']}, ssl=False) as response:
                 if response.status == 200:
+                    logging.info("Subscription confirmed (CR)")
                     await response.read()
                 else:
                     logging.error("Failed to confirm subscription %s", m['confirmURL'])
@@ -182,12 +183,13 @@ async def enrollment_event(request):
     m = await request.json()
 
     if m['type']=='SubscriptionConfirmation':
-        logging.info("Confirming subscription")
+        logging.info("Confirming subscription (enrollment)")
         logging.debug('Headers: '+str(request.headers))
         logging.debug(str(m))
         async with aiohttp.ClientSession() as clt_session:
             async with clt_session.get(m['confirmURL'], params={'token': m['token']}, ssl=False) as response:
                 if response.status == 200:
+                    logging.info("Subscription confirmed (enrollment)")
                     await response.read()
                 else:
                     logging.error("Failed to confirm subscription %s", m['confirmURL'])

@@ -1,0 +1,94 @@
+services:
+  pr:
+    build:
+      context: ../../pr
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: osia/pr
+    environment:
+      PR_CUSTO_FILENAME: "/custo/pr.yaml"
+      PR_DATABASE_URL: "postgresql+psycopg2://pr:PRSecret@postgres2/osiadb"
+      # PR_SERVER_CERTFILE: "/pr_CA/server.pem"
+      # PR_SERVER_KEYFILE: "/pr_CA/server.key"
+      # PR_SERVER_CA_CERTFILE: "/pr_CA/client.pem"
+    volumes:
+      - ./custo:/custo
+      - ./CA:/pr_CA
+    ports:
+      - "8010:8080"
+    links:
+      - postgres2
+    depends_on:
+      - postgres2
+    restart: on-failure
+  abis:
+    build:
+      context: ../../abis
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: osia/abis
+    environment:
+      ABIS_CUSTO_FILENAME: "/custo/abis.yaml"
+      ABIS_DATABASE_URL: "postgresql+psycopg2://abis:AbisSecret@postgres2/osiadb"
+    volumes:
+      - ./custo:/custo
+    ports:
+      - "8030:8080"
+    links:
+      - postgres2
+    depends_on:
+      - postgres2
+    restart: on-failure
+  cr:
+    build:
+      context: ../../cr
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: osia/cr
+    environment:
+      # How to reach me (from the notification service)
+      MY_URL: "http://host.docker.internal/cr/"
+      CR_NOTIFICATION_URL: "http://host.docker.internal/notification/"
+      CR_UIN_URL: "http://host.docker.internal:8020/"
+      CR_PR_URL: "http://host.docker.internal/pr/"
+      CR_ENROLLMENT_URL: "http://host.docker.internal:8000/"
+      # CR_LOGLEVEL: DEBUG
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8050:8080"
+  cms:
+    build:
+      context: ../../cms
+      args:
+        D4R6Y: ${D4R6Y}
+        PIP_CONF: ${PIP_CONF}
+        APK_ARGS: ${APK_ARGS}
+    image: osia/cms
+    environment:
+      CMS_CUSTO_FILENAME: "/custo/cms.yaml"
+      # CMS_LOGLEVEL: DEBUG
+    volumes:
+      - ./custo:/custo
+    ports:
+      - "8060:8080"
+
+  #
+  # Databases
+  #
+  postgres2:
+    image: ${D4R6Y}postgres:18.3-alpine3.23
+    environment:
+      - POSTGRES_DB=osiadb
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=SuperSecret
+      - TZ=Europe/Paris
+    volumes:
+      - ../pg_setup.sql:/docker-entrypoint-initdb.d/pg_setup.sql
+

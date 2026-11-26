@@ -47,7 +47,13 @@ services:
       - "8040:8080"
     environment:
       REDIS_URL: "redis://redis/0"
-      ROOT_URL: "http://notification:8080/"
+      # XXX To be changed on site.
+      # This is used to build the URL sent to the client for confirmation
+      # It must be a valid address used by the client of the notification service to contact the notification service
+      ROOT_URL: "http://host.docker.internal/notification/"
+      NOTIFICATION_LOGLEVEL: DEBUG
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     links:
       - redis
     depends_on:
@@ -66,12 +72,19 @@ services:
     image: osia/orchestrator
     ports:
       - "8100:8080"
-    env_file: day1.env
     environment:
       NOTIFICATION_URL: "http://notification:8080/"
+      # Used to build the confirmation URL sent to the notification service
       MY_URL: "http://orchestrator:8080/"
       REDIS_URL: "redis://redis/1"
       ENROLLMENT_URL: "http://enrollment:8080/"
+      # URL to real systems are routed through a local HAProxy
+      CR_URL: "http://host.docker.internal/cr/"
+      PR_URL: "http://host.docker.internal/pr/"
+      ABIS_URL: "http://host.docker.internal/abis/"
+      CMS_URL: "http://host.docker.internal/cms/"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     links:
       - notification
       - redis
@@ -79,16 +92,6 @@ services:
     depends_on:
       - notification
       - redis
-  #
-  # Infra
-  #
-  haproxy:
-    image: ${D4R6Y}haproxy:3.4.7-alpine3.24
-    volumes:
-      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
-    env_file: day1.env
-    ports:
-      - "80:8080"
 
   #
   # Databases
@@ -121,7 +124,11 @@ services:
       - ORCHESTRATOR_URL=http://orchestrator:8080/
       - NOTIFICATION_URL=http://notification:8080/
       - UIN_URL=http://uin:8080/
-    env_file: day1.env
+      # URL to real systems are routed through a local HAProxy
+      - ABIS_URL=http://host.docker.internal/abis/
+      - PR_URL=http://host.docker.internal/pr/
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "9100:8080"
     links:
