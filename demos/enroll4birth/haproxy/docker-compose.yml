@@ -1,0 +1,12 @@
+services:
+  haproxy:
+    image: haproxy:3.4.7-alpine3.24
+    env_file: "env.conf"
+    volumes:
+      - ./:/usr/local/etc/haproxy/
+      - ./:/etc/haproxy/
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+#    network_mode: host
+    ports:
+      - "80:80"

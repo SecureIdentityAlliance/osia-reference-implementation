@@ -1,0 +1,6 @@
+In systemd unit configuration:
+
+    [Service]
+    EnvironmentFile=/etc/haproxy/env.conf
+
+    
