@@ -27,12 +27,14 @@ def do_birth(args):
                     {
                         "biometricType": "FACE",
                         "biometricSubType": "PORTRAIT",
-                        "image": base64.b64encode(portrait).decode('ascii')
+                        "image": base64.b64encode(portrait).decode('ascii'),
+                        "mimeType": "image/jpeg"
                     }
                 ]}
-        with requests.post(args.abis_url+'v1/verify/ALL/'+args.parent_uin, json=data, params={'transactionId': args.id},**get_ssl_context()) as r:
+        with requests.post(args.abis_url+'v1/verify/DEMO/'+args.parent_uin, json=data, params={'transactionId': args.id},**get_ssl_context()) as r:
             assert 200 == r.status_code
             res = r.json()
+            logging.info(res)
             assert res['decision'] == True
             logging.info('CONFIRMED')
     else:

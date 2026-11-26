@@ -18,14 +18,12 @@ async def createEncounter(url, transaction_id, person_id, encounter_id, encounte
             if resp.status == 200:
                 await resp.json()
                 return
-            if resp.status in [400, 404]:
-                logger.error("ABIS::createEncounter error %d with url %s", resp.status, resp.real_url)
-                return False
             try:
-                error = await resp.json()
+                error = await resp.text()
             except:
-                error = {'message': ''}
-            raise Exception("Could not create encounter:\n" + error['message'])
+                error = ""
+            logger.error("ABIS::createEncounter error %d with url %s: %s", resp.status, resp.real_url, error)
+            raise Exception("Could not create encounter:\n" + error)
 
 #______________________________________________________________________________
 async def deleteAll(url, transaction_id, person_id, target=None):
@@ -34,14 +32,12 @@ async def deleteAll(url, transaction_id, person_id, target=None):
                                 params={'transactionId': transaction_id}) as resp:
             if resp.status == 204:
                 return True
-            if resp.status in [400, 404]:
-                logger.error("ABIS::deleteAll error %d with url %s", resp.status, resp.real_url)
-                return False
             try:
-                error = await resp.json()
+                error = await resp.text()
             except:
-                error = {'message': ''}
-            raise Exception("Could not delete all encounters:\n" + error['message'])
+                error = ""
+            logger.error("ABIS::deleteAll error %d with url %s: %s", resp.status, resp.real_url, error)
+            raise Exception("Could not delete all encounters:\n" + error)
 
 #______________________________________________________________________________
 def main(argv):

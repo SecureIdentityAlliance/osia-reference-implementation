@@ -40,7 +40,7 @@ def prepare_data(args):
                 "image": base64.b64encode(buf).decode('ascii'),
                 "width": 300,
                 "height": 389,
-                "mimeType": "image/jpg"
+                "mimeType": "image/jpeg"
             }
         ]
     }
@@ -79,7 +79,7 @@ def prepare_data(args):
                 "image": base64.b64encode(buf).decode('ascii'),
                 "width": 294,
                 "height": 400,
-                "mimeType": "image/jpg"
+                "mimeType": "image/jpeg"
             }
         ]
     }
@@ -115,9 +115,9 @@ def prepare_data(args):
                 "biometricType": "FACE",
                 "biometricSubType": "PORTRAIT",
                 "image": base64.b64encode(buf).decode('ascii'),
-                "width": 300,
-                "height": 389,
-                "mimeType": "image/jpg"
+                "width": 285,
+                "height": 400,
+                "mimeType": "image/jpeg"
             }
         ]
     }
@@ -153,9 +153,9 @@ def prepare_data(args):
                 "biometricType": "FACE",
                 "biometricSubType": "PORTRAIT",
                 "image": base64.b64encode(buf).decode('ascii'),
-                "width": 300,
-                "height": 389,
-                "mimeType": "image/jpg"
+                "width": 294,
+                "height": 400,
+                "mimeType": "image/jpeg"
             }
         ]
     }
@@ -191,9 +191,9 @@ def prepare_data(args):
                 "biometricType": "FACE",
                 "biometricSubType": "PORTRAIT",
                 "image": base64.b64encode(buf).decode('ascii'),
-                "width": 300,
-                "height": 389,
-                "mimeType": "image/jpg"
+                "width": 285,
+                "height": 400,
+                "mimeType": "image/jpeg"
             }
         ]
     }
@@ -229,9 +229,9 @@ def prepare_data(args):
                 "biometricType": "FACE",
                 "biometricSubType": "PORTRAIT",
                 "image": base64.b64encode(buf).decode('ascii'),
-                "width": 300,
-                "height": 389,
-                "mimeType": "image/jpg"
+                "width": 283,
+                "height": 400,
+                "mimeType": "image/jpeg"
             }
         ]
     }
@@ -267,9 +267,9 @@ def prepare_data(args):
                 "biometricType": "FACE",
                 "biometricSubType": "PORTRAIT",
                 "image": base64.b64encode(buf).decode('ascii'),
-                "width": 300,
-                "height": 389,
-                "mimeType": "image/jpg"
+                "width": 294,
+                "height": 400,
+                "mimeType": "image/jpeg"
             }
         ]
     }
