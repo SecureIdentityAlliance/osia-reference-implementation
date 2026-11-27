@@ -1,6 +1,35 @@
-In systemd unit configuration:
+Install haproxy:
+
+    sudo apt install haproxy
+
+In systemd unit configuration (/usr/lib/systemd/system/haproxy.service), add:
 
     [Service]
     EnvironmentFile=/etc/haproxy/env.conf
+    EnvironmentFile=/home/osia/osia-refimpl/demos/enroll4birth/haproxy/env.conf
 
-    
+Set the secrets (Thales API Key et InfoTech private key) in /etc/haproxy directory,
+as protected files:
+
+    -rw-r-----   1 root haproxy  3411 Nov 26 16:36 clt-xinfotech.pem
+    -rw-r-----   1 root haproxy    52 Nov 26 16:49 env.conf
+    drwxr-xr-x   2 root root     4096 Nov 26 16:36 errors/
+    lrwxrwxrwx   1 root root       62 Nov 26 16:41 haproxy.cfg -> /home/osia/osia-refimpl/demos/enroll4birth/haproxy/haproxy.cfg
+
+Set the hostname in /home/osia/osia-refimpl/demos/enroll4birth/haproxy/env.conf:
+
+    MUEHLBAUER_HOSTNAME=xxx.yyy.zzz.aaa
+    DIGITECH_HOSTNAME=xxx.yyy.zzz.aaa
+    INGROUPE_HOSTNAME=xxx.yyy.zzz.aaa
+
+Select the backend server in /home/osia/osia-refimpl/demos/enroll4birth/haproxy/haproxy.cfg,
+for example:
+
+    frontend http-in
+        bind *:80
+
+        # route to a backend based on path's prefix
+        use_backend digitech_cr_servers if { path /cr } || { path_beg /cr/ }
+        use_backend ingroupe_pr_servers if { path /pr } || { path_beg /pr/ }
+        use_backend thales_abis_servers if { path /abis } || { path_beg /abis/ }
+        use_backend muehlbauer_cms_servers if { path /cms } || { path_beg /cms/ }

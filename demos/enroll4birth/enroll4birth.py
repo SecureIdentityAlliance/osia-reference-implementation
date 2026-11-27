@@ -34,7 +34,7 @@ def do_birth(args):
         with requests.post(args.abis_url+'v1/verify/DEMO/'+args.parent_uin, json=data, params={'transactionId': args.id},**get_ssl_context()) as r:
             assert 200 == r.status_code
             res = r.json()
-            logging.info(res)
+            logging.debug(res)
             assert res['decision'] == True
             logging.info('CONFIRMED')
     else:
